@@ -13,8 +13,9 @@ import { lookupNeighborhood } from '../../lib/neighborhoods';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import UpgradeModal from '../../components/ui/UpgradeModal';
+import { TIMING_MS } from '../../config';
 
-const INVOKE_TIMEOUT_MS = 90_000;
+const INVOKE_TIMEOUT_MS = TIMING_MS.invokeTimeout;
 
 async function applyMockFallback(genId: string, data: WizardData) {
   await supabase.from('generations').update({
@@ -225,34 +226,45 @@ function generateMockMLS(d: WizardData): string {
   const baths = d.bathrooms || 2;
   const sqft = d.sqft ? Number(d.sqft) : null;
   const sqftStr = sqft ? `${sqft.toLocaleString()} sf` : '';
+  const amenSet = new Set(d.amenities.map(a => a.toLowerCase()));
+  const custom = (d.customAmenities || '').toLowerCase();
+  const hasPiazza = amenSet.has('screened piazza') || amenSet.has('wraparound porch') || custom.includes('piazza') || custom.includes('porch');
+  const hasFireplace = amenSet.has('gas fireplace') || custom.includes('fireplace');
+  const hasChefKitchen = amenSet.has("chef's kitchen") || custom.includes('chef');
   const amenList = d.amenities.slice(0, 4).join(', ');
-  const hasChefKitchen = d.amenities.some(a => /chef|kitchen/i.test(a)) || (d.customAmenities && d.customAmenities.toLowerCase().includes('chef'));
 
-  return `The first time you turn onto the street, you feel it: the canopy of live oaks, the quiet hum of a neighborhood that still knows its neighbors. This ${beds}-bedroom, ${baths}-bath ${neighborhood} home doesn't announce itself with flash—it invites you in with a wide, shaded piazza where the coastal breeze moves through the screens and the only soundtrack is the rustle of palmetto fronds. This is the Holy City at its most lived-in—a place where evenings begin with sweet tea on the piazza and end with marsh views and the glow of Shem Creek sunsets a short drive away.
+  return `The first time you turn onto the street, you feel it: the quiet hum of a neighborhood that still knows its neighbors. This ${beds}-bedroom, ${baths}-bath ${neighborhood} home welcomes you with a sense of ease—light, air, and that unmistakable Lowcountry rhythm that makes Charleston feel like home. ${hasPiazza ? 'Step onto the piazza and let the coastal breeze move through the screens—sweet tea here becomes a daily ritual.' : 'Settle in at the entry and let the day slow down—coffee mornings and easy evenings feel natural here.'}
 
-Inside, the main level is built for both daily life and effortless entertaining. The living area opens off the foyer with clean lines and abundant natural light; imagine winter evenings by the fireplace and weekend mornings with the paper and coffee. ${hasChefKitchen ? "The chef's kitchen is the true heart of the home—custom cabinetry, stone counters, and a layout that keeps the cook in the conversation." : 'The kitchen opens to the living space with room to gather.'} A dedicated dining space sits between kitchen and living room, so dinner parties flow from prep to table without a single closed door. ${amenList ? `Thoughtful touches include ${amenList}.` : ''} A half bath and purposeful mudroom complete the main floor.
+Inside, the main level is built for both daily life and effortless entertaining. The living area opens with an easy, open flow and generous natural light; imagine quiet evenings with the paper and weekend mornings that linger. ${hasFireplace ? 'A gas fireplace anchors the space when cooler nights roll in.' : ''} ${hasChefKitchen ? "The chef's kitchen is the heart of the home—designed for cooking and conversation." : 'The kitchen connects naturally to the living space, keeping everyone together.'} A dedicated dining area makes gatherings feel effortless, and the layout stays simple, comfortable, and usable. ${amenList ? `Notable features you selected include ${amenList}.` : ''} A half bath completes the main floor.
 
 Upstairs, the primary suite feels like a retreat. The bedroom is sized for a king and for quiet; the en-suite bath offers a double vanity and a shower built for the long run. Two additional bedrooms share a well-appointed hall bath—ideal for family, guests, or a home office that doubles as a guest room. Closets and storage are where you need them, so the house stays uncluttered even when life doesn't.
 
-Outside, the piazza is the star. It's the room that isn't in the square-footage count but lives in every Lowcountry memory—grills and oyster roasts, morning coffee, and the kind of conversations that run past midnight. The yard is sized for play, pets, or a future pool; mature plantings and a sense of enclosure give privacy without closing off the sky. You're minutes from the water, from dining along Shem Creek, and from the beaches of Sullivan's Island—close enough to taste the salt in the air, far enough to leave the crowds behind.
+Outside, ${hasPiazza ? "the piazza is the star—the room that isn't in the square-footage count but lives in every Lowcountry memory." : 'the outdoor spaces invite you to step outside and enjoy the Lowcountry air.'} You're minutes from the best of Charleston-area living—dining, beaches, and everyday conveniences—close enough to enjoy it all, far enough to come home to calm.
 
-This is ${neighborhood} the way locals know it: tidal creeks and marsh views, piazzas and porch swings, and a pace that still has room for both ambition and ease. ${sqftStr ? `At ${sqftStr}, ` : ''}the home is ready for its next chapter—and for a buyer who wants that chapter written in the Lowcountry. Schedule your private showing and see why this one feels different the moment you walk in.`;
+This is ${neighborhood} the way locals know it: coastal light, easy evenings, and a pace that still has room for both ambition and ease. ${sqftStr ? `At ${sqftStr}, ` : ''}the home is ready for its next chapter—and for a buyer who wants that chapter written in the Lowcountry. Schedule your private showing and see how it feels in person.`; 
 }
 
 function generateMockAirbnb(d: WizardData): string {
   const neighborhood = d.neighborhood || 'Charleston';
-  return `Welcome to your Lowcountry escape in ${neighborhood}! This thoughtfully appointed home puts you at the heart of authentic Charleston living — where sweet tea on the piazza, fresh seafood at nearby restaurants, and sun-soaked beach days become your everyday rhythm.
+  const amenSet = new Set(d.amenities.map(a => a.toLowerCase()));
+  const custom = (d.customAmenities || '').toLowerCase();
+  const hasPiazza = amenSet.has('screened piazza') || amenSet.has('wraparound porch') || custom.includes('piazza') || custom.includes('porch');
+  return `Welcome to your Lowcountry escape in ${neighborhood}! This home puts you close to everything Charleston is known for — great dining, coastal day trips, and the easy rhythm that keeps visitors coming back.
 
-Wake up to the gentle sounds of the Lowcountry, steps from local favorites and world-class attractions. Whether you're here for a romantic getaway, family vacation, or the Charleston Food + Wine Festival, this home is your perfect basecamp.
+Wake up, grab coffee, and plan your day — whether you're here for a romantic getaway, a family trip, or a week of exploring the Holy City. ${hasPiazza ? 'Start and end the day on the piazza with a coastal breeze.' : ''} From here, it’s simple to explore local favorites, waterfront spots, and Charleston’s best seasonal events.
 
 ✓ Fully equipped kitchen   ✓ High-speed WiFi   ✓ Free parking   ✓ Self check-in`;
 }
 
 function generateMockSocial(d: WizardData): string[] {
   const neighborhood = d.neighborhood || 'Charleston';
+  const amenSet = new Set(d.amenities.map(a => a.toLowerCase()));
+  const custom = (d.customAmenities || '').toLowerCase();
+  const hasPiazza = amenSet.has('screened piazza') || amenSet.has('wraparound porch') || custom.includes('piazza') || custom.includes('porch');
+  const piazzaPhrase = hasPiazza ? ' — piazza life included' : '';
   return [
-    `🌿 Just listed in ${neighborhood}! This stunning Lowcountry home captures everything Charleston buyers are searching for — a welcoming piazza, sun-filled interiors, and unbeatable proximity to everything the Holy City has to offer. DM for details. #CharlestonRealEstate #LowcountryLiving #${neighborhood.replace(' ', '')}Homes #JustListed #CharlestonSC`,
-    `✨ ${neighborhood} living at its finest. Authentic Charleston character meets modern comfort in this beautiful listing. Piazza? Check. Proximity to the best of the Holy City? Check. Ready to call this home? 📍 ${d.address} #CharlestonHomes #SouthCarolinaRealEstate #LowcountryStyle #RealtorLife #NewListing`,
-    `🏠 The Lowcountry lifestyle is calling! This ${d.bedrooms || 3}BR/${d.bathrooms || 2}BA gem in ${neighborhood} won't last long in this market. Reach out today to schedule a private showing before it's gone. Link in bio → #CharlestonRealtor #${neighborhood.replace(/ /g, '')} #LowcountryAI #CharlestonListings`,
+    `🌿 Just listed in ${neighborhood}${piazzaPhrase}! Bright, easy flow + the Lowcountry rhythm buyers want. DM for details. #CharlestonRealEstate #LowcountryLiving #${neighborhood.replace(' ', '')}Homes #JustListed #CharlestonSC`,
+    `✨ ${neighborhood} living with a Charleston-first feel. Ready to see it in person? 📍 ${d.address} #CharlestonHomes #SouthCarolinaRealEstate #LowcountryStyle #RealtorLife #NewListing`,
+    `🏠 New in ${neighborhood}: ${d.bedrooms || 3}BR/${d.bathrooms || 2}BA with comfort-forward spaces and a location that makes life easier. Schedule a private tour. #CharlestonRealtor #${neighborhood.replace(/ /g, '')} #LowcountryAI #CharlestonListings`,
   ];
 }

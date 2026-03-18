@@ -128,7 +128,6 @@ export default function Step3Amenities({ data, onChange }: { data:WizardData; on
         </div>
       </div>
 
-      <style>{`.neon-label{display:block;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.14em;color:var(--text-lo);text-transform:uppercase;margin-bottom:7px}.step-heading{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text-hi);margin:0 0 6px}.step-sub{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-mid);margin:0;line-height:1.7}`}</style>
     </div>
   );
 }

@@ -104,12 +104,11 @@ export default function Step2Photos({ data, onChange }: { data:WizardData; onCha
             OpenAI Vision Analysis
           </div>
           <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:13, color:'var(--text-mid)', lineHeight:1.65 }}>
-            Vision AI identifies shiplap walls, hardwood floors, coffered ceilings, piazza views, and other
-            Lowcountry details — automatically woven into your copy. No photos? You can still generate from address + amenities alone.
+            Vision AI extracts only high-confidence, visible details from your photos (no guessing).
+            Those photo notes can be woven into your copy when they align with your selected amenities. No photos? You can still generate from your facts alone.
           </div>
         </div>
       </div>
-      <style>{`.step-heading{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text-hi);margin:0 0 6px}.step-sub{font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text-mid);margin:0;line-height:1.7}`}</style>
     </div>
   );
 }

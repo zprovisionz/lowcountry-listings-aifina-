@@ -1,6 +1,23 @@
 # Lowcountry Listings AI
 
-A Charleston-only SaaS platform that helps real estate agents, property managers, and Airbnb hosts create professional, hyper-local listing content using AI. Built for the Lowcountry (Charleston, Berkeley, Dorchester counties) with authentic vocabulary, verified landmark distances, and neighborhood intelligence.
+Charleston-only AI listing generator built in Mount Pleasant for local agents who need speed *without* generic AI nonsense. Generate MLS-ready copy with verified landmark distances, Lowcountry vocabulary, and fact-locked guardrails that reduce hallucinations and protect your reputation.
+
+## Quick Start
+
+```bash
+npm install
+cp .env.example .env.local   # fill in VITE_* vars
+npm run dev
+```
+
+Open `http://localhost:5173`.
+
+## Why agents love it
+
+- **Saves 2+ hours per listing**: MLS + Airbnb + 3 social captions in one flow
+- **Hyper-local accuracy**: verified landmark distances and neighborhood intelligence
+- **Flagship safety**: fact-only prompts + refinement + fact-check pass + “Edit & regenerate” on results
+- **Charleston voice**: elegant, narrative-style copy tuned for Mount Pleasant, Summerville, and the Charleston metro
 
 ## Overview
 
@@ -64,6 +81,17 @@ Configure in **Supabase Dashboard → Project Settings → Edge Functions → Se
 | `SUPABASE_SERVICE_ROLE_KEY` | All edge functions | Supabase service role key (Settings → API) |
 
 Optional for staging: `FAL_KEY` (fal.ai) in Edge Function secrets for `stage-photo`.
+
+### Local Edge Function testing (optional)
+
+Run Supabase locally and serve an Edge Function from your machine:
+
+```bash
+supabase start
+supabase functions serve generate-listing --env-file ./supabase/.env.local
+```
+
+Create `./supabase/.env.local` with the same secrets you set in Supabase Dashboard (see table above). Do **not** commit it.
 
 ### Database
 

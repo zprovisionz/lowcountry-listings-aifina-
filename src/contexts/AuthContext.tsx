@@ -5,6 +5,7 @@ import {
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types/database';
+import { TIMING_MS } from '../config';
 
 interface AuthContextValue {
   user:       User | null;
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Safety: never show spinner longer than 10s
     const timeoutId = setTimeout(() => {
       if (!cancelled) setLoading(false);
-    }, 10000);
+    }, TIMING_MS.authSafetyTimeout);
 
     const finish = () => {
       if (!cancelled) setLoading(false);

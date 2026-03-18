@@ -161,6 +161,8 @@ serve(async (req: Request) => {
         photoUrls: [],
         neighborhoodContext: null,
         neighborhoodLifestyle: [],
+        // Bulk CSV often lacks amenities/photos; default to overview-only unless enough facts exist.
+        overviewOnly: !(row.bedrooms && row.bathrooms && row.sqft),
       };
 
       const fnRes = await fetch(`${supabaseUrl}/functions/v1/generate-listing`, {

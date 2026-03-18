@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import ParticleBackground from './ParticleBackground';
+import DashboardParticles from './layout/DashboardParticles';
 import AddressSearch from './AddressSearch';
 import LivePreview from './LivePreview';
 
@@ -39,7 +39,7 @@ export default function Hero() {
         'radial-gradient(ellipse 50% 45% at 90% 35%, rgba(255,0,255,0.045) 0%, transparent 70%),' +
         '#0a0a1f',
     }}>
-      <ParticleBackground />
+      <DashboardParticles />
 
       {/* Scanline vignette */}
       <div style={{

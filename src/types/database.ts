@@ -25,6 +25,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['profiles']['Row']>;
         Update: Partial<Database['public']['Tables']['profiles']['Row']>;
+        Relationships: [];
       };
       generations: {
         Row: {
@@ -50,6 +51,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['generations']['Row']>;
         Update: Partial<Database['public']['Tables']['generations']['Row']>;
+        Relationships: [];
       };
       teams: {
         Row: {
@@ -67,6 +69,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['teams']['Row']>;
         Update: Partial<Database['public']['Tables']['teams']['Row']>;
+        Relationships: [];
       };
       analytics_events: {
         Row: {
@@ -79,6 +82,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['analytics_events']['Row']>;
         Update: Partial<Database['public']['Tables']['analytics_events']['Row']>;
+        Relationships: [];
       };
       team_invites: {
         Row: {
@@ -94,6 +98,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['team_invites']['Row']>;
         Update: Partial<Database['public']['Tables']['team_invites']['Row']>;
+        Relationships: [];
       };
       mls_connections: {
         Row: {
@@ -108,6 +113,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['mls_connections']['Row']>;
         Update: Partial<Database['public']['Tables']['mls_connections']['Row']>;
+        Relationships: [];
       };
       bulk_jobs: {
         Row: {
@@ -124,6 +130,7 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['bulk_jobs']['Row']>;
         Update: Partial<Database['public']['Tables']['bulk_jobs']['Row']>;
+        Relationships: [];
       };
       credit_purchases: {
         Row: {
@@ -137,8 +144,22 @@ export interface Database {
         };
         Insert: Partial<Database['public']['Tables']['credit_purchases']['Row']>;
         Update: Partial<Database['public']['Tables']['credit_purchases']['Row']>;
+        Relationships: [];
       };
     };
+    Views: Record<string, never>;
+    Functions: {
+      append_staged_photo: {
+        Args: { p_generation_id: string; p_url: string };
+        Returns: void;
+      };
+      increment_generation_count: {
+        Args: { p_generation_id: string };
+        Returns: void;
+      };
+    };
+    Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
 

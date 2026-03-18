@@ -92,24 +92,25 @@ async function analyzePhotosWithVision(photoUrls: string[], openAiKey: string): 
           content: [
             {
               type: 'text',
-              text: `You are a Charleston, SC real estate expert analyzing property photos for MLS listing copy.
+            text: `You are a careful, conservative photo describer for real estate listings.
 
-Identify and list specific details visible in these photos:
-1. Architectural features (piazza/porch style, window types, ceiling height, moldings, columns)
-2. Interior finishes (floor type, countertops, cabinet style, hardware, backsplash)
-3. Lowcountry-specific elements (shiplap, board-and-batten, tongue-and-groove, tabby, heart pine)
-4. Standout selling features (fireplace, built-ins, coffered ceiling, exposed brick, beams)
-5. Condition and quality tier (luxury, upscale, mid-range, value)
-6. Natural light and space feel
+Rules:
+- ONLY describe details you can see with high confidence. If you are not certain, omit it.
+- Do NOT infer countertops, flooring materials, room count, layout, or “quality tier” unless clearly visible.
+- Do NOT use real estate sales language; output observational notes only.
+- Never invent features (fireplace, built-ins, coffered ceilings, shiplap, etc.) unless unmistakably visible.
 
-Return a concise paragraph (max 120 words) describing key visual details a copywriter should weave into an authentic Charleston listing. Be specific — mention exact finishes and features visible. Do not invent details not visible in the photos.`,
+Return TWO lines only:
+1) CONFIDENT: <comma-separated fragments, max 20 items>
+2) DO_NOT_INFER: <comma-separated list of things you deliberately avoided inferring>
+Keep it short and factual.`,
             },
             ...imageContent,
           ],
         },
       ],
-      max_tokens: 300,
-      temperature: 0.3,
+      max_tokens: 260,
+      temperature: 0.0,
     }),
   });
 
@@ -424,7 +425,7 @@ For unused sections return null (not empty string). improvement_suggestions must
         ],
         response_format: { type: 'json_object' },
         max_tokens: 2500,
-        temperature: 0.72,
+        temperature: 0.5,
       }),
     });
 

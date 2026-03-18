@@ -56,7 +56,6 @@ function parseRows(csvRows: string[][]): { address: string; bedrooms?: number; b
 
 export default function BulkPage() {
   const { profile } = useAuth();
-  const [csvText, setCsvText] = useState('');
   const [parsed, setParsed] = useState<string[][]>([]);
   const [job, setJob] = useState<BulkJob | null>(null);
   const [polling, setPolling] = useState(false);
@@ -70,7 +69,6 @@ export default function BulkPage() {
     const reader = new FileReader();
     reader.onload = () => {
       const text = String(reader.result ?? '');
-      setCsvText(text);
       setParsed(parseCSV(text));
       setJob(null);
     };

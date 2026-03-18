@@ -10,15 +10,14 @@ import LoginPage    from './pages/auth/LoginPage';
 import AuthCallback from './pages/auth/AuthCallback';
 
 // App pages
-import DashboardPage from './pages/dashboard/DashboardPage';
-import GeneratePage  from './pages/generate/GeneratePage';
-import ResultsPage   from './pages/generate/ResultsPage';
-import HistoryPage   from './pages/history/HistoryPage';
-import ReportsPage   from './pages/reports/ReportsPage';
-import TeamPage      from './pages/team/TeamPage';
-import AccountPage   from './pages/account/AccountPage';
-import BulkPage      from './pages/bulk/BulkPage';
-import AnalyticsPage from './pages/analytics/AnalyticsPage';
+import { DashboardPage } from './features/dashboard';
+import { GeneratePage, ResultsPage } from './features/generate';
+import { HistoryPage } from './features/history';
+import { ReportsPage } from './features/reports';
+import { TeamPage } from './features/team';
+import { AccountPage } from './features/account';
+import { BulkPage } from './features/bulk';
+import { AnalyticsPage } from './features/analytics';
 
 // Landing (public)
 import LandingApp from './LandingApp';

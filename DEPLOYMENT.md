@@ -34,6 +34,17 @@ In the project’s **Settings → Environment Variables**, add the following. Us
 2. **Stripe**: If using live Stripe, set the webhook endpoint to your Supabase Edge Function URL for `stripe-webhook` and use the same Site URL where needed for redirects.
 3. **Google**: Ensure the Maps API key allows your Vercel domain in referrer restrictions (or use no restriction for testing).
 
+## Local Supabase + Edge Functions (recommended before deploying)
+
+```bash
+supabase start
+
+# Serve edge function locally with a local env file
+supabase functions serve generate-listing --env-file ./supabase/.env.local
+```
+
+Create `./supabase/.env.local` containing your server-side secrets (OpenAI, service role key, server Maps key, Stripe, etc.). Do not commit it.
+
 ## 5. `vercel.json` in this repo
 
 The project includes a `vercel.json` that:

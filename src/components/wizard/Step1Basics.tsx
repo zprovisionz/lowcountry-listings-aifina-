@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { WizardData } from '../../types/database';
 import { PROPERTY_TYPES } from '../../types/database';
+import { CHARLESTON_BOUNDS, TIMING_MS } from '../../config';
 
-const BOUNDS = { north:33.2, south:32.5, east:-79.6, west:-80.5 };
+const BOUNDS = CHARLESTON_BOUNDS;
 
 const detectNeighborhood = (addr: string): string => {
   const l = addr.toLowerCase();
@@ -48,7 +49,7 @@ export default function Step1Basics({
   // After 10s, allow manual address entry if Maps never loaded
   useEffect(() => {
     if (mapsReady || useFallback) return;
-    const t = setTimeout(() => setUseFallback(true), 10000);
+    const t = setTimeout(() => setUseFallback(true), TIMING_MS.mapsFallbackDelay);
     return () => clearTimeout(t);
   }, [mapsReady, useFallback]);
 
@@ -214,11 +215,6 @@ export default function Step1Basics({
         {neonField('MLS #',       'mlsNumber', 'text',   'Optional')}
       </div>
 
-      <style>{`
-        .neon-label { display:block; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.14em; color:var(--text-lo); text-transform:uppercase; margin-bottom:7px; }
-        .step-heading { font-family:'Syne',sans-serif; font-weight:800; font-size:22px; color:var(--text-hi); margin:0 0 6px; }
-        .step-sub { font-family:'DM Sans',sans-serif; font-size:14px; color:var(--text-mid); margin:0; line-height:1.7; }
-      `}</style>
     </div>
   );
 }

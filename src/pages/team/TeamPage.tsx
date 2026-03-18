@@ -21,7 +21,6 @@ export default function TeamPage() {
     inviteLoading,
     inviteMember,
     removeMember,
-    updateMemberRole,
     revokeInvite,
   } = useTeam();
   const [inviteEmail, setInviteEmail] = useState('');

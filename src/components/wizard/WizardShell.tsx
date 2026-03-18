@@ -36,7 +36,6 @@ export default function WizardShell({
             const n = i + 1;
             const isActive   = n === currentStep;
             const isDone     = n < currentStep;
-            const isUpcoming = n > currentStep;
 
             return (
               <div key={step.label} style={{ display:'flex', alignItems:'center', flex:1 }}>

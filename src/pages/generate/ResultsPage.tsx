@@ -7,6 +7,7 @@ import ScoreRing from '../../components/ui/ScoreRing';
 import { useGenerations } from '../../hooks/useGenerations';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { TIMING_MS } from '../../config';
 
 type Tab = 'mls' | 'airbnb' | 'social' | 'staging';
 
@@ -76,10 +77,10 @@ export default function ResultsPage() {
             return;
           }
           // safety: stop polling after ~90s (45 attempts)
-          if (pollCountRef.current >= 45) {
+          if (pollCountRef.current >= TIMING_MS.resultsPollMaxAttempts) {
             clearPoll();
           }
-        }, 2000);
+        }, TIMING_MS.resultsPollInterval);
       }
       await trackEvent(id, 'view');
     };

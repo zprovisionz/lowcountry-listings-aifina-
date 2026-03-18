@@ -200,7 +200,7 @@ export default function AccountPage() {
                   {' '}/ {profile?.generations_limit === -1 ? '∞' : (profile?.generations_limit ?? 0) + (profile?.extra_gen_credits ?? 0)}
                 </span>
                 {(profile?.extra_gen_credits ?? 0) > 0 && (
-                  <span style={{ fontSize: 11, color: 'var(--cyan)', marginLeft: 6 }}>(+{profile.extra_gen_credits} extra)</span>
+                  <span style={{ fontSize: 11, color: 'var(--cyan)', marginLeft: 6 }}>(+{profile?.extra_gen_credits ?? 0} extra)</span>
                 )}
               </div>
             </div>
@@ -212,7 +212,7 @@ export default function AccountPage() {
                   {' '}/ {(profile?.staging_credits_limit === -1 ? 999 : profile?.staging_credits_limit ?? 0) + (profile?.extra_staging_credits ?? 0)}
                 </span>
                 {(profile?.extra_staging_credits ?? 0) > 0 && (
-                  <span style={{ fontSize: 11, color: 'var(--magenta)', marginLeft: 6 }}>(+{profile.extra_staging_credits} extra)</span>
+                  <span style={{ fontSize: 11, color: 'var(--magenta)', marginLeft: 6 }}>(+{profile?.extra_staging_credits ?? 0} extra)</span>
                 )}
               </div>
             </div>
