@@ -1,1 +1,15 @@
 /.env.local
+.env.local
+.env.*.local
+
+# dependencies / build output
+node_modules/
+dist/
+
+# tooling / caches
+*.tsbuildinfo
+.vite/
+
+# OS/editor
+.DS_Store
+.vscode/
