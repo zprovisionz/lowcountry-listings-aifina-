@@ -6,8 +6,9 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 
+const ALLOWED_ORIGIN = Deno.env.get('APP_PUBLIC_URL') ?? 'http://localhost:5173';
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, stripe-signature',
 };
 
@@ -53,6 +54,14 @@ serve(async (req: Request) => {
       status: 400,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
+  }
+
+  // Idempotency: reject replays before any side effects
+  const { error: dupErr } = await supabase
+    .from('processed_webhook_events')
+    .insert({ event_id: event.id });
+  if (dupErr?.code === '23505') {
+    return new Response('already processed', { status: 200, headers: CORS_HEADERS });
   }
 
   try {
@@ -115,6 +124,16 @@ serve(async (req: Request) => {
             amount_cents: session.amount_total ?? 0,
           });
         }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = invoice.customer as string;
+        await supabase
+          .from('profiles')
+          .update({ subscription_status: 'past_due' })
+          .eq('stripe_customer_id', customerId);
         break;
       }
 

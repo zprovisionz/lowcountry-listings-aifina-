@@ -24,7 +24,7 @@ const FAQS: FAQItem[] = [
   },
   {
     q: 'Can I use this for Airbnb, VRBO, or short-term rentals?',
-    a: 'Absolutely — STR is a first-class use case. The wizard includes a "Short-Term Rental" property type selector, and all Starter and above plans generate guest-focused Airbnb copy (200–250 words) calibrated for what guests actually search for: walkability, tidal creek sunrise views, pier distances, and Lowcountry lifestyle. Hosts using the Airbnb format have reported 30–40% booking increases compared to generic descriptions.',
+    a: 'Absolutely — STR is a first-class use case. The wizard includes a "Short-Term Rental" property type selector, and all Starter and above plans generate guest-focused Airbnb copy (200–250 words) calibrated for what guests actually search for: walkability, tidal-creek sunrise views, pier distances, and Lowcountry lifestyle. Hosts find that hyper-local copy converts better than generic descriptions because it answers the questions guests are already asking.',
   },
 ];
 
@@ -81,7 +81,7 @@ export default function FAQ() {
                   }}
                 >
                   <span style={{
-                    fontFamily: 'Syne, sans-serif', fontWeight: 600,
+                    fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600,
                     fontSize: 'clamp(14px, 2vw, 16px)',
                     color: isOpen ? 'var(--cyan)' : 'var(--text-hi)',
                     lineHeight: 1.4,
@@ -135,7 +135,7 @@ export default function FAQ() {
             Still have questions? We're real people in Charleston.
           </p>
           <a href="mailto:hello@lowcountrylistings.ai" style={{
-            fontFamily: 'Space Mono, monospace', fontSize: 11,
+            fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 11,
             color: 'var(--cyan)', letterSpacing: '.1em',
             textDecoration: 'none',
             borderBottom: '1px solid rgba(0,255,255,0.3)',

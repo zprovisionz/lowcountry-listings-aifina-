@@ -133,20 +133,20 @@ export default function Step1Basics({
           <div style={{
             marginTop:6, padding:'8px 12px',
             background:'rgba(255,200,80,0.07)', border:'1px solid rgba(255,200,80,0.25)',
-            borderRadius:8, fontSize:11.5, color:'rgba(255,200,80,0.95)', fontFamily:'Space Mono,monospace',
+            borderRadius:8, fontSize:11.5, color:'rgba(255,200,80,0.95)', fontFamily:"'DM Mono', ui-monospace, monospace",
           }}>Address not verified by Google; ensure it's in Charleston, Berkeley, or Dorchester.</div>
         )}
         {addrErr && (
           <div style={{
             marginTop:6, padding:'8px 12px',
             background:'rgba(255,80,80,0.07)', border:'1px solid rgba(255,80,80,0.25)',
-            borderRadius:8, fontSize:11.5, color:'#ff8080', fontFamily:'Space Mono,monospace',
+            borderRadius:8, fontSize:11.5, color:'#ff8080', fontFamily:"'DM Mono', ui-monospace, monospace",
           }}>{addrErr}</div>
         )}
         {data.neighborhood && !addrErr && (
           <div style={{ marginTop:7, display:'inline-flex', alignItems:'center', gap:6,
             padding:'4px 12px', background:'rgba(0,255,255,0.07)', border:'1px solid rgba(0,255,255,0.22)',
-            borderRadius:20, fontSize:10, color:'var(--cyan)', fontFamily:'Space Mono,monospace',
+            borderRadius:20, fontSize:10, color:'var(--cyan)', fontFamily:"'DM Mono', ui-monospace, monospace",
             boxShadow:'0 0 10px rgba(0,255,255,0.1)',
           }}>
             <span style={{ fontSize:8 }}>◆</span>
@@ -173,7 +173,7 @@ export default function Step1Basics({
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, flexShrink: 0,
           }}>{data.overviewOnly ? '✓' : ''}</div>
           <div>
-            <div style={{ fontFamily: 'Syne,sans-serif', fontWeight: 700, fontSize: 13, color: 'var(--text-hi)' }}>
+            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 13, color: 'var(--text-hi)' }}>
               Neighborhood overview only (quick generate)
             </div>
             <div style={{ fontFamily: 'DM Sans,sans-serif', fontSize: 12, color: 'var(--text-mid)', marginTop: 4, lineHeight: 1.5 }}>
@@ -195,7 +195,7 @@ export default function Step1Basics({
                 background: on ? 'rgba(0,255,255,0.12)' : 'rgba(0,255,255,0.03)',
                 border:`1px solid ${on ? 'rgba(0,255,255,0.6)' : 'rgba(0,255,255,0.15)'}`,
                 borderRadius:9, cursor:'pointer',
-                fontFamily:'Syne,sans-serif', fontWeight:600, fontSize:13,
+                fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:13,
                 color: on ? 'var(--cyan)' : 'var(--text-mid)',
                 transition:'all .2s ease',
                 boxShadow: on ? '0 0 16px rgba(0,255,255,0.2),inset 0 0 10px rgba(0,255,255,0.05)' : 'none',

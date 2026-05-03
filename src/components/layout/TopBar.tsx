@@ -1,5 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { DEBUG } from '../../config';
 
 const PAGE_META: Record<string, { title:string; sub:string }> = {
   '/dashboard': { title:'Dashboard',   sub:'Welcome back to Lowcountry AI' },
@@ -15,6 +16,7 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
   const { profile } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const allowUiBypass = !!(DEBUG.bypassBilling && (import.meta.env.DEV || profile?.is_test_user));
 
   const page = Object.entries(PAGE_META).find(([k]) => pathname.startsWith(k))?.[1]
     ?? { title:'Lowcountry AI', sub:'' };
@@ -40,11 +42,11 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
 
       {/* Title */}
       <div style={{ flex:1 }}>
-        <h1 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:17, color:'#eafaff', margin:0, lineHeight:1 }}>
+        <h1 style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800, fontSize:17, color:'#eafaff', margin:0, lineHeight:1 }}>
           {page.title}
         </h1>
         {page.sub && (
-          <p style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', margin:'2px 0 0' }}>
+          <p style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', margin:'2px 0 0' }}>
             {page.sub}
           </p>
         )}
@@ -52,7 +54,20 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
 
       {/* Right controls */}
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        {pathname !== '/generate' && (
+        {allowUiBypass && (
+          <div style={{
+            display:'flex', alignItems:'center', gap:6,
+            padding:'6px 10px',
+            background:'rgba(255,0,255,0.10)',
+            border:'1px solid rgba(255,0,255,0.28)',
+            borderRadius:999,
+          }}>
+            <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, letterSpacing:'.14em', color:'var(--magenta)', fontWeight:800 }}>
+              TEST MODE
+            </span>
+          </div>
+        )}
+        {!pathname.startsWith('/generate') && !pathname.startsWith('/results') && (
           <button onClick={() => navigate('/generate')} className="btn btn-primary btn-sm">
             ✦ Quick Generate
           </button>
@@ -66,8 +81,8 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
             border:'1px solid rgba(0,255,255,0.18)',
             borderRadius:20,
           }}>
-            <span style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)' }}>GEN</span>
-            <span style={{ fontFamily:'Space Mono,monospace', fontSize:11, color:'var(--cyan)', fontWeight:700 }}>
+            <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)' }}>GEN</span>
+            <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:11, color:'var(--cyan)', fontWeight:700 }}>
               {profile.generations_used}
               <span style={{ color:'var(--text-lo)' }}>/{profile.generations_limit === -1 ? '∞' : profile.generations_limit}</span>
             </span>

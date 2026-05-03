@@ -136,7 +136,7 @@ export default function Pricing() {
           {/* Annual toggle */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 14, marginTop: 32 }}>
             <span style={{
-              fontFamily: 'Space Mono, monospace', fontSize: 11,
+              fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 11,
               color: annual ? 'var(--text-lo)' : 'var(--text-hi)',
               transition: 'color .25s',
             }}>Monthly</span>
@@ -159,14 +159,14 @@ export default function Pricing() {
             </button>
 
             <span style={{
-              fontFamily: 'Space Mono, monospace', fontSize: 11,
+              fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 11,
               color: annual ? 'var(--text-hi)' : 'var(--text-lo)',
               transition: 'color .25s',
             }}>Annual</span>
 
             {annual && (
               <span style={{
-                fontFamily: 'Space Mono, monospace', fontSize: 9,
+                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
                 color: 'var(--cyan)', padding: '3px 10px',
                 background: 'rgba(0,255,255,0.09)',
                 border: '1px solid rgba(0,255,255,0.28)',
@@ -230,13 +230,13 @@ export default function Pricing() {
                 )}
 
                 <h3 style={{
-                  fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20,
+                  fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 20,
                   color: nameColor, margin: '0 0 2px',
                 }}>
                   {tier.name}
                 </h3>
                 <p style={{
-                  fontFamily: 'Space Mono, monospace', fontSize: 9,
+                  fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
                   color: 'var(--text-ghost)', letterSpacing: '.07em', margin: '0 0 18px',
                 }}>
                   Best for: {tier.bestFor}
@@ -247,26 +247,26 @@ export default function Pricing() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: 3 }}>
                     {tier.monthly > 0 && (
                       <span style={{
-                        fontFamily: 'Space Mono, monospace', fontSize: 13,
+                        fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 13,
                         color: 'var(--text-lo)', marginTop: 9,
                       }}>$</span>
                     )}
                     <span style={{
-                      fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 50,
+                      fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 50,
                       color: 'var(--text-hi)', lineHeight: 1,
                     }}>
                       {tier.monthly === 0 ? 'Free' : displayPrice}
                     </span>
                     {tier.monthly > 0 && (
                       <span style={{
-                        fontFamily: 'Space Mono, monospace', fontSize: 11,
+                        fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 11,
                         color: 'var(--text-lo)', marginTop: 'auto', marginBottom: 9,
                       }}>/mo</span>
                     )}
                   </div>
                   {annual && tier.annual > 0 && (
                     <div style={{
-                      fontFamily: 'Space Mono, monospace', fontSize: 9,
+                      fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
                       color: 'var(--cyan)', marginTop: 3,
                     }}>
                       ${tier.annual}/yr · 20% saved
@@ -284,7 +284,7 @@ export default function Pricing() {
                     borderRadius: 8,
                   }}>
                     <span style={{ fontSize: 12 }}>⚡</span>
-                    <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 10, color: 'var(--text-hi)' }}>
+                    <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, color: 'var(--text-hi)' }}>
                       {tier.gens}
                     </span>
                   </div>
@@ -297,7 +297,7 @@ export default function Pricing() {
                       borderRadius: 8,
                     }}>
                       <span style={{ fontSize: 12 }}>🏠</span>
-                      <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 10, color: 'var(--text-hi)' }}>
+                      <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, color: 'var(--text-hi)' }}>
                         {tier.staging}
                       </span>
                     </div>
@@ -335,7 +335,7 @@ export default function Pricing() {
 
                 {tier.popular && (
                   <p style={{
-                    fontFamily: 'Space Mono, monospace', fontSize: 8.5,
+                    fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5,
                     color: 'var(--text-ghost)', textAlign: 'center',
                     marginTop: 10, letterSpacing: '.06em',
                   }}>
@@ -359,7 +359,7 @@ export default function Pricing() {
         }}>
           <div>
             <div style={{
-              fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 17,
+              fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 17,
               color: 'var(--magenta)', marginBottom: 4,
             }}>
               Team Plan — $149/mo
@@ -388,7 +388,7 @@ export default function Pricing() {
           borderRadius: 14, textAlign: 'center',
         }}>
           <h4 style={{
-            fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 14,
+            fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 14,
             color: 'var(--text-hi)', margin: '0 0 16px',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}>
@@ -398,10 +398,10 @@ export default function Pricing() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: 36, flexWrap: 'wrap' }}>
             {PAY_PER_USE.map(({ label, price }) => (
               <div key={label} style={{ textAlign: 'center' }}>
-                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 16, color: 'var(--cyan)', fontWeight: 700 }}>
+                <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 16, color: 'var(--cyan)', fontWeight: 700 }}>
                   {price}
                 </div>
-                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', marginTop: 3, letterSpacing: '.08em' }}>
+                <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', marginTop: 3, letterSpacing: '.08em' }}>
                   {label}
                 </div>
               </div>

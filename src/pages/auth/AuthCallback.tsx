@@ -37,7 +37,7 @@ export default function AuthCallback() {
         animation: 'spinRing .8s linear infinite',
       }} />
       <span style={{
-        fontFamily: 'Space Mono, monospace', fontSize: 11,
+        fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 11,
         color: 'var(--text-lo)', letterSpacing: '.16em',
       }}>
         COMPLETING SIGN IN…

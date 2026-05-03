@@ -20,6 +20,7 @@ export interface Database {
           subscription_status: string;
           extra_gen_credits: number;
           extra_staging_credits: number;
+          is_test_user?: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -77,6 +78,7 @@ export interface Database {
           user_id: string;
           generation_id: string | null;
           event_type: 'view' | 'copy' | 'download' | 'share' | 'generate';
+          /** e.g. low_confidence_override, scope: all_outputs */
           metadata: Record<string, unknown> | null;
           created_at: string;
         };
@@ -157,6 +159,10 @@ export interface Database {
         Args: { p_generation_id: string };
         Returns: void;
       };
+      is_test_user: {
+        Args: { p_user_id: string };
+        Returns: boolean;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -192,6 +198,7 @@ export interface Profile {
   subscription_status: string;
   extra_gen_credits: number;
   extra_staging_credits: number;
+  is_test_user?: boolean;
 }
 
 export interface TeamInvite {

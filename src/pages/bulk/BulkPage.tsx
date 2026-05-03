@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { supabase } from '../../lib/supabase';
 import UpgradeModal from '../../components/ui/UpgradeModal';
 import type { BulkJob, BulkJobResult } from '../../types/database';
@@ -42,11 +43,14 @@ function parseRows(csvRows: string[][]): { address: string; bedrooms?: number; b
     const r = csvRows[i];
     const address = (addrIdx >= 0 ? r[addrIdx] : r[0])?.trim();
     if (!address) continue;
+    const bedsRaw = bedsIdx >= 0 ? parseInt(r[bedsIdx] ?? '', 10) : NaN;
+    const bathsRaw = bathsIdx >= 0 ? parseFloat(r[bathsIdx] ?? '') : NaN;
+    const sqftRaw = sqftIdx >= 0 ? parseInt(r[sqftIdx] ?? '', 10) : NaN;
     rows.push({
       address,
-      bedrooms: bedsIdx >= 0 ? parseInt(r[bedsIdx] ?? '', 10) : undefined,
-      bathrooms: bathsIdx >= 0 ? parseFloat(r[bathsIdx] ?? '') as number : undefined,
-      sqft: sqftIdx >= 0 ? parseInt(r[sqftIdx] ?? '', 10) : undefined,
+      bedrooms: !isNaN(bedsRaw) && bedsRaw > 0 ? bedsRaw : undefined,
+      bathrooms: !isNaN(bathsRaw) && bathsRaw > 0 ? bathsRaw : undefined,
+      sqft: !isNaN(sqftRaw) && sqftRaw > 0 ? sqftRaw : undefined,
       propertyType: typeIdx >= 0 ? r[typeIdx] : undefined,
       tone: toneIdx >= 0 ? r[toneIdx] : undefined,
     });
@@ -56,6 +60,7 @@ function parseRows(csvRows: string[][]): { address: string; bedrooms?: number; b
 
 export default function BulkPage() {
   const { profile } = useAuth();
+  const { toast } = useToast();
   const [parsed, setParsed] = useState<string[][]>([]);
   const [job, setJob] = useState<BulkJob | null>(null);
   const [polling, setPolling] = useState(false);
@@ -109,9 +114,9 @@ export default function BulkPage() {
       if (initial) setJob(initial as BulkJob);
     } catch (err) {
       setPolling(false);
-      if (err instanceof Error) alert(err.message);
+      toast(err instanceof Error ? err.message : 'Bulk generation failed. Please try again.', 'error');
     }
-  }, [canUseBulk, parsed, SUPABASE_URL]);
+  }, [canUseBulk, parsed, toast]);
 
   const downloadCSV = useCallback(() => {
     if (!job?.results?.length) return;
@@ -132,20 +137,36 @@ export default function BulkPage() {
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 960, margin: '0 auto' }}>
-      <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 28, color: 'var(--text-hi)', marginBottom: 8 }}>
-        Bulk CSV Generation
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 28, color: 'var(--text-hi)', margin: 0 }}>
+          Bulk CSV Generation
+        </h1>
+        <span style={{
+          padding: '3px 10px',
+          background: 'rgba(255,0,255,0.08)',
+          border: '1px solid rgba(255,0,255,0.32)',
+          borderRadius: 999,
+          fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
+          color: 'var(--magenta)', letterSpacing: '.12em', fontWeight: 700,
+        }}>
+          STARTER+
+        </span>
+      </div>
       <p style={{ fontSize: 14, color: 'var(--text-mid)', marginBottom: 28 }}>
-        Upload a CSV with columns: address (required), bedrooms, bathrooms, sqft, property type, tone. We’ll generate listings for each row.
+        Upload a CSV with columns: address (required), bedrooms, bathrooms, sqft, property type, tone. We'll generate listings for each row.
       </p>
 
       {!canUseBulk && (
-        <div style={{ padding: 16, marginBottom: 24, background: 'rgba(255,200,80,0.08)', border: '1px solid rgba(255,200,80,0.25)', borderRadius: 12 }}>
-          <p style={{ fontSize: 13, color: 'var(--text-mid)' }}>
-            Bulk generation is available on Starter and above. Upgrade to use this feature.
+        <div style={{ padding: '18px 20px', marginBottom: 24, background: 'rgba(255,0,255,0.06)', border: '1px solid rgba(255,0,255,0.28)', borderRadius: 12 }}>
+          <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--magenta)', letterSpacing: '.14em', marginBottom: 8 }}>
+            PAID FEATURE
+          </div>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13.5, color: 'var(--text-mid)', margin: '0 0 14px', lineHeight: 1.6 }}>
+            Bulk CSV generation is available on the <strong style={{ color: 'var(--magenta)' }}>Starter plan and above</strong>.
+            You'll be able to upload a CSV and queue up listings here once you upgrade.
           </p>
-          <button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 12 }} onClick={() => setShowUpgrade(true)}>
-            View plans
+          <button type="button" className="btn btn-accent btn-sm" onClick={() => setShowUpgrade(true)}>
+            View plans →
           </button>
         </div>
       )}
@@ -154,7 +175,7 @@ export default function BulkPage() {
         className="glass"
         style={{ padding: 28, borderRadius: 16, marginBottom: 24 }}
       >
-        <label style={{ display: 'block', fontFamily: 'Space Mono, monospace', fontSize: 10, letterSpacing: '.12em', color: 'var(--cyan)', marginBottom: 10 }}>
+        <label style={{ display: 'block', fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, letterSpacing: '.12em', color: 'var(--cyan)', marginBottom: 10 }}>
           UPLOAD CSV
         </label>
         <input
@@ -167,7 +188,7 @@ export default function BulkPage() {
 
       {preview.length > 0 && (
         <div className="glass" style={{ padding: 28, borderRadius: 16, marginBottom: 24, overflowX: 'auto' }}>
-          <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Preview ({rows.length} rows)</h3>
+          <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Preview ({rows.length} rows)</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr>
@@ -189,18 +210,26 @@ export default function BulkPage() {
           <button
             type="button"
             className="btn btn-primary"
-            style={{ marginTop: 20 }}
+            style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8 }}
             onClick={startBulk}
             disabled={polling || rows.length === 0}
           >
-            {polling ? 'Processing…' : `Start Bulk Generation (${rows.length} rows)`}
+            {polling ? (
+              <>
+                <span style={{ width: 12, height: 12, border: '2px solid rgba(0,255,255,0.25)', borderTopColor: 'var(--cyan)', borderRadius: '50%', animation: 'spinRing .7s linear infinite', display: 'inline-block' }} />
+                Processing…
+              </>
+            ) : (
+              `Start Bulk Generation (${rows.length} rows)`
+            )}
           </button>
+          <style>{`@keyframes spinRing { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
       {job && (
         <div className="glass" style={{ padding: 28, borderRadius: 16, marginBottom: 24 }}>
-          <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, marginBottom: 16 }}>
+          <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 16, marginBottom: 16 }}>
             Job: {job.status} — {job.processed_rows} / {job.total_rows}
           </h3>
           {job.status === 'running' && (

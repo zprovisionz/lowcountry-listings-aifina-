@@ -90,12 +90,12 @@ export default function LoginPage() {
             boxShadow: '0 0 24px rgba(0,255,255,0.2)',
           }}>🌿</div>
           <h1 style={{
-            fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 24,
+            fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 24,
             color: '#eafaff', margin: '0 0 4px',
           }}>
             Lowcountry <span style={{ color: 'var(--cyan)' }}>AI</span>
           </h1>
-          <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.16em' }}>
+          <p style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.16em' }}>
             CHARLESTON, SC — EXCLUSIVELY
           </p>
         </div>
@@ -123,7 +123,7 @@ export default function LoginPage() {
                 border: mode === m ? '1px solid rgba(0,255,255,0.3)' : '1px solid transparent',
                 borderRadius: 8,
                 color: mode === m ? 'var(--cyan)' : 'var(--text-lo)',
-                fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13,
+                fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 13,
                 cursor: 'pointer', transition: 'all .2s ease',
               }}>
                 {m === 'signin' ? 'Sign In' : 'Sign Up'}
@@ -149,7 +149,7 @@ export default function LoginPage() {
               <path fill="#fbbc05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#ea4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 14, color: '#e0ffff' }}>
+            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 14, color: '#e0ffff' }}>
               Continue with Google
             </span>
           </button>
@@ -157,16 +157,20 @@ export default function LoginPage() {
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
             <div style={{ flex: 1, height: 1, background: 'rgba(0,255,255,0.1)' }} />
-            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-ghost)', letterSpacing: '.12em' }}>OR</span>
+            <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-ghost)', letterSpacing: '.12em' }}>OR</span>
             <div style={{ flex: 1, height: 1, background: 'rgba(0,255,255,0.1)' }} />
           </div>
 
           {/* Fields */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 20 }}>
             <div>
-              <label style={labelStyle}>Email</label>
+              <label htmlFor="login-email" style={labelStyle}>Email</label>
               <input
-                type="email" value={email}
+                id="login-email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={email}
                 onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleEmail()}
                 placeholder="agent@charlestonrealty.com"
@@ -177,9 +181,13 @@ export default function LoginPage() {
             </div>
             {mode !== 'forgot' && (
               <div>
-                <label style={labelStyle}>Password</label>
+                <label htmlFor="login-password" style={labelStyle}>Password</label>
                 <input
-                  type="password" value={password}
+                  id="login-password"
+                  name="password"
+                  type="password"
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  value={password}
                   onChange={e => setPassword(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleEmail()}
                   placeholder="••••••••"
@@ -210,7 +218,7 @@ export default function LoginPage() {
           {mode === 'signin' && (
             <button onClick={() => setMode('forgot')} style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-lo)', fontFamily: 'Space Mono, monospace',
+              color: 'var(--text-lo)', fontFamily: "'DM Mono', ui-monospace, monospace",
               fontSize: 10, letterSpacing: '.08em', marginTop: 12, display: 'block', width: '100%',
               textAlign: 'center',
             }}>
@@ -221,7 +229,7 @@ export default function LoginPage() {
 
         <p style={{
           textAlign: 'center', marginTop: 20,
-          fontFamily: 'Space Mono, monospace', fontSize: 9,
+          fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
           color: 'var(--text-ghost)', letterSpacing: '.08em',
         }}>
           Charleston · Berkeley · Dorchester counties only · Phase 1
@@ -231,6 +239,6 @@ export default function LoginPage() {
     </div>
   );
 }
-
-const labelStyle: React.CSSProperties = { display:'block', fontFamily:'Space Mono, monospace', fontSize:9, letterSpacing:'.14em', color:'var(--text-lo)', textTransform:'uppercase', marginBottom:6 };
+const labelStyle: React.CSSProperties = { display:'block', fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, letterSpacing:'.14em', color:'var(--text-lo)', textTransform:'uppercase', marginBottom:6 };
 const inputStyle: React.CSSProperties = { width:'100%', padding:'11px 14px', background:'rgba(5,7,24,.9)', border:'1px solid rgba(0,255,255,.22)', borderRadius:9, color:'var(--text-hi)', fontFamily:'DM Sans, sans-serif', fontSize:14, outline:'none', transition:'border-color .2s, box-shadow .2s', caretColor:'var(--cyan)', boxSizing:'border-box' };
+

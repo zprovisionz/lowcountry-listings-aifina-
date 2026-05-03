@@ -13,7 +13,7 @@ import { lookupNeighborhood } from '../../lib/neighborhoods';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import UpgradeModal from '../../components/ui/UpgradeModal';
-import { TIMING_MS } from '../../config';
+import { DEBUG, TIMING_MS } from '../../config';
 
 const INVOKE_TIMEOUT_MS = TIMING_MS.invokeTimeout;
 
@@ -77,11 +77,12 @@ export default function GeneratePage() {
       : profile.generations_limit + (profile.extra_gen_credits ?? 0)
     : 0;
   const quotaExhausted = profile && profile.generations_used >= effectiveLimit;
+  const allowUiBypass = !!(DEBUG.bypassBilling && (import.meta.env.DEV || profile?.is_test_user));
 
   const handleSubmit = async () => {
     if (!user) return;
 
-    if (quotaExhausted) {
+    if (quotaExhausted && !allowUiBypass) {
       toast('Generation quota exhausted. Upgrade or buy extra credits.', 'error');
       setShowUpgradeModal(true);
       return;
@@ -163,7 +164,7 @@ export default function GeneratePage() {
           try {
             await applyMockFallback(gen.id, data);
             await refreshProfile();
-            toast('Listing generated using fallback (server took too long).', 'success');
+            toast('Server took too long — showing a draft fallback. Use Edit & regenerate when you\'re ready.', 'warning');
             navigate(`/results/${gen.id}`);
           } catch (fallbackErr) {
             toast((fallbackErr as Error)?.message ?? 'Generation timed out. Please try again.', 'error');
@@ -177,6 +178,10 @@ export default function GeneratePage() {
       const fnErr = invokeResult?.error;
       if (fnErr) {
         await applyMockFallback(gen.id, data);
+        await refreshProfile();
+        toast('AI server hiccup — showing a draft fallback. Use Edit & regenerate when you\'re ready.', 'warning');
+        navigate(`/results/${gen.id}`);
+        return;
       }
 
       await refreshProfile();

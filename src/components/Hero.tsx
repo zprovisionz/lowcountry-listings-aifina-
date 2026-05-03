@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import DashboardParticles from './layout/DashboardParticles';
 import AddressSearch from './AddressSearch';
 import LivePreview from './LivePreview';
 
@@ -34,18 +33,10 @@ export default function Hero() {
       overflow: 'hidden',
       padding: '130px 24px 90px',
       background:
-        'radial-gradient(ellipse 110% 70% at 50% -5%, rgba(0,60,90,0.6) 0%, transparent 62%),' +
-        'radial-gradient(ellipse 55% 45% at 12% 72%, rgba(0,255,255,0.045) 0%, transparent 70%),' +
-        'radial-gradient(ellipse 50% 45% at 90% 35%, rgba(255,0,255,0.045) 0%, transparent 70%),' +
-        '#0a0a1f',
+        'radial-gradient(ellipse 90% 70% at 50% -20%, oklch(0.72 0.13 195 / 0.12) 0%, transparent 55%),' +
+        'radial-gradient(ellipse 50% 40% at 100% 80%, oklch(0.78 0.11 85 / 0.06) 0%, transparent 50%),' +
+        'var(--space)',
     }}>
-      <DashboardParticles />
-
-      {/* Scanline vignette */}
-      <div style={{
-        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
-        background: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.022) 3px,rgba(0,0,0,0.022) 4px)',
-      }} />
 
       {/* Corner brackets */}
       {([
@@ -56,7 +47,7 @@ export default function Hero() {
       ] as React.CSSProperties[]).map((style, i) => (
         <div key={i} style={{
           position: 'absolute', width: 44, height: 44,
-          borderColor: 'rgba(0,255,255,0.38)',
+          borderColor: 'var(--cyan-border)',
           pointerEvents: 'none', zIndex: 2,
           ...style,
         }} />
@@ -68,19 +59,19 @@ export default function Hero() {
         width: '100%', maxWidth: 860, margin: '0 auto', textAlign: 'center',
       }}>
 
-        {/* ── Scarcity + trust badge row ── */}
+        {/* ── Locality + trust badge row ── */}
         <div className="anim-fade-up d-100" style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 26, flexWrap: 'wrap' }}>
-          {/* Scarcity */}
+          {/* Live status */}
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 7,
             padding: '6px 16px',
-            background: 'rgba(255,0,255,0.07)',
-            border: '1px solid rgba(255,0,255,0.3)',
+            background: 'var(--cyan-ghost)',
+            border: '1px solid var(--cyan-border)',
             borderRadius: 30,
           }}>
-            <span className="dot-live" style={{ background: 'var(--magenta)', boxShadow: '0 0 8px var(--magenta)' }} />
-            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9.5, color: 'var(--magenta)', letterSpacing: '.16em' }}>
-              LIMITED BETA — SPOTS FILLING FAST
+            <span className="dot-live" />
+            <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9.5, color: 'var(--cyan)', letterSpacing: '.16em' }}>
+              NOW SERVING THE CHARLESTON METRO
             </span>
           </div>
 
@@ -88,12 +79,12 @@ export default function Hero() {
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 7,
             padding: '6px 16px',
-            background: 'rgba(0,255,255,0.06)',
-            border: '1px solid rgba(0,255,255,0.22)',
+            background: 'var(--cyan-ghost)',
+            border: '1px solid var(--cyan-border)',
             borderRadius: 30,
           }}>
             <span style={{ fontSize: 11 }}>📍</span>
-            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9.5, color: 'var(--cyan)', letterSpacing: '.14em' }}>
+            <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9.5, color: 'var(--cyan)', letterSpacing: '.14em' }}>
               BUILT IN MOUNT PLEASANT, SC
             </span>
           </div>
@@ -101,7 +92,7 @@ export default function Hero() {
 
         {/* ── Headline ── */}
         <h1 className="anim-fade-up d-200" style={{
-          fontFamily: 'Syne, sans-serif',
+          fontFamily: "'Playfair Display', Georgia, serif",
           fontWeight: 800,
           fontSize: 'clamp(36px, 6vw, 72px)',
           lineHeight: 1.02,
@@ -118,8 +109,7 @@ export default function Hero() {
         <div className="anim-fade-in d-250" style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
           <div style={{
             width: 140, height: 1,
-            background: 'linear-gradient(90deg, transparent, var(--cyan), var(--magenta), transparent)',
-            boxShadow: '0 0 14px rgba(0,255,255,0.45)',
+            background: 'linear-gradient(90deg, transparent, var(--cyan-dim), var(--magenta-dim), transparent)',
           }} />
         </div>
 
@@ -139,13 +129,13 @@ export default function Hero() {
           and <span style={{ color: 'var(--cyan)', fontWeight: 500 }}>virtual staging</span> no generic tool can match.
         </p>
 
-        {/* ── Urgency bar ── */}
+        {/* ── Sub-tag bar ── */}
         <div className="anim-fade-up d-300" style={{ marginBottom: 36 }}>
           <span style={{
-            fontFamily: 'Space Mono, monospace', fontSize: 10,
-            color: 'rgba(255,200,80,0.8)', letterSpacing: '.1em',
+            fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10,
+            color: 'var(--text-lo)', letterSpacing: '.1em',
           }}>
-            ↓ In a cooling 2026 market, standout copy wins listings. Start free today.
+            ↓ Standout listing copy in seconds. Start free, no credit card.
           </span>
         </div>
 
@@ -159,7 +149,7 @@ export default function Hero() {
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '5px 14px',
               background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(0,255,255,0.14)',
+              border: '1px solid var(--cyan-border)',
               borderRadius: 20,
               fontFamily: 'DM Sans, sans-serif', fontSize: 12,
               color: 'var(--text-mid)',
@@ -173,26 +163,22 @@ export default function Hero() {
         {/* ── Address box ── */}
         <div className="anim-fade-up d-400" style={{ maxWidth: 600, margin: '0 auto' }}>
           <div style={{
-            background: 'rgba(8,8,28,0.82)',
-            border: '1px solid rgba(0,255,255,0.32)',
+            background: 'var(--space-card)',
+            border: '1px solid var(--cyan-border)',
             borderRadius: 20,
             padding: 28,
-            backdropFilter: 'blur(32px)',
-            boxShadow:
-              'inset 0 1px 0 rgba(0,255,255,0.08),' +
-              '0 36px 90px rgba(0,0,0,0.6),' +
-              '0 0 0 1px rgba(0,255,255,0.06),' +
-              '0 0 60px rgba(0,255,255,0.04)',
+            backdropFilter: 'blur(24px)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
             position: 'relative', overflow: 'hidden',
           }}>
-            {/* Top scan line */}
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: 1,
-              background: 'linear-gradient(90deg, transparent, rgba(0,255,255,0.5), transparent)',
+              background: 'linear-gradient(90deg, transparent, var(--cyan-dim), transparent)',
+              opacity: 0.5,
             }} />
 
             <p style={{
-              fontFamily: 'Space Mono, monospace', fontSize: 10,
+              fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10,
               letterSpacing: '.16em', color: 'var(--cyan)',
               marginBottom: 14, textAlign: 'left',
               display: 'flex', alignItems: 'center', gap: 8,
@@ -216,7 +202,7 @@ export default function Hero() {
                   '↳ Lowcountry vocabulary',
                 ].map(h => (
                   <span key={h} style={{
-                    fontFamily: 'Space Mono, monospace', fontSize: 9,
+                    fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
                     color: 'var(--text-ghost)', letterSpacing: '.06em',
                   }}>{h}</span>
                 ))}
@@ -252,7 +238,7 @@ export default function Hero() {
         </div>
 
         <p className="anim-fade-up d-500" style={{
-          fontFamily: 'Space Mono, monospace', fontSize: 9,
+          fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
           color: 'var(--text-ghost)', letterSpacing: '.12em',
           marginTop: 14,
         }}>
@@ -263,8 +249,8 @@ export default function Hero() {
         <div className="anim-fade-up d-600" style={{
           display: 'flex', justifyContent: 'center', flexWrap: 'wrap',
           gap: 0, marginTop: 52,
-          background: 'rgba(0,255,255,0.03)',
-          border: '1px solid rgba(0,255,255,0.1)',
+          background: 'var(--cyan-ghost)',
+          border: '1px solid var(--cyan-border)',
           borderRadius: 14,
           padding: '20px 0',
           maxWidth: 560, marginLeft: 'auto', marginRight: 'auto',
@@ -274,15 +260,14 @@ export default function Hero() {
               flex: '1 1 110px',
               textAlign: 'center',
               padding: '8px 20px',
-              borderRight: i < STATS.length - 1 ? '1px solid rgba(0,255,255,0.1)' : 'none',
+              borderRight: i < STATS.length - 1 ? '1px solid var(--cyan-border)' : 'none',
             }}>
               <div style={{
-                fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 26,
+                fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 26,
                 color: 'var(--cyan)', lineHeight: 1,
-                textShadow: '0 0 20px rgba(0,255,255,0.5)',
               }}>{value}</div>
               <div style={{
-                fontFamily: 'Space Mono, monospace', fontSize: 8.5,
+                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5,
                 color: 'var(--text-lo)', letterSpacing: '.14em',
                 marginTop: 4, textTransform: 'uppercase',
               }}>{label}</div>
@@ -297,13 +282,12 @@ export default function Hero() {
         position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, zIndex: 3,
       }}>
-        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 8, color: 'var(--text-ghost)', letterSpacing: '.22em' }}>
+        <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8, color: 'var(--text-ghost)', letterSpacing: '.22em' }}>
           SCROLL
         </span>
         <div style={{
           width: 1, height: 34,
-          background: 'linear-gradient(to bottom, var(--cyan), transparent)',
-          boxShadow: '0 0 8px rgba(0,255,255,0.4)',
+          background: 'linear-gradient(to bottom, var(--cyan-dim), transparent)',
         }} />
       </div>
     </section>

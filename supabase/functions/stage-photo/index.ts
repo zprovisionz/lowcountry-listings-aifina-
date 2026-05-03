@@ -17,19 +17,41 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+const ALLOWED_ORIGIN = Deno.env.get('APP_PUBLIC_URL') ?? 'http://localhost:5173';
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const DAILY_CAPS: Record<string, number> = {
+  free:     5,
+  starter:  20,
+  pro:      50,
+  pro_plus: 100,
+  team:     200,
+};
+
 const STAGING_PROMPTS: Record<string, string> = {
-  coastal_modern:          'Professional real estate interior photo, coastal modern staging, clean architectural lines, light hardwood floors, white and driftwood palette with ocean blue accents, minimal coastal art, oversized windows, airy and sophisticated, Charleston Lowcountry coastal lifestyle, magazine quality real estate photography',
-  lowcountry_traditional:  'Professional real estate interior photo, traditional Lowcountry style staging, natural rattan and wicker furniture, linen upholstery, palmetto leaf motifs, shiplap accent wall, heart-pine floors, antique brass fixtures, sandy beige and seafoam palette, warm inviting Southern charm, authentic Charleston character, bright natural light',
+  coastal_modern:          'Professional real estate interior photo, coastal modern staging, clean architectural lines, light hardwood floors, white and driftwood palette with ocean blue accents, minimal coastal art, oversized windows, airy and sophisticated, Charleston Lowcountry coastal lifestyle, magazine quality real estate photography, sea-glass tile backsplash, natural rattan pendant lighting, driftwood side table, reclaimed wood shelf, linen throw, soft Atlantic blue textiles',
+  lowcountry_traditional:  'Professional real estate interior photo, traditional Lowcountry style staging, natural rattan and wicker furniture, linen upholstery, palmetto leaf motifs, shiplap accent wall, heart-pine floors, antique brass fixtures, sandy beige and seafoam palette, warm inviting Southern charm, authentic Charleston character, bright natural light, wainscoting, transom window details, Charleston single-house proportions, vintage Charleston maps as wall art, period-appropriate linen drapery, warm amber lighting',
   contemporary:            'Professional real estate interior photo, contemporary staging, bold geometric furniture, dramatic lighting, rich jewel-tone or monochrome palette, statement art pieces, polished surfaces, sophisticated and curated aesthetic, high-end urban feel, architectural detail showcase',
   minimalist:              'Professional real estate interior photo, minimalist staging, bright white walls, warm blonde wood floors, simple functional furniture with clean lines, abundant natural daylight, negative space, airy and calm, serene and uncluttered, Scandinavian-inspired aesthetic',
   luxury_resort:           'Professional real estate interior photo, ultra-luxury resort-grade staging, neutral greige palette, bespoke custom furniture, curated fine art, integrated ambient lighting, seamless indoor-outdoor flow, Architectural Digest quality, concierge-level finish, ultra-premium real estate photography',
   empty_clean:             'Professional real estate interior photo, empty room with no furniture, freshly painted bright white walls, clean polished floors, all clutter removed, bright even natural lighting, architectural photography clearly showing room proportions, ceiling height, trim detail, and window placement',
 };
+
+const DEFAULT_STAGING_STYLE = 'coastal_modern';
+const ALLOW_TEST_MODE = (Deno.env.get('ALLOW_TEST_MODE') ?? '').toLowerCase() === 'true';
+
+async function isAllowedTestUser(supabase: ReturnType<typeof createClient>, userId: string): Promise<boolean> {
+  if (!ALLOW_TEST_MODE) return false;
+  try {
+    const { data } = await supabase.rpc('is_test_user', { p_user_id: userId });
+    return !!data;
+  } catch {
+    return false;
+  }
+}
 
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -45,7 +67,14 @@ serve(async (req: Request) => {
 
   try {
     // ─── Parse payload ──────────────────────────────────────────────────
-    const { generationId, photoUrl, stagingStyle = 'coastal_lowcountry', userId } = await req.json();
+    const raw = await req.json();
+    const generationId: string | undefined = raw?.generationId;
+    const photoUrl: string | undefined = raw?.photoUrl;
+    const userId: string | undefined = raw?.userId;
+    const requestedStyle: string = typeof raw?.stagingStyle === 'string' ? raw.stagingStyle : DEFAULT_STAGING_STYLE;
+    const stagingStyle: string = Object.prototype.hasOwnProperty.call(STAGING_PROMPTS, requestedStyle)
+      ? requestedStyle
+      : DEFAULT_STAGING_STYLE;
 
     if (!generationId || !photoUrl || !userId) {
       return new Response(JSON.stringify({ error: 'Missing required fields: generationId, photoUrl, userId' }), {
@@ -55,12 +84,31 @@ serve(async (req: Request) => {
     }
 
     // ─── Check quota ────────────────────────────────────────────────────
-    const { data: hasQuota } = await supabase.rpc('check_staging_quota', { p_user_id: userId });
-    if (!hasQuota) {
-      return new Response(JSON.stringify({ error: 'Staging quota exhausted. Upgrade your plan or purchase credits.' }), {
-        status: 402,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+    const allowTest = await isAllowedTestUser(supabase, userId);
+    if (!allowTest) {
+      const { data: hasQuota } = await supabase.rpc('check_staging_quota', { p_user_id: userId });
+      if (!hasQuota) {
+        return new Response(JSON.stringify({ error: 'Staging quota exhausted. Upgrade your plan or purchase credits.' }), {
+          status: 402,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        });
+      }
+
+      // ─── Per-user daily rate limit ──────────────────────────────────────
+      const { data: userTier } = await supabase.from('profiles').select('tier').eq('id', userId).single();
+      const tier = (userTier as { tier?: string } | null)?.tier ?? 'free';
+      const { data: dailyCount } = await supabase.rpc('increment_api_usage', {
+        p_user_id: userId,
+        p_fn_name: 'stage-photo',
       });
+      const cap = DAILY_CAPS[tier] ?? DAILY_CAPS.free;
+      if ((dailyCount as number) > cap) {
+        return new Response(
+          JSON.stringify({ error: 'Daily rate limit exceeded. Try again tomorrow or upgrade your plan.' }),
+          { status: 429, headers: { 'Content-Type': 'application/json', ...CORS_HEADERS } },
+        );
+      }
+      // ─── End rate limit ───────────────────────────────────────────────
     }
 
     // ─── Create staging_queue row ────────────────────────────────────────
@@ -80,7 +128,7 @@ serve(async (req: Request) => {
     stagingId = stagingRow.id;
 
     // ─── Call fal.ai image-to-image ──────────────────────────────────────
-    const prompt = STAGING_PROMPTS[stagingStyle] ?? STAGING_PROMPTS['coastal_lowcountry'];
+    const prompt = STAGING_PROMPTS[stagingStyle] ?? STAGING_PROMPTS[DEFAULT_STAGING_STYLE];
     const falKey = Deno.env.get('FAL_KEY')!;
 
     const falRes = await fetch('https://fal.run/fal-ai/flux/dev/image-to-image', {
@@ -157,7 +205,10 @@ serve(async (req: Request) => {
     });
 
     // ─── Increment staging credit counter ────────────────────────────────
-    await supabase.rpc('increment_staging_count', { p_staging_id: stagingId });
+    // In test mode, do not consume credits.
+    if (!allowTest) {
+      await supabase.rpc('increment_staging_count', { p_staging_id: stagingId });
+    }
 
     return new Response(JSON.stringify({ ok: true, stagedUrl: publicUrl, stagingId }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

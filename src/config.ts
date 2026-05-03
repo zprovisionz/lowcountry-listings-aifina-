@@ -65,3 +65,12 @@ export const TIERS = {
   },
 } as const;
 
+export const DEBUG = {
+  /**
+   * When true, UI can optionally bypass quota gates for debugging.
+   * Server-side bypass is still controlled separately via the `ALLOW_TEST_MODE` Edge secret
+   * and `profiles.is_test_user` allowlisting.
+   */
+  bypassBilling: (import.meta.env.VITE_DEBUG_BYPASS_BILLING ?? '').toLowerCase() === 'true',
+} as const;
+

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
@@ -11,8 +12,10 @@ interface EventRow {
 
 export default function AnalyticsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addressMap, setAddressMap] = useState<Record<string, string>>({});
 
   const fetchEvents = useCallback(async () => {
     if (!user) return;
@@ -22,7 +25,22 @@ export default function AnalyticsPage() {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(500);
-    if (!error && data) setEvents(data as EventRow[]);
+    if (!error && data) {
+      const rows = data as EventRow[];
+      setEvents(rows);
+      const ids = Array.from(new Set(rows.map(r => r.generation_id).filter((v): v is string => !!v)));
+      if (ids.length > 0) {
+        const { data: gens } = await supabase
+          .from('generations')
+          .select('id, address')
+          .in('id', ids);
+        if (gens) {
+          const map: Record<string, string> = {};
+          (gens as { id: string; address: string }[]).forEach(g => { map[g.id] = g.address; });
+          setAddressMap(map);
+        }
+      }
+    }
     setLoading(false);
   }, [user]);
 
@@ -73,7 +91,7 @@ export default function AnalyticsPage() {
 
   return (
     <div style={{ padding: '24px 28px', maxWidth: 960, margin: '0 auto' }}>
-      <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 28, color: 'var(--text-hi)', marginBottom: 8 }}>
+      <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 28, color: 'var(--text-hi)', marginBottom: 8 }}>
         Performance Analytics
       </h1>
       <p style={{ fontSize: 14, color: 'var(--text-mid)', marginBottom: 28 }}>
@@ -82,26 +100,26 @@ export default function AnalyticsPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 32 }}>
         <div className="glass" style={{ padding: 20, borderRadius: 14 }}>
-          <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: '.14em', color: 'var(--cyan)', marginBottom: 6 }}>TOTAL VIEWS</div>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 32, color: 'var(--text-hi)' }}>{views}</div>
+          <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, letterSpacing: '.14em', color: 'var(--cyan)', marginBottom: 6 }}>TOTAL VIEWS</div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 32, color: 'var(--text-hi)' }}>{views}</div>
         </div>
         <div className="glass" style={{ padding: 20, borderRadius: 14 }}>
-          <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: '.14em', color: 'var(--cyan)', marginBottom: 6 }}>TOTAL COPIES</div>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 32, color: 'var(--text-hi)' }}>{copies}</div>
+          <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, letterSpacing: '.14em', color: 'var(--cyan)', marginBottom: 6 }}>TOTAL COPIES</div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 32, color: 'var(--text-hi)' }}>{copies}</div>
         </div>
         <div className="glass" style={{ padding: 20, borderRadius: 14 }}>
-          <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: '.14em', color: 'var(--cyan)', marginBottom: 6 }}>COPY RATE</div>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 32, color: 'var(--text-hi)' }}>{copyRate}%</div>
+          <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, letterSpacing: '.14em', color: 'var(--cyan)', marginBottom: 6 }}>COPY RATE</div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 32, color: 'var(--text-hi)' }}>{copyRate}%</div>
         </div>
         <div className="glass" style={{ padding: 20, borderRadius: 14 }}>
-          <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: '.14em', color: 'var(--cyan)', marginBottom: 6 }}>LISTINGS TRACKED</div>
-          <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 32, color: 'var(--text-hi)' }}>{uniqueListings}</div>
+          <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, letterSpacing: '.14em', color: 'var(--cyan)', marginBottom: 6 }}>LISTINGS TRACKED</div>
+          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 32, color: 'var(--text-hi)' }}>{uniqueListings}</div>
         </div>
       </div>
 
       {sortedDates.length > 0 && (
         <div className="glass" style={{ padding: 28, borderRadius: 16, marginBottom: 24 }}>
-          <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, marginBottom: 20 }}>Activity (last 30 days)</h3>
+          <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 16, marginBottom: 20 }}>Activity (last 30 days)</h3>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 120 }}>
             {sortedDates.slice(-30).map((d) => (
               <div key={d} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
@@ -135,23 +153,47 @@ export default function AnalyticsPage() {
 
       {topListings.length > 0 && (
         <div className="glass" style={{ padding: 28, borderRadius: 16 }}>
-          <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Top listings by copies</h3>
+          <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Top listings by copies</h3>
           <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-            {topListings.map(([genId, count]) => (
-              <li key={genId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <a href={`/results/${genId}`} style={{ fontSize: 13, color: 'var(--cyan)', textDecoration: 'none' }}>
-                  {genId.slice(0, 8)}…
-                </a>
-                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 12, color: 'var(--text-mid)' }}>{count} copies</span>
-              </li>
-            ))}
+            {topListings.map(([genId, count]) => {
+              const address = addressMap[genId];
+              return (
+                <li key={genId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', gap: 12 }}>
+                  <a
+                    href={`/results/${genId}`}
+                    style={{
+                      fontSize: 13, color: 'var(--cyan)', textDecoration: 'none',
+                      flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}
+                    title={address ?? genId}
+                  >
+                    {address ?? `Listing ${genId.slice(0, 8)}…`}
+                  </a>
+                  <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 12, color: 'var(--text-mid)', flexShrink: 0 }}>{count} copies</span>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}
 
       {events.length === 0 && (
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--text-mid)', fontSize: 14 }}>
-          No analytics events yet. View or copy content on your results pages to see data here.
+        <div style={{
+          padding: '52px 24px', textAlign: 'center',
+          background: 'rgba(10,10,32,0.5)',
+          border: '1px solid rgba(0,255,255,0.1)',
+          borderRadius: 14,
+        }}>
+          <div style={{ fontSize: 36, marginBottom: 14 }}>📊</div>
+          <p style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 17, color: 'var(--text-hi)', margin: '0 0 6px' }}>
+            No analytics yet
+          </p>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13.5, color: 'var(--text-mid)', margin: '0 0 22px' }}>
+            Once your results pages get viewed or copied, performance will show up here.
+          </p>
+          <button onClick={() => navigate('/generate')} className="btn btn-primary btn-sm">
+            Generate a listing →
+          </button>
         </div>
       )}
     </div>

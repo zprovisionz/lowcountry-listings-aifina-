@@ -40,7 +40,7 @@ export default function HistoryPage() {
             style={{ paddingLeft:38 }}
           />
         </div>
-        <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)' }}>
+        <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)' }}>
           {filtered.length} LISTING{filtered.length!==1?'S':''}
         </div>
         <button onClick={() => navigate('/generate')} className="btn btn-primary btn-sm">✦ New Listing</button>
@@ -57,7 +57,7 @@ export default function HistoryPage() {
           background:'rgba(0,0,0,0.2)',
         }}>
           {['ADDRESS','NEIGHBORHOOD','STATUS','AUTH.','CONF.',''].map(h => (
-            <span key={h} style={{ fontFamily:'Space Mono,monospace', fontSize:8.5, color:'var(--text-lo)', letterSpacing:'.14em' }}>{h}</span>
+            <span key={h} style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8.5, color:'var(--text-lo)', letterSpacing:'.14em' }}>{h}</span>
           ))}
         </div>
 
@@ -68,7 +68,7 @@ export default function HistoryPage() {
         ) : filtered.length === 0 ? (
           <div style={{ padding:'60px 24px', textAlign:'center' }}>
             <div style={{ fontSize:36, marginBottom:14 }}>📋</div>
-            <p style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:17, color:'var(--text-hi)', margin:'0 0 8px' }}>
+            <p style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:17, color:'var(--text-hi)', margin:'0 0 8px' }}>
               {search ? 'No matches' : 'No listings yet'}
             </p>
             <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:13.5, color:'var(--text-mid)', margin:'0 0 22px' }}>
@@ -95,12 +95,12 @@ export default function HistoryPage() {
                   <div style={{ fontFamily:'DM Sans,sans-serif', fontWeight:500, fontSize:13.5, color:'#eafaff', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                     {g.address}
                   </div>
-                  <div style={{ fontFamily:'Space Mono,monospace', fontSize:8.5, color:'var(--text-lo)', marginTop:2 }}>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8.5, color:'var(--text-lo)', marginTop:2 }}>
                     {new Date(g.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
                   </div>
                 </div>
                 {/* Neighborhood */}
-                <div style={{ fontFamily:'Space Mono,monospace', fontSize:10, color:'var(--text-mid)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', paddingRight:8 }}>
+                <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-mid)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', paddingRight:8 }}>
                   {g.neighborhood ?? '—'}
                 </div>
                 {/* Status chip */}
@@ -108,10 +108,10 @@ export default function HistoryPage() {
                   <span className={`chip chip-${g.status}`}>{g.status}</span>
                 </div>
                 {/* Scores */}
-                <div style={{ fontFamily:'Space Mono,monospace', fontWeight:700, fontSize:13, color:scoreColor(g.authenticity_score) }}>
+                <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontWeight:700, fontSize:13, color:scoreColor(g.authenticity_score) }}>
                   {g.authenticity_score!=null ? `${g.authenticity_score}%` : '—'}
                 </div>
-                <div style={{ fontFamily:'Space Mono,monospace', fontWeight:700, fontSize:13, color:scoreColor(g.confidence_score) }}>
+                <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontWeight:700, fontSize:13, color:scoreColor(g.confidence_score) }}>
                   {g.confidence_score!=null ? `${g.confidence_score}%` : '—'}
                 </div>
                 {/* Actions */}
@@ -141,7 +141,7 @@ export default function HistoryPage() {
                   <button onClick={()=>handleDelete(g.id)} disabled={deleting===g.id} style={{
                     padding:'5px 14px', background:'rgba(255,60,60,0.12)',
                     border:'1px solid rgba(255,80,80,0.35)', borderRadius:6,
-                    color:'#ff6060', fontFamily:'Space Mono,monospace',
+                    color:'#ff6060', fontFamily:"'DM Mono', ui-monospace, monospace",
                     fontSize:10, cursor:'pointer',
                   }}>
                     {deleting===g.id ? 'Deleting…' : 'Confirm'}

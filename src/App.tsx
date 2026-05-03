@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider }  from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import ProtectedRoute    from './components/layout/ProtectedRoute';
@@ -15,12 +15,16 @@ import { GeneratePage, ResultsPage } from './features/generate';
 import { HistoryPage } from './features/history';
 import { ReportsPage } from './features/reports';
 import { TeamPage } from './features/team';
+import AcceptInvitePage from './pages/team/AcceptInvitePage';
 import { AccountPage } from './features/account';
 import { BulkPage } from './features/bulk';
 import { AnalyticsPage } from './features/analytics';
 
-// Landing (public)
-import LandingApp from './LandingApp';
+// Public
+import LandingApp    from './LandingApp';
+import PrivacyPage   from './pages/legal/PrivacyPage';
+import TermsPage     from './pages/legal/TermsPage';
+import NotFoundPage  from './pages/NotFoundPage';
 
 export default function App() {
   return (
@@ -33,6 +37,9 @@ export default function App() {
             <Route path="/"              element={<LandingApp />} />
             <Route path="/login"         element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/privacy"       element={<PrivacyPage />} />
+            <Route path="/terms"         element={<TermsPage />} />
+            <Route path="/join"          element={<AcceptInvitePage />} />
 
             {/* ── Protected app ── */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
@@ -47,8 +54,8 @@ export default function App() {
               <Route path="/analytics"       element={<AnalyticsPage />} />
             </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* 404 */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           </ErrorBoundary>
         </ToastProvider>

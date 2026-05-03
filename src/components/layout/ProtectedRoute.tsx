@@ -20,7 +20,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
           animation: 'spinRing .8s linear infinite',
         }} />
         <span style={{
-          fontFamily: 'Space Mono, monospace',
+          fontFamily: "'DM Mono', ui-monospace, monospace",
           fontSize: 11, letterSpacing: '.14em', color: 'var(--text-lo)',
         }}>
           AUTHENTICATING…

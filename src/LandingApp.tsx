@@ -8,25 +8,23 @@ import Footer       from './components/Footer';
 
 export default function LandingApp() {
   return (
-    <div style={{ background: '#0a0a1f', minHeight: '100vh', position: 'relative' }}>
-      {/* Global scanline overlay */}
-      <div style={{
-        position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9999,
-        background: 'repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.018) 3px, rgba(0,0,0,0.018) 4px)',
-      }} />
-      <Navbar />
-      <main>
-        <Hero />
-        <div className="divider" />
-        <Features />
-        <div className="divider" />
-        <Pricing />
-        <div className="divider" />
-        <Testimonials />
-        <div className="divider" />
-        <FAQ />
-      </main>
-      <Footer />
+    <div style={{ background: 'var(--space)', minHeight: '100vh', position: 'relative' }}>
+      <div className="app-shell-bg" aria-hidden />
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <Navbar />
+        <main>
+          <Hero />
+          <div className="divider" />
+          <Features />
+          <div className="divider" />
+          <Pricing />
+          <div className="divider" />
+          <Testimonials />
+          <div className="divider" />
+          <FAQ />
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }

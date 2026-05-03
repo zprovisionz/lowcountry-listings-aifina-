@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -37,17 +37,22 @@ export default function AccountPage() {
   const { createCheckoutSession, openBillingPortal, loading: stripeLoading } = useStripe();
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
   const [saving, setSaving] = useState(false);
-  const [mlsName, setMlsName] = useState('');
-  const [mlsEndpoint, setMlsEndpoint] = useState('');
-  const [mlsToken, setMlsToken] = useState('');
-  const [mlsSaving, setMlsSaving] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const NAME_MAX = 80;
+  const trimmedName = fullName.trim();
+  const nameValid = trimmedName.length > 0 && trimmedName.length <= NAME_MAX;
 
   const handleSaveName = async () => {
     if (!profile) return;
+    if (!nameValid) {
+      toast(`Name must be 1–${NAME_MAX} characters.`, 'error');
+      return;
+    }
     setSaving(true);
     const { error } = await supabase
       .from('profiles')
-      .update({ full_name: fullName })
+      .update({ full_name: trimmedName })
       .eq('id', profile.id);
     if (error) toast('Failed to save name.', 'error');
     else toast('Name updated!', 'success');
@@ -69,7 +74,7 @@ export default function AccountPage() {
         border: '1px solid rgba(0,255,255,0.14)',
         borderRadius: 16, backdropFilter: 'blur(20px)',
       }}>
-        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 18 }}>
+        <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 18 }}>
           PROFILE
         </div>
         <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -79,7 +84,7 @@ export default function AccountPage() {
             background: 'linear-gradient(135deg, rgba(0,255,255,0.18), rgba(255,0,255,0.18))',
             border: '2px solid rgba(0,255,255,0.35)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: 'var(--cyan)',
+            fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 22, color: 'var(--cyan)',
             boxShadow: '0 0 18px rgba(0,255,255,0.15)',
           }}>
             {(profile?.full_name ?? profile?.email ?? 'U')[0].toUpperCase()}
@@ -87,11 +92,13 @@ export default function AccountPage() {
 
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>
-              <label style={labelStyle}>Display Name</label>
+              <label htmlFor="account-fullname" style={labelStyle}>Display Name</label>
               <div style={{ display: 'flex', gap: 10 }}>
                 <input
+                  id="account-fullname"
                   type="text"
                   value={fullName}
+                  maxLength={NAME_MAX}
                   onChange={e => setFullName(e.target.value)}
                   placeholder="Your name"
                   style={{ ...inputStyle, flex: 1 }}
@@ -100,12 +107,15 @@ export default function AccountPage() {
                 />
                 <button
                   onClick={handleSaveName}
-                  disabled={saving}
+                  disabled={saving || !nameValid}
                   className="btn btn-primary btn-sm"
                   style={{ flexShrink: 0 }}
                 >
                   {saving ? 'Saving…' : 'Save'}
                 </button>
+              </div>
+              <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-ghost)', marginTop: 6, letterSpacing: '.06em' }}>
+                {trimmedName.length}/{NAME_MAX}
               </div>
             </div>
             <div>
@@ -125,7 +135,7 @@ export default function AccountPage() {
         border: '1px solid rgba(0,255,255,0.14)',
         borderRadius: 16,
       }}>
-        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 18 }}>
+        <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 18 }}>
           PLAN & BILLING
         </div>
 
@@ -144,24 +154,24 @@ export default function AccountPage() {
                 transition: 'all .2s',
               }}>
                 <div style={{
-                  fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 15,
+                  fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 15,
                   color: isCurrent ? t.color : 'var(--text-mid)', marginBottom: 4,
                 }}>
                   {t.name}
                 </div>
                 <div style={{
-                  fontFamily: 'Space Mono, monospace', fontSize: 11,
+                  fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 11,
                   color: isCurrent ? t.color : 'var(--text-lo)', fontWeight: 700,
                 }}>
                   {t.price}
                 </div>
-                <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 8.5, color: 'var(--text-ghost)', marginTop: 6 }}>
+                <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5, color: 'var(--text-ghost)', marginTop: 6 }}>
                   {t.gens}
                 </div>
                 {isCurrent && (
                   <div style={{
                     marginTop: 8,
-                    fontFamily: 'Space Mono, monospace', fontSize: 8,
+                    fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8,
                     color: t.color, letterSpacing: '.12em',
                   }}>
                     CURRENT
@@ -177,7 +187,7 @@ export default function AccountPage() {
                       background: 'rgba(255,0,255,0.08)',
                       border: '1px solid rgba(255,0,255,0.25)',
                       borderRadius: 6,
-                      fontFamily: 'Space Mono, monospace', fontSize: 8.5,
+                      fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5,
                       color: 'var(--magenta)', cursor: stripeLoading ? 'not-allowed' : 'pointer',
                       letterSpacing: '.06em',
                     }}
@@ -193,8 +203,8 @@ export default function AccountPage() {
         <div style={{ marginTop: 18 }}>
           <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 8.5, color: 'var(--text-lo)', letterSpacing: '.12em', marginBottom: 4 }}>GENERATIONS</div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--cyan)' }}>
+              <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5, color: 'var(--text-lo)', letterSpacing: '.12em', marginBottom: 4 }}>GENERATIONS</div>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 20, color: 'var(--cyan)' }}>
                 {profile?.generations_used ?? 0}
                 <span style={{ fontSize: 13, color: 'var(--text-lo)', fontWeight: 400 }}>
                   {' '}/ {profile?.generations_limit === -1 ? '∞' : (profile?.generations_limit ?? 0) + (profile?.extra_gen_credits ?? 0)}
@@ -205,8 +215,8 @@ export default function AccountPage() {
               </div>
             </div>
             <div>
-              <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 8.5, color: 'var(--text-lo)', letterSpacing: '.12em', marginBottom: 4 }}>STAGING CREDITS</div>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--magenta)' }}>
+              <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5, color: 'var(--text-lo)', letterSpacing: '.12em', marginBottom: 4 }}>STAGING CREDITS</div>
+              <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 20, color: 'var(--magenta)' }}>
                 {profile?.staging_credits_used ?? 0}
                 <span style={{ fontSize: 13, color: 'var(--text-lo)', fontWeight: 400 }}>
                   {' '}/ {(profile?.staging_credits_limit === -1 ? 999 : profile?.staging_credits_limit ?? 0) + (profile?.extra_staging_credits ?? 0)}
@@ -231,7 +241,7 @@ export default function AccountPage() {
         </div>
 
         <div style={{ marginTop: 22 }}>
-          <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.12em', marginBottom: 12 }}>CREDIT PACKS</div>
+          <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.12em', marginBottom: 12 }}>CREDIT PACKS</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
             {CREDIT_PACKS.map((pack) => (
               <button
@@ -248,44 +258,32 @@ export default function AccountPage() {
         </div>
       </div>
 
-      {/* MLS Connection (RESO stub) */}
+      {/* MLS Connection — coming soon (collect interest only, no token storage) */}
       <div style={{
-        padding: '24px 26px',
-        background: 'rgba(10,10,32,0.75)',
-        border: '1px solid rgba(0,255,255,0.14)',
-        borderRadius: 16,
+        padding: '20px 24px',
+        background: 'rgba(10,10,32,0.5)',
+        border: '1px dashed rgba(0,255,255,0.18)',
+        borderRadius: 14,
       }}>
-        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 18 }}>
-          MLS CONNECTION (RESO STUB)
-        </div>
-        <p style={{ fontSize: 12, color: 'var(--text-mid)', marginBottom: 16 }}>
-          Connect your MLS data feed (RESO Web API). Token is stored encrypted. Full integration coming in a future release.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 480 }}>
-          <input type="text" placeholder="MLS name" value={mlsName} onChange={(e) => setMlsName(e.target.value)} style={inputStyle} />
-          <input type="url" placeholder="API endpoint" value={mlsEndpoint} onChange={(e) => setMlsEndpoint(e.target.value)} style={inputStyle} />
-          <input type="password" placeholder="Access token (stored encrypted)" value={mlsToken} onChange={(e) => setMlsToken(e.target.value)} style={inputStyle} />
-          <button
-            type="button"
-            className="btn btn-primary btn-sm"
-            disabled={mlsSaving || !mlsName.trim()}
-            onClick={async () => {
-              if (!profile?.id) return;
-              setMlsSaving(true);
-              const { error } = await supabase.from('mls_connections').insert({
-                user_id: profile.id,
-                mls_name: mlsName.trim(),
-                api_endpoint: mlsEndpoint.trim() || null,
-                access_token_encrypted: mlsToken.trim() || null,
-                status: mlsToken.trim() ? 'connected' : 'pending',
-              });
-              if (error) toast(error.message, 'error');
-              else { toast('MLS connection saved.', 'success'); setMlsName(''); setMlsEndpoint(''); setMlsToken(''); }
-              setMlsSaving(false);
-            }}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 6 }}>
+              MLS CONNECTION · ROADMAP
+            </div>
+            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 14, color: 'var(--text-hi)', marginBottom: 4 }}>
+              Direct MLS / RESO Web API integration
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-mid)', margin: 0, lineHeight: 1.6 }}>
+              We're building a one-click MLS pull (RESO-compliant) so you can populate the wizard from a listing ID. Want early access?
+            </p>
+          </div>
+          <a
+            href="mailto:hello@lowcountrylistings.ai?subject=MLS%20integration%20early%20access"
+            className="btn btn-ghost btn-sm"
+            style={{ textDecoration: 'none', flexShrink: 0 }}
           >
-            {mlsSaving ? 'Saving…' : 'Save connection'}
-          </button>
+            Notify me →
+          </a>
         </div>
       </div>
 
@@ -296,7 +294,7 @@ export default function AccountPage() {
         border: '1px solid rgba(255,80,80,0.15)',
         borderRadius: 14,
       }}>
-        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'rgba(200,60,60,0.7)', letterSpacing: '.14em', marginBottom: 14 }}>
+        <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'rgba(200,60,60,0.7)', letterSpacing: '.14em', marginBottom: 14 }}>
           ACCOUNT
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -304,22 +302,102 @@ export default function AccountPage() {
             ⏻ Sign Out
           </button>
           <button
-            onClick={() => toast('Account deletion: contact support@lowcountrylistings.ai', 'info')}
+            onClick={() => setShowDeleteConfirm(true)}
             style={{
               padding: '10px 20px', background: 'transparent',
-              border: '1px solid rgba(255,80,80,0.2)',
-              borderRadius: 9, color: 'rgba(200,80,80,0.6)',
-              fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 13,
+              border: '1px solid rgba(255,80,80,0.35)',
+              borderRadius: 9, color: '#ff8080',
+              fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 13,
               cursor: 'pointer',
             }}
           >
             Delete Account
           </button>
         </div>
+        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: 'var(--text-lo)', margin: '14px 0 0', lineHeight: 1.6 }}>
+          Account deletion is handled by request so we can verify identity and confirm
+          billing wind-down. We respond within 1 business day and remove your data within
+          30 days per our{' '}
+          <a href="/privacy" style={{ color: 'var(--cyan)' }}>Privacy Policy</a>.
+        </p>
+      </div>
+
+      {showDeleteConfirm && (
+        <DeleteAccountConfirm
+          email={profile?.email ?? ''}
+          onClose={() => setShowDeleteConfirm(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function DeleteAccountConfirm({ email, onClose }: { email: string; onClose: () => void }) {
+  const subject = encodeURIComponent('Account deletion request');
+  const body = encodeURIComponent(
+    `Please delete the Lowcountry Listings AI account associated with: ${email}\n\nReason (optional):\n`
+  );
+  const mailtoHref = `mailto:support@lowcountrylistings.ai?subject=${subject}&body=${body}`;
+
+  useEscClose(onClose);
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 600,
+        background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+      }}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        style={{
+          maxWidth: 460, width: '100%', padding: 28, borderRadius: 16,
+          background: 'rgba(10,10,32,0.95)', border: '1px solid rgba(255,80,80,0.35)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+        }}
+      >
+        <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: '#ff8080', letterSpacing: '.14em', marginBottom: 12 }}>
+          PERMANENT · IRREVERSIBLE
+        </div>
+        <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 20, color: 'var(--text-hi)', margin: '0 0 10px' }}>
+          Delete your account
+        </h3>
+        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: 'var(--text-mid)', lineHeight: 1.7, margin: '0 0 18px' }}>
+          This will permanently remove your generations, staging history, billing records, and
+          team memberships within 30 days. To start the request, send us a deletion email
+          from <strong style={{ color: 'var(--text-hi)' }}>{email}</strong>. We'll confirm
+          before processing.
+        </p>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          <button onClick={onClose} className="btn btn-ghost btn-sm">Cancel</button>
+          <a
+            href={mailtoHref}
+            onClick={onClose}
+            style={{
+              padding: '9px 18px',
+              background: 'rgba(255,80,80,0.1)',
+              border: '1px solid rgba(255,80,80,0.45)',
+              borderRadius: 9, color: '#ff8080',
+              fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 13,
+              textDecoration: 'none',
+            }}
+          >
+            Email deletion request →
+          </a>
+        </div>
       </div>
     </div>
   );
 }
 
-const labelStyle: React.CSSProperties = { display: 'block', fontFamily: 'Space Mono, monospace', fontSize: 9, letterSpacing: '.14em', color: 'var(--text-lo)', textTransform: 'uppercase', marginBottom: 7 };
+function useEscClose(onClose: () => void) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+}
+
+const labelStyle: React.CSSProperties = { display: 'block', fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, letterSpacing: '.14em', color: 'var(--text-lo)', textTransform: 'uppercase', marginBottom: 7 };
 const inputStyle: React.CSSProperties = { padding: '11px 14px', background: 'rgba(5,7,24,0.9)', border: '1px solid rgba(0,255,255,0.22)', borderRadius: 9, color: 'var(--text-hi)', fontFamily: 'DM Sans, sans-serif', fontSize: 13.5, outline: 'none', transition: 'border-color .2s', caretColor: 'var(--cyan)', display: 'block' };

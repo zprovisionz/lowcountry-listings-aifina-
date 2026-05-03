@@ -7,7 +7,7 @@ import ScoreRing from '../../components/ui/ScoreRing';
 import { useGenerations } from '../../hooks/useGenerations';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
-import { TIMING_MS } from '../../config';
+import { DEBUG, TIMING_MS } from '../../config';
 
 type Tab = 'mls' | 'airbnb' | 'social' | 'staging';
 
@@ -39,6 +39,7 @@ export default function ResultsPage() {
   const [polling,       setPolling]       = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef    = useRef(0);
+  const stagingRef      = useRef<HTMLDivElement | null>(null);
   const [stagingJobs,   setStagingJobs]   = useState<StagingJob[]>([]);
   const [stagingStyle,  setStagingStyle]  = useState('coastal_modern');
   const [stagingPhoto,  setStagingPhoto]  = useState<string>('');
@@ -161,7 +162,7 @@ export default function ResultsPage() {
   if (loading) return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'60vh', gap:20 }}>
       <div style={{ width:44,height:44,border:'2px solid rgba(0,255,255,0.2)',borderTopColor:'var(--cyan)',borderRadius:'50%',animation:'spinRing .8s linear infinite' }} />
-      <span style={{ fontFamily:'Space Mono,monospace', fontSize:11, color:'var(--text-lo)', letterSpacing:'.14em' }}>LOADING RESULTS…</span>
+      <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:11, color:'var(--text-lo)', letterSpacing:'.14em' }}>LOADING RESULTS…</span>
       <style>{`@keyframes spinRing{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -177,7 +178,7 @@ export default function ResultsPage() {
           display:'flex', alignItems:'center', justifyContent:'center',
           fontSize:28,
         }}>✦</div>
-        <h2 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:22, color:'#eafaff', margin:'0 0 10px' }}>
+        <h2 style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800, fontSize:22, color:'#eafaff', margin:'0 0 10px' }}>
           Generating Your Listing…
         </h2>
         <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:14, color:'var(--text-mid)', lineHeight:1.75, margin:'0 0 26px' }}>
@@ -191,7 +192,7 @@ export default function ResultsPage() {
               background:'rgba(0,255,255,0.04)', borderRadius:8, border:'1px solid rgba(0,255,255,0.1)',
             }}>
               <div style={{ width:13,height:13,borderRadius:'50%',border:'1.5px solid rgba(0,255,255,0.3)',borderTopColor:'var(--cyan)',animation:`spinRing ${0.7+i*0.1}s linear infinite`,flexShrink:0 }} />
-              <span style={{ fontFamily:'Space Mono,monospace', fontSize:10, color:'var(--text-lo)' }}>{step}</span>
+              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-lo)' }}>{step}</span>
             </div>
           ))}
         </div>
@@ -204,7 +205,7 @@ export default function ResultsPage() {
   if (!gen || gen.status === 'error') return (
     <div style={{ textAlign:'center', padding:'80px 24px' }}>
       <div style={{ fontSize:40, marginBottom:16 }}>⚠</div>
-      <h2 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:20, color:'#eafaff', margin:'0 0 10px' }}>
+      <h2 style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800, fontSize:20, color:'#eafaff', margin:'0 0 10px' }}>
         {gen?.status === 'error' ? 'Generation Failed' : 'Not Found'}
       </h2>
       <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:14, color:'var(--text-mid)', marginBottom:24 }}>
@@ -215,6 +216,10 @@ export default function ResultsPage() {
   );
 
   const wc = (t:string|null) => t ? t.trim().split(/\s+/).length : 0;
+  const hasPhotos = !!(gen.photo_urls && gen.photo_urls.length > 0);
+  const hasCompleteStaging = stagingJobs.some(j => j.status === 'complete' && !!j.staged_url);
+  const showStagingNew = hasPhotos && !hasCompleteStaging;
+  const allowUiBypass = !!(DEBUG.bypassBilling && (import.meta.env.DEV || profile?.is_test_user));
 
   return (
     <div style={{ maxWidth:900, margin:'0 auto', display:'flex', flexDirection:'column', gap:22 }}>
@@ -223,21 +228,21 @@ export default function ResultsPage() {
       <div className="anim-fade-up" style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:14 }}>
         <div>
           <button onClick={() => navigate('/history')} style={{
-            background:'none', border:'none', color:'var(--text-lo)', fontFamily:'Space Mono,monospace',
+            background:'none', border:'none', color:'var(--text-lo)', fontFamily:"'DM Mono', ui-monospace, monospace",
             fontSize:10, cursor:'pointer', letterSpacing:'.1em', marginBottom:8, padding:0,
             display:'flex', alignItems:'center', gap:5, transition:'color .2s',
           }}
           onMouseEnter={e=>(e.currentTarget as HTMLElement).style.color='var(--cyan)'}
           onMouseLeave={e=>(e.currentTarget as HTMLElement).style.color='var(--text-lo)'}
           >← HISTORY</button>
-          <h1 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:20, color:'#eafaff', margin:'0 0 6px' }}>
+          <h1 style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800, fontSize:20, color:'#eafaff', margin:'0 0 6px' }}>
             {gen.address}
           </h1>
           <div style={{ display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
             {gen.neighborhood && (
               <span className="tag" style={{ marginBottom:0 }}>{gen.neighborhood}</span>
             )}
-            <span style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)' }}>
+            <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)' }}>
               {new Date(gen.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
             </span>
           </div>
@@ -255,7 +260,7 @@ export default function ResultsPage() {
         {/* Landmark distances */}
         {gen.landmark_distances && (
           <div style={{ flex:1, minWidth:200 }}>
-            <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>
               LANDMARK DISTANCES
             </div>
             {Object.entries(gen.landmark_distances).slice(0,4).map(([place,dist],i) => (
@@ -264,7 +269,7 @@ export default function ResultsPage() {
                 background: i%2===0 ? 'rgba(0,255,255,0.03)' : 'transparent', borderRadius:6,
               }}>
                 <span style={{ fontFamily:'DM Sans,sans-serif', fontSize:12.5, color:'var(--text-mid)' }}>{place}</span>
-                <span style={{ fontFamily:'Space Mono,monospace', fontSize:11, color: i%2===0 ? 'var(--cyan)' : 'var(--magenta)', fontWeight:700 }}>{dist}</span>
+                <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:11, color: i%2===0 ? 'var(--cyan)' : 'var(--magenta)', fontWeight:700 }}>{dist}</span>
               </div>
             ))}
           </div>
@@ -273,7 +278,7 @@ export default function ResultsPage() {
         {/* Suggestions */}
         {gen.improvement_suggestions && gen.improvement_suggestions.length > 0 && (
           <div style={{ flex:1, minWidth:180 }}>
-            <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>SUGGESTIONS</div>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>SUGGESTIONS</div>
             {gen.improvement_suggestions.map(s => (
               <div key={s} style={{ display:'flex', alignItems:'flex-start', gap:7, marginBottom:8, fontFamily:'DM Sans,sans-serif', fontSize:12.5, color:'var(--text-mid)', lineHeight:1.55 }}>
                 <span style={{ color:'var(--magenta)', flexShrink:0, marginTop:2, fontSize:10 }}>◈</span>
@@ -284,12 +289,54 @@ export default function ResultsPage() {
         )}
       </div>
 
+      {/* Virtual staging CTA (discoverability) */}
+      <div className="glass-featured anim-fade-up d-150" style={{ padding:'18px 22px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:14 }}>
+        <div style={{ display:'flex', flexDirection:'column', gap:6, minWidth:240 }}>
+          <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+            VIRTUAL STAGING · POWERED BY FAL.AI
+          </div>
+          <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontSize:16, fontWeight:800, color:'var(--text-hi)' }}>
+            Stage a photo in one click.
+          </div>
+          <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:13, color:'var(--text-mid)', lineHeight:1.6 }}>
+            Pick a photo, choose a style, and get a clean “before/after” you can download and use in your listing.
+          </div>
+        </div>
+        <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
+          {!hasPhotos ? (
+            <>
+              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-ghost)', letterSpacing:'.08em' }}>
+                No photos on this listing
+              </span>
+              <button onClick={() => navigate('/generate')} className="btn btn-primary">Generate with photos →</button>
+            </>
+          ) : (
+            <button
+              onClick={() => {
+                setTab('staging');
+                setTimeout(() => stagingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+              }}
+              className="btn btn-primary"
+            >
+              🛋 Open Virtual Staging →
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="glass-dash anim-fade-up d-200" style={{ overflow:'hidden' }}>
         {/* Tab bar */}
         <div className="neon-tab-bar">
           {TABS.map(t => {
-            const avail = t.key==='mls' ? !!gen.mls_copy : t.key==='airbnb' ? !!gen.airbnb_copy : !!(gen.social_captions?.length);
+            const avail =
+              t.key === 'mls'
+                ? !!gen.mls_copy
+                : t.key === 'airbnb'
+                  ? !!gen.airbnb_copy
+                  : t.key === 'social'
+                    ? !!(gen.social_captions?.length)
+                    : true; // staging is always usable (shows “no photos” state if needed)
             const isActive = tab === t.key;
             return (
               <button
@@ -300,10 +347,25 @@ export default function ResultsPage() {
                 style={{ opacity: avail ? 1 : 0.3, cursor: avail ? 'pointer' : 'not-allowed' }}
               >
                 <span style={{ fontSize:18 }}>{t.icon}</span>
-                <span style={{ fontFamily:'Syne,sans-serif', fontWeight: isActive ? 700 : 500, fontSize:12.5, color: isActive ? 'var(--cyan)' : 'var(--text-mid)', transition:'color .2s' }}>
+                <span style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight: isActive ? 700 : 500, fontSize:12.5, color: isActive ? 'var(--cyan)' : 'var(--text-mid)', transition:'color .2s' }}>
                   {t.label}
                 </span>
-                <span style={{ fontFamily:'Space Mono,monospace', fontSize:8, color:'var(--text-ghost)', letterSpacing:'.08em' }}>
+                {t.key === 'staging' && showStagingNew && (
+                  <span style={{
+                    marginLeft: 6,
+                    padding: '3px 7px',
+                    borderRadius: 999,
+                    fontFamily: "'DM Mono', ui-monospace, monospace",
+                    fontSize: 8,
+                    letterSpacing: '.12em',
+                    color: 'var(--magenta)',
+                    border: '1px solid rgba(255,0,255,0.35)',
+                    background: 'rgba(255,0,255,0.12)',
+                  }}>
+                    NEW
+                  </span>
+                )}
+                <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--text-ghost)', letterSpacing:'.08em' }}>
                   {t.words}
                 </span>
               </button>
@@ -326,16 +388,16 @@ export default function ResultsPage() {
             return (
               <div>
                 {basedOnInputs && (
-                  <div style={{ fontFamily:'Space Mono,monospace', fontSize:10, color:'var(--text-ghost)', letterSpacing:'.06em', marginBottom:12 }}>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-ghost)', letterSpacing:'.06em', marginBottom:12 }}>
                     Based on your inputs: {basedOnInputs}
                   </div>
                 )}
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, flexWrap:'wrap', gap:10 }}>
                   <div>
-                    <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
                       {tab==='mls' ? 'RESO-COMPLIANT MLS DESCRIPTION' : 'AIRBNB / VRBO GUEST-FACING COPY'}
                     </div>
-                    <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-ghost)', marginTop:3 }}>{wc(text)} words</div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-ghost)', marginTop:3 }}>{wc(text)} words</div>
                   </div>
                   <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
                     {tab==='mls' && text && user && (
@@ -371,13 +433,13 @@ export default function ResultsPage() {
           {/* Social */}
           {tab === 'social' && (
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:4 }}>
+              <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:4 }}>
                 3 PLATFORM-READY CAPTIONS WITH LOWCOUNTRY HASHTAGS
               </div>
               {(gen.social_captions??[]).map((caption,i) => (
                 <div key={i} className={i%2===0?'glass':'glass-magenta'} style={{ padding:'18px 20px', borderRadius:12 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                    <span style={{ fontFamily:'Space Mono,monospace', fontSize:9, color: i%2===0 ? 'var(--cyan)' : 'var(--magenta)', letterSpacing:'.12em' }}>
+                    <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color: i%2===0 ? 'var(--cyan)' : 'var(--magenta)', letterSpacing:'.12em' }}>
                       CAPTION {i+1}
                     </span>
                     <CopyButton text={caption} label="COPY" onCopy={() => trackEvent(id!,'copy')} />
@@ -395,8 +457,8 @@ export default function ResultsPage() {
 
           {/* Virtual Staging */}
           {tab === 'staging' && (
-            <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
-              <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+            <div ref={stagingRef} style={{ display:'flex', flexDirection:'column', gap:20 }}>
+              <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
                 AI VIRTUAL STAGING · POWERED BY FAL.AI
               </div>
 
@@ -414,7 +476,7 @@ export default function ResultsPage() {
               {gen.photo_urls && gen.photo_urls.length > 0 && (
                 <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
                   <div>
-                    <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>SELECT PHOTO TO STAGE</div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>SELECT PHOTO TO STAGE</div>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(100px,1fr))', gap:8 }}>
                       {gen.photo_urls.map((url, i) => (
                         <div
@@ -440,7 +502,7 @@ export default function ResultsPage() {
                   </div>
 
                   <div>
-                    <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>STAGING STYLE</div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>STAGING STYLE</div>
                     <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                       {STAGING_STYLES.map(s => (
                         <button
@@ -460,14 +522,20 @@ export default function ResultsPage() {
 
                   {/* Quota info */}
                   {profile && (
-                    <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-ghost)', letterSpacing:'.08em' }}>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-ghost)', letterSpacing:'.08em' }}>
                       STAGING CREDITS: {profile.staging_credits_used} / {profile.staging_credits_limit === -1 ? '∞' : profile.staging_credits_limit} USED
                     </div>
                   )}
 
                   <button
                     onClick={handleStagePhoto}
-                    disabled={!stagingPhoto || stagingBusy || (profile?.staging_credits_limit !== -1 && (profile?.staging_credits_used ?? 0) >= (profile?.staging_credits_limit ?? 0))}
+                    disabled={
+                      !stagingPhoto ||
+                      stagingBusy ||
+                      (!allowUiBypass &&
+                        profile?.staging_credits_limit !== -1 &&
+                        (profile?.staging_credits_used ?? 0) >= (profile?.staging_credits_limit ?? 0))
+                    }
                     className="btn btn-primary"
                     style={{ width:'fit-content', opacity: (!stagingPhoto || stagingBusy) ? 0.6 : 1 }}
                   >
@@ -479,13 +547,13 @@ export default function ResultsPage() {
               {/* Staging job results */}
               {stagingJobs.length > 0 && (
                 <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-                  <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>STAGED RESULTS</div>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>STAGED RESULTS</div>
                   {stagingJobs.map(job => (
                     <div key={job.id} className="glass" style={{ borderRadius:12, overflow:'hidden' }}>
                       {job.status === 'processing' && (
                         <div style={{ padding:'20px', display:'flex', alignItems:'center', gap:12 }}>
                           <div style={{ width:16,height:16,borderRadius:'50%',border:'2px solid rgba(0,255,255,0.2)',borderTopColor:'var(--cyan)',animation:'spinRing .8s linear infinite',flexShrink:0 }} />
-                          <span style={{ fontFamily:'Space Mono,monospace', fontSize:10, color:'var(--text-lo)' }}>
+                          <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-lo)' }}>
                             Staging in progress — fal.ai is applying {STAGING_STYLES.find(s => s.id === job.staging_style)?.label ?? job.staging_style} style…
                           </span>
                         </div>
@@ -500,11 +568,11 @@ export default function ResultsPage() {
                           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:1, background:'rgba(0,0,0,0.5)' }}>
                             <div style={{ position:'relative' }}>
                               <img src={job.original_url} alt="Original" style={{ width:'100%', display:'block', objectFit:'cover', aspectRatio:'4/3' }} />
-                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:'Space Mono,monospace', fontSize:8, color:'rgba(255,255,255,0.7)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>BEFORE</div>
+                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'rgba(255,255,255,0.7)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>BEFORE</div>
                             </div>
                             <div style={{ position:'relative' }}>
                               <img src={job.staged_url} alt="Staged" style={{ width:'100%', display:'block', objectFit:'cover', aspectRatio:'4/3' }} />
-                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:'Space Mono,monospace', fontSize:8, color:'var(--cyan)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>STAGED</div>
+                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--cyan)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>STAGED</div>
                             </div>
                           </div>
                           <div style={{ padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
@@ -539,10 +607,10 @@ export default function ResultsPage() {
             padding:'12px 16px', textAlign:'center',
             background:'rgba(10,10,32,0.5)', border:'1px solid rgba(0,255,255,0.09)', borderRadius:10,
           }}>
-            <div style={{ fontFamily:'Space Mono,monospace', fontSize:8, color:'var(--text-lo)', letterSpacing:'.12em', marginBottom:6 }}>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--text-lo)', letterSpacing:'.12em', marginBottom:6 }}>
               {label.toUpperCase()}
             </div>
-            <div style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:17, color:'var(--text-hi)' }}>
+            <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:17, color:'var(--text-hi)' }}>
               {String(value)}
             </div>
           </div>
@@ -556,66 +624,115 @@ export default function ResultsPage() {
       </div>
 
       {editModalOpen && gen.mls_copy && (
-        <div
-          style={{
-            position: 'fixed', inset: 0, zIndex: 1000,
-            background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 20,
-          }}
-          onClick={() => !editBusy && setEditModalOpen(false)}
-        >
-          <div
-            className="glass-dash"
-            style={{ maxWidth: 560, width: '100%', maxHeight: '90vh', overflow: 'auto', padding: 24, borderRadius: 16 }}
-            onClick={e => e.stopPropagation()}
-          >
-            <h3 style={{ fontFamily: 'Syne,sans-serif', fontSize: 18, margin: '0 0 8px', color: 'var(--text-hi)' }}>
-              Edit &amp; regenerate MLS
-            </h3>
-            <p style={{ fontFamily: 'DM Sans,sans-serif', fontSize: 13, color: 'var(--text-mid)', margin: '0 0 16px', lineHeight: 1.6 }}>
-              Describe changes. Facts stay locked to your saved listing—only copy that matches your amenities and specs is kept.
-            </p>
-            <label className="neon-label" style={{ display: 'block', marginBottom: 6 }}>Quick suggestion</label>
-            <select
-              value={editPreset}
-              onChange={e => setEditPreset(e.target.value)}
-              style={{
-                width: '100%', marginBottom: 14, padding: '10px 12px', borderRadius: 8,
-                background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,255,255,0.2)', color: 'var(--text-hi)', fontSize: 13,
-              }}
-            >
-              <option value="">(none)</option>
-              <option value="add_piazza">Add piazza — only if in your amenities/photos</option>
-              <option value="remove_fireplace">Remove fireplace (unless listed)</option>
-              <option value="shorten_opening">Shorten opening</option>
-              <option value="more_lifestyle">More area lifestyle (landmarks only)</option>
-              <option value="tighten_specs">Tighten bed/bath/sqft wording</option>
-            </select>
-            <label className="neon-label" style={{ display: 'block', marginBottom: 6 }}>Your notes</label>
-            <textarea
-              value={editNotes}
-              onChange={e => setEditNotes(e.target.value)}
-              placeholder="e.g. Emphasize the chef's kitchen; tone down the opening…"
-              rows={5}
-              style={{
-                width: '100%', marginBottom: 16, padding: 12, borderRadius: 8, resize: 'vertical',
-                background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(0,255,255,0.15)', color: '#c8e4ec',
-                fontFamily: 'DM Sans,sans-serif', fontSize: 14, lineHeight: 1.6,
-              }}
-            />
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <button type="button" className="btn btn-ghost" disabled={editBusy} onClick={() => setEditModalOpen(false)}>
-                Cancel
-              </button>
-              <button type="button" className="btn btn-primary" disabled={editBusy} onClick={handleEditRegenerateMls}>
-                {editBusy ? 'Regenerating…' : 'Apply & update MLS'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditMlsModal
+          editNotes={editNotes}
+          editPreset={editPreset}
+          editBusy={editBusy}
+          onChangeNotes={setEditNotes}
+          onChangePreset={setEditPreset}
+          onClose={() => setEditModalOpen(false)}
+          onApply={handleEditRegenerateMls}
+        />
       )}
 
       <style>{`@keyframes spinRing{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+}
+
+function EditMlsModal({
+  editNotes, editPreset, editBusy,
+  onChangeNotes, onChangePreset, onClose, onApply,
+}: {
+  editNotes: string;
+  editPreset: string;
+  editBusy: boolean;
+  onChangeNotes: (v: string) => void;
+  onChangePreset: (v: string) => void;
+  onClose: () => void;
+  onApply: () => void;
+}) {
+  const isDirty = editNotes.trim().length > 0 || editPreset !== '';
+
+  const tryClose = useCallback(() => {
+    if (editBusy) return;
+    if (isDirty && !window.confirm('Discard your unsaved edits?')) return;
+    onClose();
+  }, [editBusy, isDirty, onClose]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') tryClose(); };
+    window.addEventListener('keydown', handler);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', handler);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [tryClose]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-mls-title"
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 20,
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) tryClose(); }}
+    >
+      <div
+        className="glass-dash"
+        style={{ maxWidth: 560, width: '100%', maxHeight: '90vh', overflow: 'auto', padding: 24, borderRadius: 16 }}
+      >
+        <h3 id="edit-mls-title" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 18, margin: '0 0 8px', color: 'var(--text-hi)' }}>
+          Edit &amp; regenerate MLS
+        </h3>
+        <p style={{ fontFamily: 'DM Sans,sans-serif', fontSize: 13, color: 'var(--text-mid)', margin: '0 0 16px', lineHeight: 1.6 }}>
+          Describe changes. Facts stay locked to your saved listing—only copy that matches your amenities and specs is kept.
+        </p>
+        <label htmlFor="edit-mls-preset" className="neon-label" style={{ display: 'block', marginBottom: 6 }}>Quick suggestion</label>
+        <select
+          id="edit-mls-preset"
+          value={editPreset}
+          onChange={e => onChangePreset(e.target.value)}
+          style={{
+            width: '100%', marginBottom: 14, padding: '10px 12px', borderRadius: 8,
+            background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,255,255,0.2)', color: 'var(--text-hi)', fontSize: 13,
+          }}
+        >
+          <option value="">(none)</option>
+          <option value="add_piazza">Add piazza — only if in your amenities/photos</option>
+          <option value="remove_fireplace">Remove fireplace (unless listed)</option>
+          <option value="shorten_opening">Shorten opening</option>
+          <option value="more_lifestyle">More area lifestyle (landmarks only)</option>
+          <option value="tighten_specs">Tighten bed/bath/sqft wording</option>
+        </select>
+        <label htmlFor="edit-mls-notes" className="neon-label" style={{ display: 'block', marginBottom: 6 }}>Your notes</label>
+        <textarea
+          id="edit-mls-notes"
+          value={editNotes}
+          onChange={e => onChangeNotes(e.target.value)}
+          placeholder="e.g. Emphasize the chef's kitchen; tone down the opening…"
+          rows={5}
+          autoFocus
+          style={{
+            width: '100%', marginBottom: 16, padding: 12, borderRadius: 8, resize: 'vertical',
+            background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(0,255,255,0.15)', color: '#c8e4ec',
+            fontFamily: 'DM Sans,sans-serif', fontSize: 14, lineHeight: 1.6,
+          }}
+        />
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn-ghost" disabled={editBusy} onClick={tryClose}>
+            Cancel
+          </button>
+          <button type="button" className="btn btn-primary" disabled={editBusy} onClick={onApply}>
+            {editBusy ? 'Regenerating…' : 'Apply & update MLS'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

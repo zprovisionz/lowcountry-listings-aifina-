@@ -47,7 +47,7 @@ export default function WizardShell({
                     {isDone ? '✓' : step.icon}
                   </div>
                   <span style={{
-                    fontFamily:'Space Mono,monospace', fontSize:8.5, letterSpacing:'.08em',
+                    fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8.5, letterSpacing:'.08em',
                     textTransform:'uppercase', whiteSpace:'nowrap',
                     color: isDone ? '#00ff96' : isActive ? 'var(--cyan)' : 'var(--text-ghost)',
                     transition:'color .3s',
@@ -78,11 +78,11 @@ export default function WizardShell({
         }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <span className="dot-live" />
-            <span style={{ fontFamily:'Space Mono,monospace', fontSize:10, color:'var(--cyan)', letterSpacing:'.14em' }}>
+            <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--cyan)', letterSpacing:'.14em' }}>
               STEP {currentStep} OF {STEPS.length} — {STEPS[currentStep-1].desc.toUpperCase()}
             </span>
           </div>
-          <span style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)' }}>
+          <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)' }}>
             {Math.round((currentStep / STEPS.length) * 100)}% complete
           </span>
         </div>

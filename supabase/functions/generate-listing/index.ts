@@ -17,6 +17,28 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const ALLOW_TEST_MODE = (Deno.env.get('ALLOW_TEST_MODE') ?? '').toLowerCase() === 'true';
+
+async function isAllowedTestGeneration(
+  supabase: ReturnType<typeof createClient>,
+  generationId: string
+): Promise<boolean> {
+  if (!ALLOW_TEST_MODE) return false;
+  try {
+    const { data: row } = await supabase
+      .from('generations')
+      .select('user_id')
+      .eq('id', generationId)
+      .single();
+    const userId = (row as { user_id?: string } | null)?.user_id;
+    if (!userId) return false;
+    const { data } = await supabase.rpc('is_test_user', { p_user_id: userId });
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
 const LANDMARKS: Record<string, { lat: number; lng: number }> = {
   'Downtown Charleston / King Street': { lat: 32.7765, lng: -79.9311 },
   'Shem Creek (Mount Pleasant)':       { lat: 32.7936, lng: -79.8841 },
@@ -505,7 +527,11 @@ For unused sections return null (not empty string). improvement_suggestions must
 
     if (updateErr) throw updateErr;
 
-    await supabase.rpc('increment_generation_count', { p_generation_id: generationId });
+    // In test mode, do not consume generation quota.
+    const allowTest = await isAllowedTestGeneration(supabase, generationId);
+    if (!allowTest) {
+      await supabase.rpc('increment_generation_count', { p_generation_id: generationId });
+    }
 
     return new Response(JSON.stringify({ ok: true, scores }), {
       headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },

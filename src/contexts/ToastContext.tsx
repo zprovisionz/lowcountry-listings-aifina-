@@ -48,7 +48,7 @@ const TYPE_STYLES: Record<ToastType, { border: string; color: string; icon: stri
   success: { border: 'rgba(0,255,150,0.4)',  color: '#00ff96', icon: '✓' },
   error:   { border: 'rgba(255,80,80,0.4)',  color: '#ff6060', icon: '✕' },
   warning: { border: 'rgba(255,200,0,0.4)',  color: '#ffc800', icon: '⚠' },
-  info:    { border: 'rgba(0,255,255,0.4)',  color: '#00ffff', icon: 'ℹ' },
+  info:    { border: 'var(--cyan-border)', color: 'var(--cyan)', icon: 'ℹ' },
 };
 
 function ToastContainer({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: string) => void }) {

@@ -41,16 +41,16 @@ export default function ScoreRing({ value, label, color = 'cyan', size = 92 }: S
           display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
         }}>
           <span style={{
-            fontFamily:'Syne,sans-serif', fontWeight:800,
+            fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800,
             fontSize: size * 0.22, lineHeight:1, color: hexColor,
             textShadow:`0 0 14px ${hexColor}`,
           }}>{value}</span>
-          <span style={{ fontFamily:'Space Mono,monospace', fontSize: size * 0.09, color:'var(--text-lo)', letterSpacing:'.1em' }}>
+          <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize: size * 0.09, color:'var(--text-lo)', letterSpacing:'.1em' }}>
             {grade}
           </span>
         </div>
       </div>
-      <span style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', textTransform:'uppercase' }}>
+      <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', textTransform:'uppercase' }}>
         {label}
       </span>
     </div>

@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const NAV_LINKS = [
-  { label: 'Features', href: '#features' },
-  { label: 'Pricing',  href: '#pricing' },
-  { label: 'Reviews',  href: '#testimonials' },
+  { label: 'Features',  href: '#features' },
+  { label: 'Pricing',   href: '#pricing' },
+  { label: 'Use Cases', href: '#testimonials' },
+  { label: 'FAQ',       href: '#faq' },
 ];
 
 export default function Navbar() {
@@ -19,7 +20,7 @@ export default function Navbar() {
     const onScroll = () => {
       setScrolled(window.scrollY > 48);
       // Highlight active section
-      const sections = ['features', 'pricing', 'testimonials'];
+      const sections = ['features', 'pricing', 'testimonials', 'faq'];
       for (const id of sections) {
         const el = document.getElementById(id);
         if (el) {
@@ -37,11 +38,9 @@ export default function Navbar() {
       <nav style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 200,
         padding: scrolled ? '10px 0' : '18px 0',
-        background: scrolled
-          ? 'rgba(8, 8, 26, 0.94)'
-          : 'transparent',
-        backdropFilter: scrolled ? 'blur(24px) saturate(1.4)' : 'none',
-        borderBottom: scrolled ? '1px solid rgba(0,255,255,0.12)' : 'none',
+        background: scrolled ? 'color-mix(in srgb, var(--space) 92%, transparent)' : 'transparent',
+        backdropFilter: scrolled ? 'blur(20px) saturate(1.2)' : 'none',
+        borderBottom: scrolled ? '1px solid var(--cyan-border)' : 'none',
         transition: 'all 0.4s var(--ease-expo)',
         animation: 'navFadeIn .6s ease both',
       }}>
@@ -58,32 +57,37 @@ export default function Navbar() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           {/* ─ Logo ─ */}
-          <a href="#" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 38, height: 38,
-              background: 'linear-gradient(135deg, rgba(0,255,255,0.15) 0%, rgba(255,0,255,0.12) 100%)',
-              border: '1px solid rgba(0,255,255,0.45)',
+              background: 'linear-gradient(135deg, var(--cyan-ghost), var(--magenta-ghost))',
+              border: '1px solid var(--cyan-border)',
               borderRadius: 10,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 19,
-              boxShadow: '0 0 14px rgba(0,255,255,0.2)',
-              transition: 'box-shadow .3s ease',
+              transition: 'border-color .25s ease, background .25s ease',
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 0 24px rgba(0,255,255,0.5)'}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 0 14px rgba(0,255,255,0.2)'}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.borderColor = 'oklch(0.72 0.13 195 / 0.35)';
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLElement;
+              el.style.borderColor = '';
+            }}
             >
               🌿
             </div>
             <div>
               <span style={{
-                fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16,
-                color: '#eafaff', letterSpacing: '-.01em',
+                fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 16,
+                color: 'var(--text-hi)', letterSpacing: '-.01em',
                 display: 'block', lineHeight: 1.1,
               }}>
                 Lowcountry <span style={{ color: 'var(--cyan)' }}>AI</span>
               </span>
               <span style={{
-                fontFamily: 'Space Mono, monospace', fontSize: 8,
+                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8,
                 color: 'var(--text-lo)', letterSpacing: '.14em',
               }}>
                 CHARLESTON, SC
@@ -100,7 +104,7 @@ export default function Navbar() {
                 <a key={label} href={href} style={{
                   color: isActive ? 'var(--cyan)' : 'var(--text-mid)',
                   textDecoration: 'none',
-                  fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 13,
+                  fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 13,
                   letterSpacing: '.04em',
                   transition: 'color .25s ease',
                   position: 'relative',
@@ -113,8 +117,7 @@ export default function Navbar() {
                   {/* Active underline */}
                   <span style={{
                     position: 'absolute', bottom: -2, left: 0, right: 0, height: 1,
-                    background: 'var(--cyan)',
-                    boxShadow: '0 0 6px var(--cyan)',
+                    background: 'var(--cyan-dim)',
                     transform: isActive ? 'scaleX(1)' : 'scaleX(0)',
                     transition: 'transform .3s ease',
                     transformOrigin: 'left',
@@ -158,8 +161,8 @@ export default function Navbar() {
         {menuOpen && (
           <div style={{
             padding: '20px 28px',
-            borderTop: '1px solid rgba(0,255,255,0.12)',
-            background: 'rgba(6,6,22,0.98)',
+            borderTop: '1px solid var(--cyan-border)',
+            background: 'color-mix(in srgb, var(--space-mid) 96%, transparent)',
             backdropFilter: 'blur(24px)',
             display: 'flex', flexDirection: 'column', gap: 16,
             animation: 'fadeUp .25s ease',
@@ -167,7 +170,7 @@ export default function Navbar() {
             {NAV_LINKS.map(({ label, href }) => (
               <a key={label} href={href} onClick={() => setMenuOpen(false)} style={{
                 color: 'var(--text-mid)', textDecoration: 'none',
-                fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 16,
+                fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 16,
               }}>
                 {label}
               </a>

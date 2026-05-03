@@ -31,11 +31,11 @@ export default function DashboardPage() {
           <div>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
               <span className="dot-live" />
-              <span style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--cyan)', letterSpacing:'.14em' }}>
+              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--cyan)', letterSpacing:'.14em' }}>
                 SYSTEM ONLINE · CHARLESTON METRO
               </span>
             </div>
-            <h2 style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:22, color:'#eafaff', margin:'0 0 4px' }}>
+            <h2 style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800, fontSize:22, color:'#eafaff', margin:'0 0 4px' }}>
               Welcome back{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''} 👋
             </h2>
             <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:13.5, color:'var(--text-mid)', margin:0 }}>
@@ -72,13 +72,13 @@ export default function DashboardPage() {
           }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span className="dot-live" style={{ width:6, height:6 }} />
-              <span style={{ fontFamily:'Space Mono,monospace', fontSize:9.5, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9.5, color:'var(--text-lo)', letterSpacing:'.14em' }}>
                 RECENT GENERATIONS
               </span>
             </div>
             <button onClick={() => navigate('/history')} style={{
               background:'none', border:'none', color:'var(--cyan)',
-              fontFamily:'Space Mono,monospace', fontSize:9, cursor:'pointer', letterSpacing:'.1em',
+              fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, cursor:'pointer', letterSpacing:'.1em',
               transition:'opacity .2s',
             }}>VIEW ALL →</button>
           </div>
@@ -90,7 +90,7 @@ export default function DashboardPage() {
           ) : completed.length === 0 ? (
             <div style={{ padding:'52px 24px', textAlign:'center' }}>
               <div style={{ fontSize:36, marginBottom:14 }}>📋</div>
-              <p style={{ fontFamily:'Syne,sans-serif', fontWeight:700, fontSize:17, color:'var(--text-hi)', margin:'0 0 6px' }}>No listings yet</p>
+              <p style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:17, color:'var(--text-hi)', margin:'0 0 6px' }}>No listings yet</p>
               <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:13.5, color:'var(--text-mid)', margin:'0 0 22px' }}>
                 Generate your first Charleston listing to see it here.
               </p>
@@ -115,10 +115,10 @@ export default function DashboardPage() {
                   display:'flex', alignItems:'center', justifyContent:'center', fontSize:16,
                 }}>🏠</div>
                 <div style={{ flex:1, overflow:'hidden' }}>
-                  <div style={{ fontFamily:'Syne,sans-serif', fontWeight:600, fontSize:13.5, color:'#eafaff', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                  <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:13.5, color:'#eafaff', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                     {g.address}
                   </div>
-                  <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', marginTop:2 }}>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', marginTop:2 }}>
                     {g.neighborhood ?? 'Charleston'} · {new Date(g.created_at).toLocaleDateString()}
                   </div>
                 </div>
@@ -126,7 +126,7 @@ export default function DashboardPage() {
                   <div style={{
                     padding:'3px 9px',
                     background:'rgba(0,255,255,0.07)', border:'1px solid rgba(0,255,255,0.22)',
-                    borderRadius:6, fontFamily:'Space Mono,monospace', fontSize:10,
+                    borderRadius:6, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10,
                     color:'var(--cyan)', fontWeight:700,
                     boxShadow:'0 0 8px rgba(0,255,255,0.1)',
                   }}>
@@ -144,7 +144,7 @@ export default function DashboardPage() {
 
           {/* Quick actions */}
           <div className="glass-dash anim-fade-up d-300" style={{ padding:'18px 18px' }}>
-            <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:14 }}>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:14 }}>
               QUICK ACTIONS
             </div>
             {([
@@ -166,8 +166,8 @@ export default function DashboardPage() {
               >
                 <span style={{ fontSize:16, color, width:20, textAlign:'center', textShadow:`0 0 8px ${color}` }}>{icon}</span>
                 <div style={{ flex:1 }}>
-                  <div style={{ fontFamily:'Syne,sans-serif', fontWeight:600, fontSize:13, color:'#eafaff' }}>{label}</div>
-                  <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)' }}>{sub}</div>
+                  <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:13, color:'#eafaff' }}>{label}</div>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)' }}>{sub}</div>
                 </div>
                 <span style={{ color:'var(--text-lo)', fontSize:12 }}>→</span>
               </div>
@@ -176,10 +176,10 @@ export default function DashboardPage() {
 
           {/* Plan card */}
           <div className="glass-magenta anim-fade-up d-400" style={{ padding:'18px 18px' }}>
-            <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:10 }}>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:10 }}>
               YOUR PLAN
             </div>
-            <div className="shimmer-text" style={{ fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:18, marginBottom:12 }}>
+            <div className="shimmer-text" style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800, fontSize:18, marginBottom:12 }}>
               {(profile?.tier ?? 'free').replace('_','+').toUpperCase()}
             </div>
             {(TIER_FEATURES[profile?.tier ?? 'free'] ?? []).map(f => (

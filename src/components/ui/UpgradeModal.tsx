@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useStripe } from '../../hooks/useStripe';
 
 interface UpgradeModalProps {
@@ -9,8 +10,22 @@ interface UpgradeModalProps {
 export default function UpgradeModal({ reason, featureName, onClose }: UpgradeModalProps) {
   const { createCheckoutSession, loading } = useStripe();
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', handler);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upgrade-modal-title"
       style={{
         position: 'fixed',
         inset: 0,
@@ -36,7 +51,7 @@ export default function UpgradeModal({ reason, featureName, onClose }: UpgradeMo
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-          <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 20, color: 'var(--text-hi)' }}>
+          <h3 id="upgrade-modal-title" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 20, color: 'var(--text-hi)' }}>
             {reason === 'quota' ? 'Generation limit reached' : featureName ? `Unlock: ${featureName}` : 'Upgrade to continue'}
           </h3>
           <button
@@ -80,7 +95,7 @@ export default function UpgradeModal({ reason, featureName, onClose }: UpgradeMo
           </button>
         </div>
 
-        <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-ghost)', marginTop: 20, textAlign: 'center' }}>
+        <p style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-ghost)', marginTop: 20, textAlign: 'center' }}>
           Charleston · Berkeley · Dorchester only
         </p>
       </div>

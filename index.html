@@ -3,10 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lowcountry Listings AI — Charleston's AI Listing Platform</title>
     <meta name="description" content="AI-powered real estate listing generation built exclusively for Charleston, SC. Hyper-local intelligence, verified landmark distances, virtual staging — MLS-ready copy in seconds." />
-    <meta name="theme-color" content="#0a0a1f" />
+    <meta name="theme-color" content="#0b0f14" />
+    <meta name="color-scheme" content="dark" />
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lowcountry Listings AI" />
+    <meta property="og:title" content="Lowcountry Listings AI — Charleston's AI Listing Platform" />
+    <meta property="og:description" content="The only AI trained exclusively on Charleston voice. Verified landmark distances, hyper-local neighborhood intelligence, and virtual staging — MLS-ready copy in seconds." />
+    <meta property="og:url" content="https://lowcountrylistings.ai/" />
+    <meta property="og:image" content="https://lowcountrylistings.ai/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Lowcountry Listings AI — Charleston AI listing assistant" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Lowcountry Listings AI — Charleston's AI Listing Platform" />
+    <meta name="twitter:description" content="Charleston-only AI listing assistant. MLS + Airbnb + social copy + virtual staging in seconds." />
+    <meta name="twitter:image" content="https://lowcountrylistings.ai/og-image.png" />
+
+    <link rel="canonical" href="https://lowcountrylistings.ai/" />
 
     <!-- Callback for Google Maps (must exist before app injects script) -->
     <script>
@@ -16,17 +39,17 @@
       };
     </script>
 
-    <!-- Fonts: Syne (display) + Space Mono (mono) + DM Sans (body) -->
+    <!-- Fonts: Playfair + DM Mono + DM Sans (same family stack as landing v3) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap"
       rel="stylesheet"
     />
 
     <style>
-      /* Critical: prevent FOUC */
-      html { background: #0a0a1f; }
+      /* Critical: prevent FOUC — match landing --bg */
+      html { background: #0b0f14; }
       #root { opacity: 0; animation: rootFadeIn .4s .1s ease forwards; }
       @keyframes rootFadeIn { to { opacity: 1; } }
     </style>

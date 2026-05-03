@@ -7,8 +7,9 @@ import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import Stripe from 'https://esm.sh/stripe@14.21.0?target=deno';
 
+const ALLOWED_ORIGIN = Deno.env.get('APP_PUBLIC_URL') ?? 'http://localhost:5173';
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -17,6 +18,13 @@ const PRICE_IDS: Record<string, string> = {
   pro: Deno.env.get('STRIPE_PRO_PRICE_ID') ?? '',
   pro_plus: Deno.env.get('STRIPE_PRO_PLUS_PRICE_ID') ?? '',
   team: Deno.env.get('STRIPE_TEAM_PRICE_ID') ?? '',
+};
+
+const ANNUAL_PRICE_IDS: Record<string, string> = {
+  starter:  Deno.env.get('STRIPE_STARTER_ANNUAL_PRICE_ID') ?? '',
+  pro:      Deno.env.get('STRIPE_PRO_ANNUAL_PRICE_ID') ?? '',
+  pro_plus: Deno.env.get('STRIPE_PRO_PLUS_ANNUAL_PRICE_ID') ?? '',
+  team:     Deno.env.get('STRIPE_TEAM_ANNUAL_PRICE_ID') ?? '',
 };
 
 // Credit packs: packType -> { price in cents, credits }
@@ -86,21 +94,25 @@ serve(async (req: Request) => {
     }
 
     const body = await req.json();
-    const { mode, priceId, packType } = body as { mode: 'subscription' | 'payment'; priceId?: string; packType?: string };
+    const { mode, tierId, interval, packType } = body as {
+      mode: 'subscription' | 'payment';
+      tierId?: string;
+      interval?: 'monthly' | 'annual';
+      packType?: string;
+    };
 
     if (mode === 'subscription') {
-      const tierOrPriceId = priceId ?? body.priceId;
-      if (!tierOrPriceId) {
-        return new Response(JSON.stringify({ error: 'Missing priceId' }), {
+      if (!tierId) {
+        return new Response(JSON.stringify({ error: 'Missing tierId' }), {
           status: 400,
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
       }
-      const sessionPriceId = tierOrPriceId.startsWith('price_')
-        ? tierOrPriceId
-        : (PRICE_IDS[tierOrPriceId] ?? '');
+      const sessionPriceId = interval === 'annual'
+        ? (ANNUAL_PRICE_IDS[tierId] ?? '')
+        : (PRICE_IDS[tierId] ?? '');
       if (!sessionPriceId) {
-        return new Response(JSON.stringify({ error: 'Invalid price' }), {
+        return new Response(JSON.stringify({ error: 'Invalid price or tier' }), {
           status: 400,
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });

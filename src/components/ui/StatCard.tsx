@@ -50,21 +50,21 @@ export default function StatCard({ value, label, sub, color='cyan', icon, delay=
       }} />
 
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14 }}>
-        <span style={{ fontFamily:'Space Mono,monospace', fontSize:9, letterSpacing:'.14em', color:'var(--text-lo)', textTransform:'uppercase' }}>
+        <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, letterSpacing:'.14em', color:'var(--text-lo)', textTransform:'uppercase' }}>
           {label}
         </span>
         {icon && <span style={{ fontSize:18, opacity:.55 }}>{icon}</span>}
       </div>
 
       <div style={{
-        fontFamily:'Syne,sans-serif', fontWeight:800, fontSize:38, lineHeight:1,
+        fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800, fontSize:38, lineHeight:1,
         color: c.text, textShadow:`0 0 24px ${c.glow}`,
       }}>
         {value}
       </div>
 
       {sub && (
-        <div style={{ fontFamily:'Space Mono,monospace', fontSize:9, color:'var(--text-lo)', marginTop:7, letterSpacing:'.06em' }}>
+        <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', marginTop:7, letterSpacing:'.06em' }}>
           {sub}
         </div>
       )}

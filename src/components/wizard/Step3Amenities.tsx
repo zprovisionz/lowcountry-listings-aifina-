@@ -88,10 +88,10 @@ export default function Step3Amenities({ data, onChange }: { data:WizardData; on
                   boxShadow: active ? '0 0 22px rgba(255,0,255,0.18),inset 0 0 12px rgba(255,0,255,0.06)' : 'none',
                 }}>
                   <span style={{ fontSize:26 }}>{icon}</span>
-                  <span style={{ fontFamily:'Syne,sans-serif', fontWeight:600, fontSize:11.5, color: active ? 'var(--magenta)' : 'var(--text-mid)', textAlign:'center' }}>
+                  <span style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:11.5, color: active ? 'var(--magenta)' : 'var(--text-mid)', textAlign:'center' }}>
                     {label}
                   </span>
-                  {active && <span style={{ fontFamily:'Space Mono,monospace', fontSize:7.5, color:'var(--magenta)', letterSpacing:'.12em' }}>SELECTED</span>}
+                  {active && <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:7.5, color:'var(--magenta)', letterSpacing:'.12em' }}>SELECTED</span>}
                 </button>
               );
             })}
@@ -120,7 +120,7 @@ export default function Step3Amenities({ data, onChange }: { data:WizardData; on
                 borderRadius:10, transition:'all .2s ease',
                 boxShadow: on ? '0 0 14px rgba(0,255,255,0.12)' : 'none',
               }}>
-                <div style={{ fontFamily:'Syne,sans-serif', fontWeight:600, fontSize:13, color: on ? 'var(--cyan)' : 'var(--text-hi)' }}>{label}</div>
+                <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:13, color: on ? 'var(--cyan)' : 'var(--text-hi)' }}>{label}</div>
                 <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:11.5, color:'var(--text-lo)', marginTop:2 }}>{desc}</div>
               </button>
             );

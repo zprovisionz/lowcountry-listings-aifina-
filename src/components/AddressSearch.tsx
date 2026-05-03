@@ -116,7 +116,7 @@ export default function AddressSearch({ onAddressSelect, onClear }: AddressSearc
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6,
         marginTop: 8, fontSize: 10,
-        color: 'var(--text-ghost)', fontFamily: 'Space Mono, monospace',
+        color: 'var(--text-ghost)', fontFamily: "'DM Mono', ui-monospace, monospace",
       }}>
         <span style={{ color: 'var(--cyan)', fontSize: 8 }}>◆</span>
         Restricted to Charleston · Berkeley · Dorchester counties
@@ -129,7 +129,7 @@ export default function AddressSearch({ onAddressSelect, onClear }: AddressSearc
           background: 'rgba(255,80,80,0.08)',
           border: '1px solid rgba(255,80,80,0.28)',
           borderRadius: 8, fontSize: 11, color: '#ff8080',
-          fontFamily: 'Space Mono, monospace',
+          fontFamily: "'DM Mono', ui-monospace, monospace",
         }}>
           ⚠ {error}
         </div>

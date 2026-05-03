@@ -4,12 +4,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 
 const REPORT_CARDS = [
-  { icon:'📊', title:'Neighborhood Price Trends',   desc:'Median sold price, DOM, and price-per-sqft trends for Charleston-area neighborhoods over the last 12 months.', tier:'pro' },
   { icon:'🏘️', title:'Comparable Listings (Comps)',  desc:'AI-generated comps for any address — estimated price range, DOM, and key differentiators for the Lowcountry market.', tier:'pro_plus' },
-  { icon:'📈', title:'Market Velocity Report',       desc:'How fast are homes selling by neighborhood and price tier? Track absorption rates and list-to-close ratios.', tier:'pro' },
-  { icon:'🌊', title:'Coastal Premium Analysis',     desc:'Quantify the Shem Creek, Sullivan\'s Island, and Isle of Palms proximity premium with real transaction data.', tier:'pro_plus' },
-  { icon:'📅', title:'Seasonal Listing Intelligence',desc:'Best times to list by neighborhood, property type, and price band. Backed by 3 years of Charleston MLS data.', tier:'pro_plus' },
-  { icon:'👥', title:'Team Performance Dashboard',   desc:'Track generations, copy rates, and listing performance across your entire team. Exportable CSV reports.', tier:'team' },
+];
+
+const ROADMAP_REPORTS = [
+  { icon: '📊', title: 'Neighborhood Price Trends',    desc: 'Median sold price, DOM, and price-per-sqft trends for Charleston-area neighborhoods.' },
+  { icon: '📈', title: 'Market Velocity Report',       desc: 'Absorption rates and list-to-close ratios by neighborhood and price tier.' },
+  { icon: '🌊', title: 'Coastal Premium Analysis',     desc: 'Quantify the Shem Creek, Sullivan\'s Island, and Isle of Palms proximity premium.' },
+  { icon: '📅', title: 'Seasonal Listing Intelligence',desc: 'Best times to list by neighborhood, property type, and price band.' },
+  { icon: '👥', title: 'Team Performance Dashboard',   desc: 'Generations, copy rates, and listing performance across your entire team.' },
 ];
 
 const TIER_ORDER = ['free','starter','pro','pro_plus','team'];
@@ -81,7 +84,7 @@ export default function ReportsPage() {
         border: '1px solid rgba(0,255,255,0.14)',
         borderRadius: 14,
       }}>
-        <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#eafaff', margin: '0 0 6px' }}>
+        <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 18, color: '#eafaff', margin: '0 0 6px' }}>
           Market Intelligence
         </h2>
         <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13.5, color: 'var(--text-mid)', margin: 0 }}>
@@ -91,7 +94,7 @@ export default function ReportsPage() {
 
       {canUseComps && (
         <div className="glass" style={{ padding: 28, borderRadius: 16 }}>
-          <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Comparable Listings (Comps)</h3>
+          <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 16, marginBottom: 16 }}>Comparable Listings (Comps)</h3>
           <p style={{ fontSize: 13, color: 'var(--text-mid)', marginBottom: 20 }}>
             Enter a subject property to get 3 AI-generated comps with price range, DOM, and differentiators.
           </p>
@@ -129,9 +132,9 @@ export default function ReportsPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
                   {compsResult.comps.map((c, i) => (
                     <div key={i} className="glass" style={{ padding: 18, borderRadius: 12 }}>
-                      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 14, color: 'var(--text-hi)', marginBottom: 8 }}>{c.address}</div>
-                      <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color: 'var(--cyan)', marginBottom: 6 }}>{c.price_range}</div>
-                      <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 10, color: 'var(--text-lo)', marginBottom: 10 }}>DOM: {c.dom}</div>
+                      <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 14, color: 'var(--text-hi)', marginBottom: 8 }}>{c.address}</div>
+                      <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 11, color: 'var(--cyan)', marginBottom: 6 }}>{c.price_range}</div>
+                      <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, color: 'var(--text-lo)', marginBottom: 10 }}>DOM: {c.dom}</div>
                       <ul style={{ margin: 0, paddingLeft: 18, fontSize: 12, color: 'var(--text-mid)', lineHeight: 1.6 }}>
                         {c.differentiators?.map((d, j) => (
                           <li key={j}>{d}</li>
@@ -153,7 +156,6 @@ export default function ReportsPage() {
           const requiredIdx = TIER_ORDER.indexOf(card.tier);
           const locked = userTierIdx < requiredIdx;
           const tierLabel = card.tier.replace('_', '+').toUpperCase();
-          const isCompsCard = card.title.includes('Comparable');
 
           return (
             <div key={card.title} style={{
@@ -176,14 +178,14 @@ export default function ReportsPage() {
                   background: 'rgba(255,0,255,0.1)',
                   border: '1px solid rgba(255,0,255,0.3)',
                   borderRadius: 20,
-                  fontFamily: 'Space Mono, monospace', fontSize: 8.5,
+                  fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5,
                   color: 'var(--magenta)', letterSpacing: '.1em',
                 }}>
                   🔒 {tierLabel}+
                 </div>
               )}
               <div style={{ fontSize: 28, marginBottom: 12 }}>{card.icon}</div>
-              <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 15, color: locked ? 'var(--text-mid)' : 'var(--text-hi)', margin: '0 0 8px' }}>
+              <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 15, color: locked ? 'var(--text-mid)' : 'var(--text-hi)', margin: '0 0 8px' }}>
                 {card.title}
               </h3>
               <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: 'var(--text-lo)', lineHeight: 1.65, margin: '0 0 18px' }}>
@@ -193,19 +195,8 @@ export default function ReportsPage() {
                 <button onClick={() => navigate('/account')} className="btn btn-accent btn-sm" style={{ fontSize: 10 }}>
                   Upgrade to {tierLabel} →
                 </button>
-              ) : isCompsCard ? (
-                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 10, color: 'var(--cyan)' }}>Use form above</span>
               ) : (
-                <span style={{
-                  padding: '6px 14px',
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 6, fontSize: 11,
-                  color: 'var(--text-lo)',
-                  fontFamily: 'Space Mono, monospace',
-                }}>
-                  Coming in Phase 2
-                </span>
+                <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, color: 'var(--cyan)' }}>Use form above</span>
               )}
             </div>
           );
@@ -213,14 +204,48 @@ export default function ReportsPage() {
       </div>
 
       <div style={{
-        padding: '14px 20px',
-        background: 'rgba(255,200,0,0.04)',
-        border: '1px dashed rgba(255,200,0,0.15)',
-        borderRadius: 10, textAlign: 'center',
+        padding: '20px 22px',
+        background: 'rgba(10,10,32,0.5)',
+        border: '1px dashed rgba(0,255,255,0.16)',
+        borderRadius: 14,
       }}>
-        <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'rgba(200,160,0,0.5)', letterSpacing: '.1em' }}>
-          ADDITIONAL MARKET REPORTS LAUNCHING IN PHASE 2
-        </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 4 }}>
+              ON THE ROADMAP
+            </div>
+            <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 15, color: 'var(--text-hi)' }}>
+              More Charleston market reports coming
+            </div>
+          </div>
+          <a
+            href="mailto:hello@lowcountrylistings.ai?subject=Market%20reports%20early%20access"
+            className="btn btn-ghost btn-sm"
+            style={{ textDecoration: 'none' }}
+          >
+            Get notified →
+          </a>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+          {ROADMAP_REPORTS.map(r => (
+            <div key={r.title} style={{
+              padding: '12px 14px',
+              background: 'rgba(0,0,0,0.2)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 10,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 16 }}>{r.icon}</span>
+                <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 12.5, color: 'var(--text-mid)' }}>
+                  {r.title}
+                </span>
+              </div>
+              <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 11.5, color: 'var(--text-lo)', lineHeight: 1.55, margin: 0 }}>
+                {r.desc}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

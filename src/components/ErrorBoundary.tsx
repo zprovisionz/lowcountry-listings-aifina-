@@ -50,7 +50,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <div style={{ fontSize: 40, marginBottom: 16 }}>⚠</div>
             <h2
               style={{
-                fontFamily: 'Syne, sans-serif',
+                fontFamily: "'Playfair Display', Georgia, serif",
                 fontWeight: 700,
                 fontSize: 18,
                 color: 'var(--text-hi)',

@@ -10,6 +10,18 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const ALLOW_TEST_MODE = (Deno.env.get('ALLOW_TEST_MODE') ?? '').toLowerCase() === 'true';
+
+async function isAllowedTestUser(supabase: ReturnType<typeof createClient>, userId: string): Promise<boolean> {
+  if (!ALLOW_TEST_MODE) return false;
+  try {
+    const { data } = await supabase.rpc('is_test_user', { p_user_id: userId });
+    return !!data;
+  } catch {
+    return false;
+  }
+}
+
 interface BulkRow {
   address: string;
   bedrooms?: number;
@@ -52,6 +64,7 @@ serve(async (req: Request) => {
   const userId = user.id;
 
   try {
+    const allowTest = await isAllowedTestUser(supabase, userId);
     const body = await req.json();
     const { jobId, rows } = body as { jobId?: string; rows: BulkRow[] };
 
@@ -102,20 +115,22 @@ serve(async (req: Request) => {
         continue;
       }
 
-      const { data: quota } = await supabase.rpc('check_generation_quota', { p_user_id: userId });
-      const allowed = (quota as { allowed?: boolean })?.allowed ?? false;
-      if (!allowed) {
-        await supabase.from('bulk_jobs').update({
-          status: 'error',
-          error_message: 'Generation quota exceeded',
-          processed_rows: processed,
-          failed_rows: failed,
-          results: results,
-          completed_at: new Date().toISOString(),
-        }).eq('id', id);
-        return new Response(JSON.stringify({ jobId: id }), {
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-        });
+      if (!allowTest) {
+        const { data: quota } = await supabase.rpc('check_generation_quota', { p_user_id: userId });
+        const allowed = (quota as { allowed?: boolean })?.allowed ?? false;
+        if (!allowed) {
+          await supabase.from('bulk_jobs').update({
+            status: 'error',
+            error_message: 'Generation quota exceeded',
+            processed_rows: processed,
+            failed_rows: failed,
+            results: results,
+            completed_at: new Date().toISOString(),
+          }).eq('id', id);
+          return new Response(JSON.stringify({ jobId: id }), {
+            headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          });
+        }
       }
 
       const { data: genRow, error: genInsertErr } = await supabase.from('generations').insert({

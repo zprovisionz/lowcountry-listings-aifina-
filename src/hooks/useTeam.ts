@@ -98,6 +98,13 @@ export function useTeam() {
     [fetchTeam]
   );
 
+  const resendInvite = useCallback(
+    async (email: string, role: 'editor' | 'viewer') => {
+      await inviteMember(email, role);
+    },
+    [inviteMember]
+  );
+
   return {
     team,
     members,
@@ -108,6 +115,7 @@ export function useTeam() {
     removeMember,
     updateMemberRole,
     revokeInvite,
+    resendInvite,
     refetch: fetchTeam,
   };
 }

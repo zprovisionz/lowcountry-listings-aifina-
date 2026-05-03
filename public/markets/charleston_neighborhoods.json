@@ -1,0 +1,280 @@
+{
+  "version": "1.0",
+  "region": "Charleston-Berkeley-Dorchester, SC",
+  "neighborhoods": [
+    {
+      "name": "Downtown Charleston",
+      "aliases": ["Peninsula", "Historic District", "South of Broad", "Ansonborough", "Harleston Village", "Wagener Terrace", "North Central"],
+      "county": "Charleston",
+      "vocab": [
+        "single house", "piazza", "cobblestone", "gaslit streets", "Charleston green",
+        "King Street", "Rainbow Row", "historic district", "antebellum", "double piazza",
+        "heart-pine floors", "transom windows", "Italianate", "Greek Revival",
+        "Battery promenade", "White Point Garden", "Charleston single", "joggling board"
+      ],
+      "lifestyle": [
+        "walkable to King Street dining", "steps from the French Quarter",
+        "stroll to the Battery", "Horse-drawn carriage tours outside",
+        "world-class galleries within blocks", "farm-to-table restaurants nearby"
+      ],
+      "landmarks": ["King Street", "The Battery", "Marion Square", "Rainbow Row", "Waterfront Park"],
+      "price_range": { "min": 600000, "max": 4000000 },
+      "property_types": ["historic_single_house", "condo", "townhome", "commercial_mixed"],
+      "keywords_for_ai": "Downtown Charleston: use 'piazza' not 'porch', 'Charleston green' shutters, heart-pine floors, cobblestone alleys. Reference King Street, the Battery, Rainbow Row by name. Emphasize walkability and historic preservation."
+    },
+    {
+      "name": "Mount Pleasant",
+      "aliases": ["Mt Pleasant", "Old Village", "I'On", "Seaside Farms", "Park West", "Dunes West", "Belle Hall"],
+      "county": "Charleston",
+      "vocab": [
+        "piazza", "marshfront", "live oaks", "tidal creek", "Shem Creek proximity",
+        "Lowcountry", "deepwater", "golf cart community", "barrier island access",
+        "Sullivan's Island views", "marsh grass at sunset", "blue heron sightings",
+        "moss-draped oaks", "pluff mud", "creek access", "boat ramp"
+      ],
+      "lifestyle": [
+        "Shem Creek waterfront dining minutes away", "Sullivan's Island beach access",
+        "Patriots Point and USS Yorktown nearby", "Ravenel Bridge views",
+        "top-rated schools", "Town Centre shopping"
+      ],
+      "landmarks": ["Shem Creek", "Sullivan's Island", "Ravenel Bridge", "Isle of Palms", "Patriots Point"],
+      "price_range": { "min": 450000, "max": 2500000 },
+      "property_types": ["single_family", "townhome", "condo", "waterfront"],
+      "keywords_for_ai": "Mount Pleasant: marshfront and tidal creek views are premium. Reference Shem Creek shrimp boats, live oak canopy on Rifle Range Road. Mention Sullivan's Island beach access and Ravenel Bridge landmark. 'Pluff mud' is a beloved Lowcountry scent."
+    },
+    {
+      "name": "West Ashley",
+      "aliases": ["Avondale", "Byrnes Downs", "Windermere", "Bees Landing", "Shadowmoss", "Grand Oaks"],
+      "county": "Charleston",
+      "vocab": [
+        "Ashley River", "plantation corridor", "ancient oaks", "brackish marsh",
+        "azalea gardens", "Magnolia Plantation proximity", "Middleton Place nearby",
+        "tidal marsh views", "moss-draped", "Ashley Hall", "Church Creek",
+        "bungalow character", "craftsman details"
+      ],
+      "lifestyle": [
+        "minutes to Magnolia Plantation and Gardens", "Middleton Place day trips",
+        "Avondale dining and nightlife", "Ashley River kayaking",
+        "close to downtown via bridge", "James Island County Park access"
+      ],
+      "landmarks": ["Magnolia Plantation", "Middleton Place", "Angel Oak Tree", "Avondale"],
+      "price_range": { "min": 280000, "max": 1200000 },
+      "property_types": ["single_family", "ranch", "bungalow", "new_construction"],
+      "keywords_for_ai": "West Ashley: plantation corridor lifestyle, Ashley River views, ancient live oaks. Reference Magnolia Plantation and Middleton Place as nearby draws. Avondale neighborhood has craft beer and dining scene."
+    },
+    {
+      "name": "James Island",
+      "aliases": ["James Island", "Riverland Terrace", "Ft. Johnson Estates", "Bayview Farms"],
+      "county": "Charleston",
+      "vocab": [
+        "tidal creek", "coastal retreat", "wetland views", "Folly Beach proximity",
+        "low-country ranch", "marsh dock", "oyster shells", "tabby construction",
+        "fishing off the dock", "Stono River", "sunset views over the marsh"
+      ],
+      "lifestyle": [
+        "5 minutes to Folly Beach", "kayak launch steps away",
+        "James Island County Park neighbors", "Charleston City Marina nearby",
+        "small-town island feel with city access", "local farm stands"
+      ],
+      "landmarks": ["Folly Beach", "James Island County Park", "Stono River", "Harbor"],
+      "price_range": { "min": 320000, "max": 1400000 },
+      "property_types": ["single_family", "waterfront", "ranch", "cottage"],
+      "keywords_for_ai": "James Island: tidal creek living, Folly Beach proximity is the top selling point. Mention marsh dock access, sunset views over the Stono River. Island lifestyle with easy downtown commute."
+    },
+    {
+      "name": "Isle of Palms",
+      "aliases": ["IOP", "Wild Dunes"],
+      "county": "Charleston",
+      "vocab": [
+        "beachfront", "barrier island", "ocean access", "resort living",
+        "Wild Dunes Resort", "championship golf", "tennis", "marina",
+        "Atlantic views", "dune preservation", "beach cottage", "vacation rental",
+        "short-term rental eligible", "rental income potential", "oceanfront deck"
+      ],
+      "lifestyle": [
+        "private beach access", "Wild Dunes golf and tennis",
+        "IOP Marina boat slips", "vacation rental income opportunity",
+        "resort amenities year-round", "beachfront dining"
+      ],
+      "landmarks": ["Wild Dunes Resort", "IOP Marina", "Atlantic Ocean", "Front Beach"],
+      "price_range": { "min": 700000, "max": 5000000 },
+      "property_types": ["beachfront", "single_family", "condo", "vacation_rental"],
+      "keywords_for_ai": "Isle of Palms: barrier island luxury. Lead with Atlantic Ocean access, Wild Dunes resort amenities, marina access. Vacation rental income is a major selling point. Use 'oceanfront' and 'barrier island' prominently."
+    },
+    {
+      "name": "Folly Beach",
+      "aliases": ["The Edge of America", "Folly"],
+      "county": "Charleston",
+      "vocab": [
+        "oceanfront", "beach town", "surf culture", "Atlantic views",
+        "the Edge of America", "surf break", "fishing pier", "eclectic",
+        "bohemian", "beach cottage", "short-term rental", "Lowcountry surf",
+        "Morris Island Lighthouse views", "tidal creek behind"
+      ],
+      "lifestyle": [
+        "steps to the Folly Beach Pier", "surf culture community",
+        "walkable to Center Street dining and bars", "vacation rental income",
+        "eclectic arts scene", "kayaking in the tidal creeks"
+      ],
+      "landmarks": ["Folly Beach Pier", "Morris Island Lighthouse", "Center Street", "Folly River"],
+      "price_range": { "min": 400000, "max": 2000000 },
+      "property_types": ["beach_cottage", "single_family", "condo", "vacation_rental"],
+      "keywords_for_ai": "Folly Beach: lean into the 'Edge of America' nickname, surf culture, eclectic community feel. Vacation rental income is primary motivator. Morris Island Lighthouse views are premium. The Folly Beach Pier and Center Street dining are top lifestyle amenities."
+    },
+    {
+      "name": "Daniel Island",
+      "aliases": ["Daniel Island", "Smythe Park", "Daniel Island Park", "Beresford Creek"],
+      "county": "Berkeley",
+      "vocab": [
+        "planned community", "riverwalk", "championship golf", "deepwater access",
+        "Daniel Island Club", "Beresford Creek", "Wando River frontage",
+        "Town Center", "walkable village", "tennis center", "new urbanism",
+        "master-planned", "dock access", "Clam Bank"
+      ],
+      "lifestyle": [
+        "Daniel Island Club golf and tennis", "Wando River deepwater dock",
+        "walkable to Smythe Park", "Family Circle Tennis Center",
+        "Daniel Island School district", "Town Center restaurants and shops"
+      ],
+      "landmarks": ["Daniel Island Club", "Wando River", "Smythe Park", "Beresford Creek"],
+      "price_range": { "min": 500000, "max": 3500000 },
+      "property_types": ["single_family", "townhome", "waterfront", "golf_community"],
+      "keywords_for_ai": "Daniel Island: master-planned community with resort amenities. Daniel Island Club membership access, Wando River deepwater docks. Walkable Town Center with boutique dining. Champion-level golf and tennis lifestyle."
+    },
+    {
+      "name": "Summerville",
+      "aliases": ["Flowertown", "Cane Bay", "Nexton", "Pine Forest", "Carnes Crossroads"],
+      "county": "Dorchester",
+      "vocab": [
+        "historic downtown", "live oak boulevard", "Southern charm", "azalea gardens",
+        "Flowertown", "Azalea Festival", "Nexton master plan", "top-rated schools",
+        "Dorchester District Two", "Ashley River", "Sawmill Branch Trail",
+        "picturesque Main Street", "front porch community"
+      ],
+      "lifestyle": [
+        "stroll historic downtown Summerville", "Azalea Park and gardens",
+        "Flowertown Players arts scene", "Nexton Square dining and retail",
+        "Dorchester D2 school district", "easy I-26 commute to Charleston",
+        "Sawmill Branch Trail for outdoor activities"
+      ],
+      "landmarks": ["Azalea Park", "Nexton Square", "Historic Downtown Summerville", "Sawmill Branch Trail"],
+      "price_range": { "min": 220000, "max": 900000 },
+      "property_types": ["single_family", "new_construction", "ranch", "townhome"],
+      "keywords_for_ai": "Summerville: 'Flowertown of the Pines' charm. Historic downtown walkability, azalea-lined streets. Nexton is the modern master-planned area with walkable squares. Top Dorchester D2 schools are a major draw for families."
+    },
+    {
+      "name": "Goose Creek",
+      "aliases": ["Crowfield Plantation", "Liberty Hall", "Crowfield"],
+      "county": "Berkeley",
+      "vocab": [
+        "Berkeley County", "Crowfield Plantation", "Goose Creek Reservoir",
+        "Navy base proximity", "established community", "mature trees",
+        "Goose Creek Sports Complex", "St. James Goose Creek Parish"
+      ],
+      "lifestyle": [
+        "JBSC Naval Weapons Station proximity", "Goose Creek Reservoir recreation",
+        "Berkeley County School District", "easy access to I-26",
+        "established neighborhood with mature landscaping"
+      ],
+      "landmarks": ["Goose Creek Reservoir", "JBSC", "Crowfield Golf Club"],
+      "price_range": { "min": 180000, "max": 500000 },
+      "property_types": ["single_family", "ranch", "townhome"],
+      "keywords_for_ai": "Goose Creek: value-driven Lowcountry living in Berkeley County. Crowfield Plantation golf community, reservoir recreation, strong military community near JBSC."
+    },
+    {
+      "name": "Hanahan",
+      "aliases": ["Hanahan"],
+      "county": "Berkeley",
+      "vocab": [
+        "Goose Creek tributary", "Berkeley County", "Cooper River proximity",
+        "Tanner Plantation", "established neighborhood", "military community",
+        "boat ramp access"
+      ],
+      "lifestyle": [
+        "Cooper River access for boating", "close to North Charleston employment",
+        "Berkeley County schools", "quiet residential community"
+      ],
+      "landmarks": ["Cooper River", "Tanner Plantation"],
+      "price_range": { "min": 200000, "max": 450000 },
+      "property_types": ["single_family", "ranch"],
+      "keywords_for_ai": "Hanahan: Cooper River boating access, quiet Berkeley County living. Close to North Charleston employment corridor."
+    },
+    {
+      "name": "North Charleston",
+      "aliases": ["Park Circle", "Waylyn", "Chicora", "Dorchester Road"],
+      "county": "Charleston",
+      "vocab": [
+        "Park Circle", "midcentury modern", "craftsman bungalow", "revitalized district",
+        "Park Circle green", "Olde North Charleston", "arts district", "gastropubs",
+        "community garden", "walkable Circle", "brewery scene"
+      ],
+      "lifestyle": [
+        "Park Circle dining and entertainment", "monthly art walks",
+        "craft brewery scene", "Park Circle green for events",
+        "close to airport and interstates", "revitalized midcentury housing"
+      ],
+      "landmarks": ["Park Circle", "Olde North Charleston", "North Charleston Coliseum"],
+      "price_range": { "min": 220000, "max": 700000 },
+      "property_types": ["bungalow", "ranch", "single_family", "condo"],
+      "keywords_for_ai": "North Charleston / Park Circle: lead with the Park Circle revitalization story. Midcentury bungalows, walkable green, craft brewery and gastropub scene. Growing arts district appeal for buyers priced out of downtown."
+    },
+    {
+      "name": "Kiawah Island",
+      "aliases": ["Kiawah"],
+      "county": "Charleston",
+      "vocab": [
+        "gated community", "championship golf", "The Ocean Course", "beach club",
+        "Kiawah Island Club", "luxury enclave", "loggerhead sea turtles",
+        "Kiawah River", "oceanfront villas", "pristine beach", "wildlife sanctuary",
+        "PGA Championship venue", "turnkey villa"
+      ],
+      "lifestyle": [
+        "The Ocean Course PGA Championship golf", "Kiawah Island Club membership",
+        "private beach access", "loggerhead sea turtle nesting grounds",
+        "world-class dining at The Sanctuary", "biking through wildlife sanctuary"
+      ],
+      "landmarks": ["The Ocean Course", "The Sanctuary Hotel", "Night Heron Park", "Kiawah River"],
+      "price_range": { "min": 900000, "max": 10000000 },
+      "property_types": ["villa", "single_family", "oceanfront", "golf_community"],
+      "keywords_for_ai": "Kiawah Island: ultra-luxury gated enclave. The Ocean Course (PGA Championship venue) is the crown jewel. Lead with exclusivity, pristine beach, wildlife sanctuary setting. Sanctuary Hotel amenities accessible to residents."
+    },
+    {
+      "name": "Seabrook Island",
+      "aliases": ["Seabrook"],
+      "county": "Charleston",
+      "vocab": [
+        "private island community", "Equestrian Center", "gated resort",
+        "Bohicket Marina", "two championship golf courses", "beach club",
+        "unspoiled maritime forest", "loggerhead nesting", "horse trails",
+        "Bohicket Creek", "Pelican Beach", "North Beach"
+      ],
+      "lifestyle": [
+        "Seabrook Island Club golf and tennis", "Equestrian Center horseback trails",
+        "Bohicket Marina boat slips", "private beach access",
+        "unspoiled maritime forest setting", "nature-first community"
+      ],
+      "landmarks": ["Bohicket Marina", "Equestrian Center", "Pelican Beach", "Bohicket Creek"],
+      "price_range": { "min": 600000, "max": 4000000 },
+      "property_types": ["villa", "single_family", "oceanfront", "equestrian"],
+      "keywords_for_ai": "Seabrook Island: private gated island with equestrian lifestyle unique in Charleston market. Bohicket Marina deepwater access. Two championship golf courses. Nature-first setting with loggerhead nesting."
+    }
+  ],
+  "landmarks": {
+    "Downtown Charleston / King Street": { "lat": 32.7765, "lng": -79.9311 },
+    "Shem Creek (Mount Pleasant)":       { "lat": 32.7936, "lng": -79.8841 },
+    "Sullivan's Island Beach":           { "lat": 32.7657, "lng": -79.8425 },
+    "Isle of Palms Beach":               { "lat": 32.7873, "lng": -79.7971 },
+    "Folly Beach":                       { "lat": 32.6551, "lng": -79.9403 },
+    "Ravenel Bridge":                    { "lat": 32.7957, "lng": -79.9330 },
+    "Angel Oak Tree":                    { "lat": 32.7068, "lng": -80.0988 },
+    "Magnolia Plantation":               { "lat": 32.8187, "lng": -80.0986 }
+  },
+  "staging_styles": [
+    { "id": "coastal_lowcountry", "label": "Coastal Lowcountry", "description": "Natural rattan, linen, driftwood tones, palmetto motifs" },
+    { "id": "modern_coastal",     "label": "Modern Coastal",     "description": "Clean lines, white and navy palette, minimal coastal accents" },
+    { "id": "southern_classic",   "label": "Southern Classic",   "description": "Warm woods, antique brass, traditional Southern furnishings" },
+    { "id": "luxury_resort",      "label": "Luxury Resort",      "description": "Hotel-grade furnishings, neutral palette, curated art" },
+    { "id": "scandinavian_light", "label": "Scandinavian Light", "description": "Bright whites, warm wood, minimalist, airy" },
+    { "id": "empty_clean",        "label": "Empty & Clean",      "description": "Remove all furniture for clean architectural photos" }
+  ]
+}

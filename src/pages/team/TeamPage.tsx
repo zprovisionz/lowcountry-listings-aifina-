@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTeam } from '../../hooks/useTeam';
+import { useToast } from '../../contexts/ToastContext';
 import type { Profile } from '../../types/database';
 
 const ROLE_STYLES: Record<string, { color: string; border: string; bg: string }> = {
@@ -13,6 +14,7 @@ const ROLE_STYLES: Record<string, { color: string; border: string; bg: string }>
 export default function TeamPage() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const {
     team,
     members,
@@ -22,10 +24,14 @@ export default function TeamPage() {
     inviteMember,
     removeMember,
     revokeInvite,
+    resendInvite,
   } = useTeam();
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
+  const [copiedInvite, setCopiedInvite] = useState<string | null>(null);
   const isTeamTier = profile?.tier === 'team';
+
+  const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.trim());
 
   if (!isTeamTier) {
     return (
@@ -37,7 +43,7 @@ export default function TeamPage() {
           borderRadius: 20, backdropFilter: 'blur(24px)',
         }}>
           <div style={{ fontSize: 40, marginBottom: 20 }}>◎</div>
-          <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 22, color: '#eafaff', margin: '0 0 12px' }}>
+          <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 22, color: '#eafaff', margin: '0 0 12px' }}>
             Team Features
           </h2>
           <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: 'var(--text-mid)', lineHeight: 1.75, margin: '0 0 28px' }}>
@@ -95,10 +101,10 @@ export default function TeamPage() {
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14,
       }}>
         <div>
-          <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 18, color: '#eafaff', margin: '0 0 4px' }}>
+          <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 18, color: '#eafaff', margin: '0 0 4px' }}>
             {team.name}
           </h2>
-          <p style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', margin: 0, letterSpacing: '.1em' }}>
+          <p style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', margin: 0, letterSpacing: '.1em' }}>
             TEAM PLAN · UNLIMITED SHARED
           </p>
         </div>
@@ -106,44 +112,57 @@ export default function TeamPage() {
 
       {canInvite && (
         <div className="glass" style={{ padding: 20, borderRadius: 14 }}>
-          <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--cyan)', letterSpacing: '.12em', marginBottom: 12 }}>INVITE MEMBER</div>
+          <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--cyan)', letterSpacing: '.12em', marginBottom: 12 }}>INVITE MEMBER</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <input
-              type="email"
-              placeholder="agent@example.com"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              style={{
-                padding: '10px 14px',
-                background: 'rgba(5,7,24,0.9)',
-                border: '1px solid rgba(0,255,255,0.22)',
-                borderRadius: 9,
-                color: 'var(--text-hi)',
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: 14,
-                minWidth: 220,
-              }}
-            />
-            <select
-              value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as 'editor' | 'viewer')}
-              style={{
-                padding: '10px 14px',
-                background: 'rgba(5,7,24,0.9)',
-                border: '1px solid rgba(0,255,255,0.22)',
-                borderRadius: 9,
-                color: 'var(--text-hi)',
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: 13,
-              }}
-            >
-              <option value="editor">Editor</option>
-              <option value="viewer">Viewer</option>
-            </select>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label htmlFor="invite-email" style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5, color: 'var(--text-lo)', letterSpacing: '.12em' }}>EMAIL</label>
+              <input
+                id="invite-email"
+                type="email"
+                autoComplete="email"
+                placeholder="agent@example.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                style={{
+                  padding: '10px 14px',
+                  background: 'rgba(5,7,24,0.9)',
+                  border: '1px solid rgba(0,255,255,0.22)',
+                  borderRadius: 9,
+                  color: 'var(--text-hi)',
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 14,
+                  minWidth: 220,
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label htmlFor="invite-role" style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5, color: 'var(--text-lo)', letterSpacing: '.12em' }}>ROLE</label>
+              <select
+                id="invite-role"
+                value={inviteRole}
+                onChange={(e) => setInviteRole(e.target.value as 'editor' | 'viewer')}
+                style={{
+                  padding: '10px 14px',
+                  background: 'rgba(5,7,24,0.9)',
+                  border: '1px solid rgba(0,255,255,0.22)',
+                  borderRadius: 9,
+                  color: 'var(--text-hi)',
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 13,
+                }}
+              >
+                <option value="editor">Editor</option>
+                <option value="viewer">Viewer</option>
+              </select>
+            </div>
             <button
               className="btn btn-primary btn-sm"
-              disabled={inviteLoading || !inviteEmail.trim()}
+              disabled={inviteLoading || !isValidEmail(inviteEmail)}
               onClick={async () => {
+                if (!isValidEmail(inviteEmail)) {
+                  toast('Enter a valid email address.', 'error');
+                  return;
+                }
                 await inviteMember(inviteEmail.trim(), inviteRole);
                 setInviteEmail('');
               }}
@@ -151,6 +170,11 @@ export default function TeamPage() {
               {inviteLoading ? 'Sending…' : 'Send Invite'}
             </button>
           </div>
+          {inviteEmail.length > 0 && !isValidEmail(inviteEmail) && (
+            <div style={{ marginTop: 8, fontFamily: 'DM Sans, sans-serif', fontSize: 11.5, color: '#ff8080' }}>
+              Enter a valid email address.
+            </div>
+          )}
         </div>
       )}
 
@@ -166,8 +190,8 @@ export default function TeamPage() {
             borderRadius: 12,
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.12em' }}>{label.toUpperCase()}</span>
-              <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 11, color }}>
+              <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.12em' }}>{label.toUpperCase()}</span>
+              <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 11, color }}>
                 {used} / {limit === -1 ? '∞' : limit}
               </span>
             </div>
@@ -184,19 +208,44 @@ export default function TeamPage() {
 
       {invites.length > 0 && (
         <div className="glass" style={{ padding: 20, borderRadius: 14 }}>
-          <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.12em', marginBottom: 12 }}>PENDING INVITES</div>
+          <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.12em', marginBottom: 12 }}>PENDING INVITES</div>
           <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {invites.map((inv) => (
-              <li key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <span style={{ fontSize: 13, color: 'var(--text-mid)' }}>{inv.email} — {inv.role}</span>
+              <li key={inv.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, color: 'var(--text-mid)', flex: 1, minWidth: 120 }}>{inv.email} — {inv.role}</span>
                 {canInvite && (
-                  <button
-                    type="button"
-                    onClick={() => revokeInvite(inv.id)}
-                    style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', borderRadius: 6, color: '#ff8080', fontSize: 11, padding: '4px 10px', cursor: 'pointer' }}
-                  >
-                    Revoke
-                  </button>
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const link = `${window.location.origin}/join?token=${inv.token}`;
+                        void navigator.clipboard.writeText(link);
+                        toast('Invite link copied.', 'success');
+                        setCopiedInvite(inv.id);
+                        window.setTimeout(() => {
+                          setCopiedInvite(prev => (prev === inv.id ? null : prev));
+                        }, 2000);
+                      }}
+                      style={{ background: 'none', border: '1px solid rgba(0,255,255,0.25)', borderRadius: 6, color: 'var(--cyan)', fontSize: 11, padding: '4px 10px', cursor: 'pointer', minWidth: 78 }}
+                    >
+                      {copiedInvite === inv.id ? '✓ Copied' : 'Copy link'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={inviteLoading}
+                      onClick={() => resendInvite(inv.email, inv.role as 'editor' | 'viewer')}
+                      style={{ background: 'none', border: '1px solid rgba(0,255,255,0.25)', borderRadius: 6, color: 'var(--cyan)', fontSize: 11, padding: '4px 10px', cursor: 'pointer' }}
+                    >
+                      Resend
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => revokeInvite(inv.id)}
+                      style={{ background: 'none', border: '1px solid rgba(255,80,80,0.3)', borderRadius: 6, color: '#ff8080', fontSize: 11, padding: '4px 10px', cursor: 'pointer' }}
+                    >
+                      Revoke
+                    </button>
+                  </div>
                 )}
               </li>
             ))}
@@ -214,7 +263,7 @@ export default function TeamPage() {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           background: 'rgba(0,0,0,0.2)',
         }}>
-          <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em' }}>
+          <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em' }}>
             TEAM MEMBERS ({members.length})
           </span>
         </div>
@@ -234,22 +283,22 @@ export default function TeamPage() {
                   background: 'linear-gradient(135deg, rgba(0,255,255,0.15), rgba(255,0,255,0.15))',
                   border: '1px solid rgba(0,255,255,0.3)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, color: 'var(--cyan)',
+                  fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 13, color: 'var(--cyan)',
                 }}>
                   {(m.full_name ?? m.email)?.[0]?.toUpperCase() ?? '?'}
                 </div>
                 <div>
-                  <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 13.5, color: '#eafaff' }}>
+                  <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 13.5, color: '#eafaff' }}>
                     {isCurrentUser ? `${m.full_name ?? m.email} (You)` : m.full_name ?? m.email}
                   </div>
-                  <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)' }}>{m.email}</div>
+                  <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)' }}>{m.email}</div>
                 </div>
               </div>
               <div>
                 <span style={{
                   padding: '3px 10px',
                   background: rs.bg, border: `1px solid ${rs.border}`,
-                  borderRadius: 20, fontFamily: 'Space Mono, monospace',
+                  borderRadius: 20, fontFamily: "'DM Mono', ui-monospace, monospace",
                   fontSize: 9, color: rs.color, letterSpacing: '.06em',
                 }}>
                   {(m.role ?? 'viewer').toUpperCase()}
@@ -264,7 +313,7 @@ export default function TeamPage() {
                       style={{
                         background: 'none', border: '1px solid rgba(255,80,80,0.2)',
                         borderRadius: 6, color: '#ff8080',
-                        fontFamily: 'Space Mono, monospace', fontSize: 9,
+                        fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
                         padding: '4px 10px', cursor: 'pointer',
                       }}
                     >
@@ -284,7 +333,7 @@ export default function TeamPage() {
         border: '1px solid rgba(0,255,255,0.08)',
         borderRadius: 12,
       }}>
-        <div style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 12 }}>
+        <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 12 }}>
           ROLE PERMISSIONS
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
@@ -301,7 +350,7 @@ export default function TeamPage() {
                 background: rs.bg, border: `1px solid ${rs.border}`,
                 borderRadius: 8,
               }}>
-                <span style={{ color: rs.color, fontFamily: 'Space Mono, monospace', fontSize: 10, letterSpacing: '.06em', whiteSpace: 'nowrap', fontWeight: 700 }}>
+                <span style={{ color: rs.color, fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, letterSpacing: '.06em', whiteSpace: 'nowrap', fontWeight: 700 }}>
                   {role.toUpperCase()}
                 </span>
                 <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: 'var(--text-lo)', lineHeight: 1.5 }}>

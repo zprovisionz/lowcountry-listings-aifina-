@@ -11,21 +11,27 @@
     "supabase:deploy:edit-mls": "supabase functions deploy edit-regenerate-mls"
   },
   "dependencies": {
+    "@sentry/react": "^10.45.0",
     "@supabase/supabase-js": "^2.47.10",
     "lucide-react": "^0.469.0",
+    "posthog-js": "^1.363.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
     "supabase": "^2.78.1"
   },
   "devDependencies": {
+    "@sentry/vite-plugin": "^5.1.1",
     "@tailwindcss/vite": "^4.0.0",
     "@types/google.maps": "^3.58.1",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/ui": "^4.1.0",
+    "happy-dom": "^20.8.4",
     "tailwindcss": "^4.0.0",
     "typescript": "~5.7.2",
-    "vite": "^6.0.5"
+    "vite": "^6.0.5",
+    "vitest": "^4.1.0"
   }
 }

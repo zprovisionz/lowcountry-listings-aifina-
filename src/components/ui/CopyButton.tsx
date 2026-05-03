@@ -34,7 +34,7 @@ export default function CopyButton({ text, label = 'Copy', onCopy }: CopyButtonP
         border: `1px solid ${copied ? 'rgba(0,255,150,0.4)' : 'rgba(0,255,255,0.25)'}`,
         borderRadius: 7,
         color: copied ? '#00ff96' : 'var(--cyan)',
-        fontFamily: 'Space Mono, monospace',
+        fontFamily: "'DM Mono', ui-monospace, monospace",
         fontSize: 10, letterSpacing: '.1em',
         cursor: 'pointer',
         transition: 'all .25s ease',

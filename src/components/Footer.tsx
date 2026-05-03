@@ -1,8 +1,20 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const PRODUCT_LINKS  = ['Features','Pricing','Virtual Staging','Authenticity Scoring','Team Accounts','Analytics'];
-const COMPANY_LINKS  = ['About','Blog','Privacy Policy','Terms of Service','Contact'];
+const PRODUCT_LINKS: { label: string; href: string }[] = [
+  { label: 'Features',             href: '/#features' },
+  { label: 'Pricing',               href: '/#pricing' },
+  { label: 'Virtual Staging',      href: '/#features' },
+  { label: 'Authenticity Scoring', href: '/#features' },
+  { label: 'Team Accounts',         href: '/#pricing' },
+  { label: 'Use Cases',            href: '/#testimonials' },
+];
+const COMPANY_LINKS: { label: string; href: string }[] = [
+  { label: 'FAQ',              href: '/#faq' },
+  { label: 'Privacy Policy',   href: '/privacy' },
+  { label: 'Terms of Service', href: '/terms' },
+  { label: 'Contact',          href: 'mailto:hello@lowcountrylistings.ai' },
+];
 const NEIGHBORHOODS  = ['Downtown Charleston','Mount Pleasant','West Ashley','James Island','Isle of Palms','Folly Beach','Daniel Island','Summerville'];
 
 export default function Footer() {
@@ -16,9 +28,9 @@ export default function Footer() {
         padding: '110px 28px',
         position: 'relative', overflow: 'hidden',
         background:
-          'radial-gradient(ellipse 80% 70% at 50% 50%, rgba(0,40,65,0.7) 0%, transparent 68%),' +
-          'radial-gradient(ellipse 40% 40% at 50% 50%, rgba(0,255,255,0.055) 0%, transparent 65%),' +
-          '#0a0a1f',
+          'radial-gradient(ellipse 80% 70% at 50% 40%, oklch(0.72 0.13 195 / 0.1) 0%, transparent 60%),' +
+          'radial-gradient(ellipse 45% 40% at 50% 80%, oklch(0.78 0.11 85 / 0.05) 0%, transparent 55%),' +
+          'var(--space)',
       }}>
         {/* Corner brackets */}
         {([
@@ -27,28 +39,28 @@ export default function Footer() {
         ] as React.CSSProperties[]).map((s, i) => (
           <div key={i} style={{
             position: 'absolute', width: 28, height: 28,
-            borderColor: 'rgba(0,255,255,0.3)',
+            borderColor: 'var(--cyan-border)',
             ...s, pointerEvents: 'none',
           }} />
         ))}
 
         <div style={{ maxWidth: 720, margin: '0 auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
 
-          {/* Urgency pill */}
+          {/* Locality pill */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
               padding: '6px 18px',
-              background: 'rgba(255,0,255,0.07)',
-              border: '1px solid rgba(255,0,255,0.28)',
+              background: 'var(--cyan-ghost)',
+              border: '1px solid var(--cyan-border)',
               borderRadius: 30,
             }}>
-              <span className="dot-live" style={{ background: 'var(--magenta)', boxShadow: '0 0 8px var(--magenta)' }} />
+              <span className="dot-live" />
               <span style={{
-                fontFamily: 'Space Mono, monospace', fontSize: 9.5,
-                color: 'var(--magenta)', letterSpacing: '.15em',
+                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9.5,
+                color: 'var(--cyan)', letterSpacing: '.15em',
               }}>
-                COOLING MARKET · LIMITED BETA SPOTS REMAINING
+                NOW SERVING THE CHARLESTON METRO
               </span>
             </div>
           </div>
@@ -56,7 +68,7 @@ export default function Footer() {
           <div className="tag">Get Started</div>
 
           <h2 style={{
-            fontFamily: 'Syne, sans-serif', fontWeight: 800,
+            fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800,
             fontSize: 'clamp(36px, 5.5vw, 62px)',
             color: 'var(--text-hi)', lineHeight: 1.0,
             letterSpacing: '-.03em', margin: '12px 0 22px',
@@ -69,8 +81,8 @@ export default function Footer() {
             color: 'var(--text-mid)', fontSize: 17, lineHeight: 1.75,
             margin: '0 0 40px', maxWidth: 540, marginLeft: 'auto', marginRight: 'auto',
           }}>
-            In a cooling 2026 Lowcountry market, listings with standout copy
-            close faster. Start free in under 60 seconds — no credit card required.
+            Charleston listings deserve copy that sounds like Charleston.
+            Start free in under 60 seconds — no credit card required.
           </p>
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: 14, flexWrap: 'wrap', marginBottom: 28 }}>
@@ -96,7 +108,7 @@ export default function Footer() {
           </div>
 
           <p style={{
-            fontFamily: 'Space Mono, monospace', fontSize: 9,
+            fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
             color: 'var(--text-ghost)', letterSpacing: '.14em',
           }}>
             10 free generations · No credit card · Charleston metro only
@@ -112,7 +124,7 @@ export default function Footer() {
             ].map(({ icon, label }) => (
               <div key={label} style={{
                 display: 'flex', alignItems: 'center', gap: 6,
-                fontFamily: 'Space Mono, monospace', fontSize: 10,
+                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10,
                 color: 'var(--text-lo)',
               }}>
                 <span>{icon}</span>
@@ -126,7 +138,7 @@ export default function Footer() {
       <div className="divider" />
 
       {/* ─── Footer grid ──────────────────────────────────────────── */}
-      <footer style={{ padding: '56px 28px 36px', background: 'rgba(5,5,18,0.9)' }}>
+      <footer style={{ padding: '56px 28px 36px', background: 'var(--space-mid)' }}>
         <div style={{ maxWidth: 1240, margin: '0 auto' }}>
           <div style={{
             display: 'grid',
@@ -138,12 +150,11 @@ export default function Footer() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <div style={{
                   width: 34, height: 34, borderRadius: 9,
-                  background: 'linear-gradient(135deg, rgba(0,255,255,0.15), rgba(255,0,255,0.12))',
-                  border: '1px solid rgba(0,255,255,0.4)',
+                  background: 'linear-gradient(135deg, var(--cyan-ghost), var(--magenta-ghost))',
+                  border: '1px solid var(--cyan-border)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17,
-                  boxShadow: '0 0 12px rgba(0,255,255,0.18)',
                 }}>🌿</div>
-                <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 16, color: 'var(--text-hi)' }}>
+                <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 16, color: 'var(--text-hi)' }}>
                   Lowcountry <span style={{ color: 'var(--cyan)' }}>AI</span>
                 </span>
               </div>
@@ -155,20 +166,20 @@ export default function Footer() {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 7,
                 padding: '7px 12px',
-                background: 'rgba(0,255,255,0.04)',
-                border: '1px solid rgba(0,255,255,0.12)',
+                background: 'var(--cyan-ghost)',
+                border: '1px solid var(--cyan-border)',
                 borderRadius: 8, marginBottom: 10,
               }}>
                 <span style={{ fontSize: 13 }}>📍</span>
                 <span style={{
-                  fontFamily: 'Space Mono, monospace', fontSize: 9,
+                  fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
                   color: 'var(--cyan)', letterSpacing: '.1em',
                 }}>
                   Built in Mount Pleasant, SC
                 </span>
               </div>
               <div style={{
-                fontFamily: 'Space Mono, monospace', fontSize: 9,
+                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
                 color: 'var(--text-ghost)', letterSpacing: '.1em',
               }}>
                 Charleston · Berkeley · Dorchester
@@ -178,30 +189,30 @@ export default function Footer() {
             {/* Product */}
             <div>
               <h4 style={{
-                fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 11,
+                fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 11,
                 color: 'var(--text-mid)', margin: '0 0 16px', letterSpacing: '.12em',
               }}>PRODUCT</h4>
-              {PRODUCT_LINKS.map(item => (
-                <a key={item} href="#" style={{
+              {PRODUCT_LINKS.map(({ label, href }) => (
+                <a key={label} href={href} style={{
                   display: 'block', fontSize: 12.5, color: 'var(--text-lo)',
                   textDecoration: 'none', marginBottom: 9, transition: 'color .2s',
                 }}
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--cyan)'}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--text-lo)'}
-                >{item}</a>
+                >{label}</a>
               ))}
             </div>
 
             {/* Neighborhoods */}
             <div>
               <h4 style={{
-                fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 11,
+                fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 11,
                 color: 'var(--text-mid)', margin: '0 0 16px', letterSpacing: '.12em',
               }}>NEIGHBORHOODS</h4>
               {NEIGHBORHOODS.map(n => (
                 <div key={n} style={{
                   fontSize: 11, color: 'var(--text-ghost)',
-                  fontFamily: 'Space Mono, monospace', marginBottom: 7,
+                  fontFamily: "'DM Mono', ui-monospace, monospace", marginBottom: 7,
                 }}>
                   {n}
                 </div>
@@ -211,17 +222,17 @@ export default function Footer() {
             {/* Company */}
             <div>
               <h4 style={{
-                fontFamily: 'Syne, sans-serif', fontWeight: 600, fontSize: 11,
+                fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 600, fontSize: 11,
                 color: 'var(--text-mid)', margin: '0 0 16px', letterSpacing: '.12em',
               }}>COMPANY</h4>
-              {COMPANY_LINKS.map(item => (
-                <a key={item} href="#" style={{
+              {COMPANY_LINKS.map(({ label, href }) => (
+                <a key={label} href={href} style={{
                   display: 'block', fontSize: 12.5, color: 'var(--text-lo)',
                   textDecoration: 'none', marginBottom: 9, transition: 'color .2s',
                 }}
                 onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = 'var(--cyan)'}
                 onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = 'var(--text-lo)'}
-                >{item}</a>
+                >{label}</a>
               ))}
             </div>
           </div>
@@ -230,10 +241,10 @@ export default function Footer() {
 
           {/* Bottom bar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-ghost)' }}>
+            <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-ghost)' }}>
               © 2026 Lowcountry Listings AI · Built in Mount Pleasant, SC · Charleston-tested, Charleston-built
             </span>
-            <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: 'var(--text-ghost)' }}>
+            <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-ghost)' }}>
               OpenAI · Google Maps · fal.ai · Supabase · Stripe
             </span>
           </div>

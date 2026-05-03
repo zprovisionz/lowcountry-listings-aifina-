@@ -59,6 +59,7 @@ Create `.env.local` in the project root with:
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL (Settings → API) |
 | `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
 | `VITE_GOOGLE_MAPS_API_KEY` | Yes | Google Cloud API key with Maps JavaScript API + Places enabled (client-side) |
+| `VITE_DEBUG_BYPASS_BILLING` | No | Dev/debug: bypass UI quota gates (requires allowlisting in prod) |
 
 These are used by the Vite app at build and runtime. Do not commit real keys; use `.env.local` (gitignored).
 
@@ -79,6 +80,7 @@ Configure in **Supabase Dashboard → Project Settings → Edge Functions → Se
 | `SUPABASE_URL` | All edge functions | Same as `VITE_SUPABASE_URL` |
 | `SUPABASE_ANON_KEY` | Some edge functions | Same as `VITE_SUPABASE_ANON_KEY` |
 | `SUPABASE_SERVICE_ROLE_KEY` | All edge functions | Supabase service role key (Settings → API) |
+| `ALLOW_TEST_MODE` | generate-listing, bulk-generate, stage-photo | If `true`, allow allowlisted users (`profiles.is_test_user`) to bypass quotas |
 
 Optional for staging: `FAL_KEY` (fal.ai) in Edge Function secrets for `stage-photo`.
 
@@ -101,6 +103,13 @@ Run Supabase migrations in order (SQL Editor or `supabase db push`):
 2. `supabase/migrations/002_rpc_functions.sql`
 3. `supabase/migrations/003_staging_queue.sql`
 4. `supabase/migrations/004_stripe_teams_bulk.sql`
+5. `supabase/migrations/005_test_mode_allowlist.sql`
+
+### Test mode (optional, for debugging)
+
+This project supports an **unrestricted testing mode** for your own account while keeping quota enforcement for normal users.
+
+- **UI bypass (local/dev)**: set `VITE_DEBUG_BYPASS_BILLING=true` in `.env.local`. You’ll see a **TEST MODE** badge in the top bar.\n- **Server-side bypass (Edge Functions)**:\n  - Set Edge secret `ALLOW_TEST_MODE=true`\n  - Allowlist your user in DB: set `profiles.is_test_user = true` for your `profiles.id`\n\nWhen both are enabled, generation + bulk + staging won’t consume quotas for allowlisted users.
 
 ### Run locally
 

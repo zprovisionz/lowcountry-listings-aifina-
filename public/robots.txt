@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /generate
+Disallow: /results
+Disallow: /history
+Disallow: /reports
+Disallow: /team
+Disallow: /account
+Disallow: /bulk
+Disallow: /analytics
+Disallow: /join
+Disallow: /auth/
+
+Sitemap: https://lowcountrylistings.ai/sitemap.xml

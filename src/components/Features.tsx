@@ -109,7 +109,7 @@ export default function Features() {
           borderRadius: 12,
         }}>
           <span style={{
-            fontFamily: 'Space Mono, monospace', fontSize: 9,
+            fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
             color: 'var(--text-lo)', letterSpacing: '.16em',
             paddingRight: 12, borderRight: '1px solid rgba(0,255,255,0.12)',
             marginRight: 4, whiteSpace: 'nowrap',
@@ -118,7 +118,7 @@ export default function Features() {
           </span>
           {LANDMARKS.map((lm, i) => (
             <span key={lm} style={{
-              fontFamily: 'Space Mono, monospace', fontSize: 10,
+              fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10,
               color: i % 2 === 0 ? 'rgba(0,255,255,0.65)' : 'rgba(255,0,255,0.6)',
               padding: '3px 9px',
               background: i % 2 === 0 ? 'rgba(0,255,255,0.05)' : 'rgba(255,0,255,0.04)',
@@ -162,14 +162,14 @@ export default function Features() {
                 </div>
 
                 <h3 style={{
-                  fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 17,
+                  fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 17,
                   color: 'var(--text-hi)', margin: '0 0 4px',
                 }}>
                   {f.title}
                 </h3>
 
                 <div style={{
-                  fontFamily: 'Space Mono, monospace', fontSize: 9.5,
+                  fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9.5,
                   color: isCyan ? 'var(--cyan)' : 'var(--magenta)',
                   letterSpacing: '.06em', marginBottom: 10,
                 }}>

@@ -9,7 +9,7 @@ export function useStripe() {
   const { toast } = useToast();
 
   const createCheckoutSession = useCallback(
-    async (mode: 'subscription' | 'payment', priceId?: string, packType?: string) => {
+    async (mode: 'subscription' | 'payment', tierId?: string, packType?: string, interval?: 'monthly' | 'annual') => {
       setLoading(true);
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -25,7 +25,8 @@ export function useStripe() {
           },
           body: JSON.stringify({
             mode,
-            priceId: priceId ?? (mode === 'subscription' ? undefined : null),
+            tierId: mode === 'subscription' ? tierId : undefined,
+            interval: mode === 'subscription' ? (interval ?? 'monthly') : undefined,
             packType: mode === 'payment' ? packType : undefined,
           }),
         });

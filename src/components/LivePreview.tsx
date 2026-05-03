@@ -137,9 +137,9 @@ export default function LivePreview({ address }: { address: string }) {
   return (
     <div className="anim-pop" style={{
       marginTop: 20,
-      border: '1px solid rgba(0,255,255,0.4)',
+      border: '1px solid var(--cyan-border)',
       borderRadius: 16,
-      background: 'rgba(0,14,32,0.75)',
+      background: 'var(--space-card)',
       backdropFilter: 'blur(24px)',
       overflow: 'hidden',
       opacity: visible ? 1 : 0,
@@ -148,13 +148,13 @@ export default function LivePreview({ address }: { address: string }) {
       {/* Terminal header */}
       <div style={{
         padding: '10px 18px',
-        background: 'rgba(0,255,255,0.05)',
-        borderBottom: '1px solid rgba(0,255,255,0.12)',
+        background: 'var(--cyan-ghost)',
+        borderBottom: '1px solid var(--cyan-border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div className="dot-live" />
-          <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 10, color: 'var(--cyan)', letterSpacing: '.12em' }}>
+          <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, color: 'var(--cyan)', letterSpacing: '.12em' }}>
             AI PREVIEW · {hood.name.toUpperCase()}
           </span>
         </div>
@@ -169,7 +169,7 @@ export default function LivePreview({ address }: { address: string }) {
       <div style={{ padding: '20px 22px' }}>
         {/* Address line */}
         <div style={{
-          fontFamily: 'Space Mono, monospace', fontSize: 10, color: 'var(--text-lo)',
+          fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, color: 'var(--text-lo)',
           marginBottom: 14, letterSpacing: '.05em',
         }}>
           📍 {address}
@@ -195,11 +195,11 @@ export default function LivePreview({ address }: { address: string }) {
           {hood.vocab.map((term, i) => (
             <span key={term} style={{
               padding: '4px 11px',
-              background: i <= vocabIdx ? 'rgba(0,255,255,0.1)' : 'rgba(0,255,255,0.03)',
-              border: `1px solid ${i <= vocabIdx ? 'rgba(0,255,255,0.4)' : 'rgba(0,255,255,0.1)'}`,
+              background: i <= vocabIdx ? 'oklch(0.72 0.13 195 / 0.1)' : 'var(--cyan-ghost)',
+              border: `1px solid ${i <= vocabIdx ? 'var(--cyan-border)' : 'var(--cyan-border)'}`,
               borderRadius: 20,
               fontSize: 10, color: i <= vocabIdx ? 'var(--cyan)' : 'var(--text-lo)',
-              fontFamily: 'Space Mono, monospace',
+              fontFamily: "'DM Mono', ui-monospace, monospace",
               transition: 'all .3s ease',
             }}>
               {term}
@@ -212,7 +212,7 @@ export default function LivePreview({ address }: { address: string }) {
           {hood.landmarks.map(({ label, dist }) => (
             <div key={label} style={{
               display:'flex', alignItems:'center', gap:5,
-              fontSize:10, color:'var(--text-mid)', fontFamily:'Space Mono, monospace',
+              fontSize:10, color:'var(--text-mid)', fontFamily:"'DM Mono', ui-monospace, monospace",
             }}>
               <span style={{ color:'var(--magenta)', fontSize:9 }}>◈</span>
               <span style={{ color:'var(--text-lo)' }}>{label}</span>
@@ -224,26 +224,25 @@ export default function LivePreview({ address }: { address: string }) {
         {/* Score bar */}
         <div style={{
           padding: '12px 16px',
-          background: 'rgba(0,255,255,0.04)',
-          borderRadius: 10, border: '1px solid rgba(0,255,255,0.1)',
+          background: 'var(--cyan-ghost)',
+          borderRadius: 10, border: '1px solid var(--cyan-border)',
           display:'flex', alignItems:'center', gap:12,
         }}>
-          <span style={{ fontSize:10, color:'var(--text-lo)', fontFamily:'Space Mono, monospace', whiteSpace:'nowrap' }}>
+          <span style={{ fontSize:10, color:'var(--text-lo)', fontFamily:"'DM Mono', ui-monospace, monospace", whiteSpace:'nowrap' }}>
             LOWCOUNTRY SCORE
           </span>
           <div style={{ flex:1, height:4, background:'rgba(255,255,255,0.07)', borderRadius:2, overflow:'hidden' }}>
             <div style={{
               height:'100%', width:`${score}%`,
               background: score > 85
-                ? 'linear-gradient(90deg, #00ffff, #00ff88)'
-                : 'linear-gradient(90deg, #00ffff, #ff00ff)',
+                ? 'linear-gradient(90deg, var(--cyan), var(--green-neon))'
+                : 'linear-gradient(90deg, var(--cyan), var(--magenta))',
               borderRadius:2, transition:'width .04s ease',
-              boxShadow:'0 0 8px rgba(0,255,255,0.6)',
             }} />
           </div>
           <span style={{
-            fontFamily:'Space Mono, monospace', fontSize:15, fontWeight:700,
-            color: score > 85 ? 'var(--cyan)' : '#ff88ff',
+            fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:15, fontWeight:700,
+            color: score > 85 ? 'var(--cyan)' : 'var(--magenta)',
             minWidth:38, textAlign:'right',
           }}>
             {score}%
@@ -251,7 +250,7 @@ export default function LivePreview({ address }: { address: string }) {
         </div>
 
         <div style={{ marginTop:16, textAlign:'center' }}>
-          <a href="#" className="btn btn-primary" style={{ fontSize:12, padding:'10px 26px' }}>
+          <a href="/login" className="btn btn-primary" style={{ fontSize:12, padding:'10px 26px' }}>
             Generate Full Listing →
           </a>
         </div>
