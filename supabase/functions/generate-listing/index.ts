@@ -11,6 +11,8 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { analyzeImagesWithVision, generateCompletion } from '../_shared/ai-client.ts';
+import { getCachedDistances, setCachedDistances, sha256Hex } from '../_shared/distance-cache.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -66,83 +68,80 @@ const NEIGHBORHOOD_VOCAB: Record<string, string[]> = {
   'Hanahan':              ['Cooper River proximity','Berkeley County','boat ramp access','quiet residential'],
 };
 
-// Few-shot MLS voice examples (Mount Pleasant + Summerville metro). Style only — model must still use only AUTHORIZED FACTS.
+// Few-shot MLS voice examples — 5 neighborhood "voice signatures."
+// Use for sentence rhythm, cadence, and emotional palette ONLY. Never copy facts.
 const MLS_FEW_SHOT_EXAMPLES = `
 
-=== FEW-SHOT STYLE EXAMPLES (sentence rhythm and emotional tone ONLY) ===
-CRITICAL: Do NOT copy piazza, live oaks, fireplace, chef kitchen, marsh views, layout, or any feature from these examples unless that exact feature appears in AUTHORIZED FACTS or Photo-derived details below.
+=== FEW-SHOT VOICE SIGNATURES (rhythm and emotion ONLY — copy NO facts) ===
+Match the voice signature of the neighborhood below. If the subject property's neighborhood is not shown, blend the closest match with the neighborhood's keywords_for_ai guide.
+CRITICAL: Do NOT copy piazza, live oaks, fireplace, chef kitchen, marsh views, layout, or any specific feature from these examples unless that exact feature is present in AUTHORIZED FACTS or Photo-derived details for the subject property.
 
-[Mount Pleasant — arrival & piazza / live oaks]
-"The first time you turn onto the street, you feel it: the canopy of live oaks, the quiet hum of a neighborhood that still knows its neighbors. This Mount Pleasant home doesn't announce itself with flash—it invites you in with a wide, shaded piazza where the coastal breeze moves through the screens and the only soundtrack is the rustle of palmetto fronds. This is the Holy City at its most lived-in—a place where evenings begin with sweet tea on the piazza and end with marsh views and the glow of Shem Creek sunsets a short drive away."
+[Mount Pleasant — marsh / live oaks / Shem Creek rhythm]
+"The first time you turn onto the street, you feel it: the canopy of live oaks, the quiet hum of a neighborhood that still knows its neighbors. This Mount Pleasant home doesn't announce itself with flash — it invites you in with a wide, shaded piazza where the coastal breeze moves through the screens and the only soundtrack is the rustle of palmetto fronds. Evenings begin with sweet tea at golden hour and end with the glow of Shem Creek sunsets a short drive away. Pluff mud on the breeze, blue herons over the marsh, Sullivan's just across the bridge — unmistakably home."
 
-[Mount Pleasant — classic family / piazza & entertaining]
-"Nestled under a canopy of live oaks in the heart of Mount Pleasant, this charming Lowcountry retreat offers the perfect blend of timeless elegance and modern comfort. Step onto the welcoming piazza and feel the gentle coastal breeze that defines life in the Holy City. Inside, soaring ceilings and abundant natural light create an open, airy flow ideal for both quiet evenings and effortless entertaining. Outside, the beautifully landscaped yard beckons for al fresco dining or lazy afternoons with the family."
+[Downtown Charleston — antebellum / cobblestone / King Street walkability]
+"Step onto cobblestone and time slows. This Charleston single rises behind a hand-forged iron gate, its double piazza painted Charleston green, gas lanterns flickering against weathered stucco. Inside, heart-pine floors creak softly underfoot and tall transom windows draw the late-afternoon light across the foyer. Walk out the front door and King Street's boutiques and dining rooms are yours; turn the other way and the Battery's seawall waits a few blocks south. Horse-drawn carriages clop past at dusk. This is the Holy City in its most original key — antebellum bones, contemporary soul, and an address that quietly carries weight."
 
-[Mount Pleasant — marsh views / Shem Creek / Sullivan's]
-"Experience elevated Lowcountry living in this thoughtfully designed Mount Pleasant home. A charming farmhouse exterior and welcoming covered front porch set the tone for relaxed coastal elegance. Inside, the open-concept layout flows seamlessly from the chef's kitchen to the living spaces, where natural light pours in and marsh views inspire tranquility. Minutes from Shem Creek's renowned waterfront dining and Sullivan's Island beaches, this residence places the best of the Lowcountry at your doorstep."
+[Folly Beach — Edge of America / surf / bohemian rental rhythm]
+"They call this the Edge of America for a reason. Out here, your day starts with the saltwater wind off the Atlantic and an unhurried walk to the surf break, board tucked under one arm. The cottage sits a short pedal from Center Street, where weathered storefronts hide some of the best fish tacos in the Lowcountry and a porch beer with strangers feels like tradition. Behind the house, the tidal creek runs out toward the Morris Island Lighthouse, watercolor pink at sunset. This is more than a beach house — it's a bohemian rhythm, a vacation-rental engine, and the freedom of saltwater days."
 
-[Mount Pleasant — Old Village / historic charm]
-"In the sought-after Old Village of Mount Pleasant, this elegant residence captures the essence of Lowcountry living. Mature live oaks frame the property, creating a serene backdrop for the wide piazza that invites quiet mornings with coffee or evening gatherings with friends. The interior blends classic Charleston details with contemporary finishes, offering a lifestyle of refined comfort just steps from the historic charm and waterfront of the Holy City."
+[Daniel Island — master-planned / riverwalk / Town Center new urbanism]
+"Daniel Island isn't a neighborhood so much as a lifestyle that's been thoughtfully composed. The riverwalk threads along the Wando, where deepwater docks meet championship golf at the Daniel Island Club. Mornings start with coffee on the Town Center plaza, afternoons lean into tennis or a kayak launch from Smythe Park, and evenings settle in over wood-fired dinners three blocks from your front door. Architecture nods to the best of new urbanism — wide front porches, walkable blocks, mature trees already filling out. For buyers who want resort-grade amenities without leaving home, Daniel Island delivers a rare, tightly-knit Lowcountry experience."
 
-[Summerville — traditional / schools & downtown]
-"Nestled in a quiet Summerville neighborhood, this charming home offers the perfect blend of classic Southern style and modern updates. Step inside to find spacious living areas filled with natural light and timeless details. The kitchen opens to the family room, creating an ideal space for both daily life and holiday gatherings. Outside, the fenced yard provides privacy and room for outdoor enjoyment. Conveniently located near excellent schools and downtown Summerville, this residence offers the lifestyle you've been waiting for."
+[Summerville — Flowertown / azaleas / Nexton vs historic downtown / family]
+"Flowertown lives up to its name. Drive into Summerville under canopies of pines and live oaks, past Azalea Park in March bloom, and the historic downtown unfolds in front-porch storefronts that have anchored this town for generations. Out toward Nexton, the rhythm shifts: tree-lined avenues open to walkable squares of cafés and shops, the kind of master-planned ease families settle into for years. Dorchester D2 schools are the quiet anchor; the Sawmill Branch Trail is where the weekend begins. Lowcountry living with a slower pulse — where neighbors wave from the porch swing and azaleas still mean spring."
 `;
 
-// ─── Vision: analyze property photos ────────────────────────────────────────
-async function analyzePhotosWithVision(photoUrls: string[], openAiKey: string): Promise<string> {
-  if (!photoUrls.length) return '';
-
-  // Use up to 3 photos to control cost; Vision works best with primary hero shots
-  const urlsToAnalyze = photoUrls.slice(0, 3);
-
-  const imageContent = urlsToAnalyze.map(url => ({
-    type: 'image_url',
-    image_url: { url, detail: 'low' }, // 'low' = ~$0.001/image, sufficient for feature detection
-  }));
-
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openAiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-            text: `You are a careful, conservative photo describer for real estate listings.
-
-Rules:
-- ONLY describe details you can see with high confidence. If you are not certain, omit it.
-- Do NOT infer countertops, flooring materials, room count, layout, or “quality tier” unless clearly visible.
-- Do NOT use real estate sales language; output observational notes only.
-- Never invent features (fireplace, built-ins, coffered ceilings, shiplap, etc.) unless unmistakably visible.
-
-Return TWO lines only:
-1) CONFIDENT: <comma-separated fragments, max 20 items>
-2) DO_NOT_INFER: <comma-separated list of things you deliberately avoided inferring>
-Keep it short and factual.`,
-            },
-            ...imageContent,
-          ],
-        },
-      ],
-      max_tokens: 260,
-      temperature: 0.0,
-    }),
-  });
-
-  if (!response.ok) {
-    console.error('Vision API error:', response.status);
-    return '';
+// Tone-specific prompt modifiers (replaces the single "Tone requested: X" line).
+// Each modifier is multi-sentence and pushes the model toward a meaningfully
+// different cadence, vocabulary, and emotional register.
+function getToneModifier(tone: string | undefined | null): string {
+  switch ((tone ?? 'standard').toLowerCase()) {
+    case 'luxury':
+      return `Adopt an elevated, refined voice with restrained adjectives and rhythmic, slightly longer sentences. Emphasize craftsmanship, provenance, materials, and lifestyle — the texture of heart-pine underfoot, the choreography of light through a transom window, the heft of an iron gate. Suggest exclusivity through cadence and specificity rather than the words "luxury" or "exclusive." Never use "must-see," "stunning," or "won't last." Trust the reader; show, do not announce. Buyers at this tier read carefully — reward them with precision, not superlatives.`;
+    case 'family':
+      return `Write for buyers picturing their family in this home. Highlight neighborhood feel, walkability to schools and parks (only if supported by AUTHORIZED FACTS or landmarks), room for everyday life, and the weekend rhythms a young family would love — porch evenings, bike rides, neighbors who wave from the mailbox. Tone is warm, reassuring, and grounded, never saccharine. Lean into front-porch culture and community character in the Lowcountry vein. Avoid sales urgency; lean into belonging and the feeling of settling in for the long arc of family life.`;
+    case 'investment':
+      return `Write for a confident investor or short-term-rental operator. Lead with demand drivers: proximity to beaches, downtown, dining, and tourist anchors; rental-income potential where the area realistically supports it (Folly Beach, Isle of Palms, Downtown Charleston, Daniel Island). Note attributes that improve occupancy: privacy, parking, layout for groups, turnkey readiness — only when supported by facts. Tone is analytical but still emotive — guests stay because a place feels good, not just because the numbers work. Never invent cap rates, ADRs, or projected rental income. Keep the writing tight, confident, and specific.`;
+    case 'standard':
+    default:
+      return `Adopt a balanced, modern Charleston-local agent voice — warm professionalism, clean cadence, and confident specificity without ever sounding flashy. Speak to a broad, well-informed buyer audience: someone who values authenticity, walkability, and the everyday rhythms of Lowcountry life. Emotional warmth is welcome; superlatives and sales clichés are not. Lean into the texture of daily life here rather than on luxury markers — unless luxury is clearly in the AUTHORIZED FACTS for this property.`;
   }
+}
 
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content?.trim() ?? '';
+// ─── Vision: analyze property photos ────────────────────────────────────────
+async function analyzePhotosWithVision(photoUrls: string[]): Promise<string> {
+  if (!photoUrls.length) return '';
+  const urlsToAnalyze = photoUrls.slice(0, 3);
+  const prompt = `You are an expert Charleston real estate photographer's eye describing property photos for an MLS listing writer.
+
+Be confident: describe what you actually see — materials, finishes, layout flow, light quality, architectural style, and condition. You do not need to hedge on details that are visually obvious (e.g. "hardwood floors," "white shaker cabinets," "coffered ceiling," "stainless appliances," "screened piazza"). Skip only details you genuinely cannot identify.
+
+Specifically scan for Lowcountry / Charleston signature elements when present:
+- Piazzas (single or double; screened or open) and wraparound porches
+- Charleston green shutters, gas lanterns, hand-forged iron details
+- Heart-pine or wide-plank hardwood floors, transom windows, shiplap, coffered or beadboard ceilings
+- Charleston-single orientation (gable end to street, side piazza), raised foundations, metal roofs
+- Brick, tabby, board-and-batten, or HardiePlank exteriors typical of the region
+- Marsh / tidal creek / dock / boat-lift views, mature live oaks framing the lot
+- Oyster-shell or crushed-tabby paths, courtyard gardens, palmetto landscaping
+
+Output EXACTLY two lines, no preamble:
+CONFIDENT: <comma-separated descriptive phrases, max 25 items>
+LOWCOUNTRY_FEATURES: <comma-separated Charleston-specific architectural elements detected, or "none">`;
+
+  return analyzeImagesWithVision(urlsToAnalyze, prompt);
+}
+
+// Pulls the LOWCOUNTRY_FEATURES line out of the Vision summary so we can promote
+// it into the listing prompt as a confident, dedicated authenticity signal.
+function parseLowcountryFeatures(visionSummary: string): string | null {
+  if (!visionSummary) return null;
+  const m = visionSummary.match(/^\s*LOWCOUNTRY_FEATURES\s*:\s*(.+)$/im);
+  const raw = m?.[1]?.trim();
+  if (!raw) return null;
+  if (/^none\b/i.test(raw)) return null;
+  return raw;
 }
 
 // ─── Scoring: authenticity and confidence ───────────────────────────────────
@@ -222,72 +221,35 @@ function hasBedBathContradiction(
   return false;
 }
 
-// Refinement: second GPT call to improve flow and voice without adding facts
-async function refineMlsCopy(draftMls: string, openAiKey: string): Promise<string> {
-  const stripped = stripWordCountLine(draftMls);
-  if (!stripped) return draftMls;
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openAiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert editor for Charleston, SC real estate listings. Rewrite only for style and flow. Do not add or invent any facts, features, room counts, or distances not present in the description. Only improve style, flow, and emotional depth—never add new factual claims. Preserve or deepen the evocative, human voice; do not make the copy drier or more generic. Return only the rewritten MLS description, no preamble or word count.',
-        },
-        {
-          role: 'user',
-          content: `Rewrite this MLS description to sound 100% human-written by a top Charleston agent. Remove repetition, improve flow, add emotional depth, ensure 400+ words. Do not add or invent any facts. Return only the rewritten MLS description, no preamble or word count.\n\n---\n\n${stripped}`,
-        },
-      ],
-      max_tokens: 1200,
-      temperature: 0.6,
-    }),
-  });
-  if (!res.ok) return draftMls;
-  const data = await res.json();
-  const refined = data.choices?.[0]?.message?.content?.trim();
-  return refined && refined.length > 100 ? refined : draftMls;
-}
-
-// Third pass: strip hallucinated facts not in input (cheap gpt-4o-mini)
-async function factCheckMls(
-  mls: string,
+// Combined refine + fact-check in ONE call (replaces the previous two passes).
+// Removes unsupported claims, improves flow & sensory detail, preserves/deepens
+// neighborhood voice, targets 400–450 words, and expands arrival/lifestyle if <380.
+async function refineAndFactCheckMls(
+  draftMls: string,
   factsJson: string,
-  openAiKey: string,
 ): Promise<string> {
-  if (!mls || mls.length < 80) return mls;
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openAiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
+  const stripped = stripWordCountLine(draftMls);
+  if (!stripped || stripped.length < 80) return draftMls;
+  try {
+    const polished = await generateCompletion({
       messages: [
         {
           role: 'system',
           content:
-            'Review the MLS description. Remove any factual claims about the property that are NOT supported by the INPUT FACTS JSON (beds, baths, sqft, amenities list, vision text, landmarks). Preserve voice, flow, length (~400 words target), and rich atmospheric language (e.g. "gentle coastal breeze," "neighborhood rhythm") when it does not assert a specific unlisted feature. If the copy mentions piazza, fireplace, pool, dock, chef kitchen, live oaks on the lot, room layout, or finishes not in the facts, remove or generalize those sentences. Return ONLY the cleaned MLS description, no preamble.',
+            "You are an expert editor for Charleston, SC real estate listings. In a SINGLE pass, do all of the following: (1) remove any factual claim about the property that is not supported by the INPUT FACTS JSON or photo-derived details (beds, baths, sqft, amenities list, vision text including LOWCOUNTRY_FEATURES, landmark distances) — if the draft mentions piazza, fireplace, pool, dock, chef kitchen, live oaks on the lot, room layout, or finishes not in those facts, remove or generalize those sentences; (2) improve flow and add concrete sensory detail (sight, sound, scent, light, breeze); (3) preserve and deepen the neighborhood voice and emotional resonance — do not flatten the copy; (4) target 400–450 words; if the draft runs short of 380 words, expand the arrival and lifestyle/location sections (NOT the fact-bearing room descriptions). Return ONLY the final MLS description — no preamble, no word count, no commentary.",
         },
         {
           role: 'user',
-          content: `INPUT FACTS (JSON):\n${factsJson}\n\n---\n\nMLS DESCRIPTION:\n${mls}\n\n---\n\nReturn the cleaned description only.`,
+          content: `INPUT FACTS (JSON):\n${factsJson}\n\n---\n\nDRAFT MLS DESCRIPTION:\n${stripped}\n\n---\n\nReturn the final, polished MLS description only.`,
         },
       ],
-      max_tokens: 1200,
-      temperature: 0.15,
-    }),
-  });
-  if (!res.ok) return mls;
-  const data = await res.json();
-  const cleaned = data.choices?.[0]?.message?.content?.trim();
-  return cleaned && cleaned.length > 120 ? cleaned : mls;
+      maxTokens: 1400,
+      temperature: 0.3,
+    });
+    return polished && polished.length > 120 ? polished : draftMls;
+  } catch {
+    return draftMls;
+  }
 }
 
 serve(async (req: Request) => {
@@ -310,41 +272,55 @@ serve(async (req: Request) => {
       address, neighborhood, propertyType,
       bedrooms, bathrooms, sqft, price, amenities, customAmenities,
       tone, generateMLS, generateAirbnb, generateSocial,
+      generateEmail = true,
       photoUrls = [],
       neighborhoodContext = null,   // keywords_for_ai from charleston_neighborhoods.json
       neighborhoodLifestyle = [],   // lifestyle phrases array
       overviewOnly = false,
+      relistOf = null,
+      relistNotes = null,
+      relistPrice = null,
     } = payload;
 
-    const openAiKey = Deno.env.get('OPENAI_API_KEY')!;
+    const isRelist = !!relistOf;
+    const sanitizedRelistNotes = typeof relistNotes === 'string' ? relistNotes.trim().slice(0, 600) : '';
 
     // ─── Step 1: Vision photo analysis (parallel with geocode) ──────────
     const [visionSummary, geocodeData] = await Promise.all([
       photoUrls.length > 0
-        ? analyzePhotosWithVision(photoUrls, openAiKey)
+        ? analyzePhotosWithVision(photoUrls)
         : Promise.resolve(''),
       fetch(
         `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${Deno.env.get('GOOGLE_MAPS_SERVER_KEY')}`
       ).then(r => r.json()).catch(() => null),
     ]);
 
-    // ─── Step 2: Landmark distances ──────────────────────────────────────
+    // ─── Step 2: Landmark distances (90-day cache by normalized address hash) ─
     let landmarkDistances: Record<string, string> = {};
     const origin = geocodeData?.results?.[0]?.geometry?.location;
 
     if (origin) {
-      const destinations = Object.values(LANDMARKS)
-        .map(l => `${l.lat},${l.lng}`)
-        .join('|');
-      const dmRes = await fetch(
-        `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin.lat},${origin.lng}&destinations=${destinations}&units=imperial&key=${Deno.env.get('GOOGLE_MAPS_SERVER_KEY')}`
-      );
-      const dmData = await dmRes.json();
-      const elements = dmData.rows?.[0]?.elements ?? [];
-      Object.keys(LANDMARKS).forEach((name, i) => {
-        const el = elements[i];
-        if (el?.status === 'OK') landmarkDistances[name] = el.distance.text;
-      });
+      const addressHash = await sha256Hex(String(address));
+      const cached = await getCachedDistances(addressHash);
+      if (cached && Object.keys(cached).length > 0) {
+        landmarkDistances = cached;
+      } else {
+        const destinations = Object.values(LANDMARKS)
+          .map(l => `${l.lat},${l.lng}`)
+          .join('|');
+        const dmRes = await fetch(
+          `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin.lat},${origin.lng}&destinations=${destinations}&units=imperial&key=${Deno.env.get('GOOGLE_MAPS_SERVER_KEY')}`
+        );
+        const dmData = await dmRes.json();
+        const elements = dmData.rows?.[0]?.elements ?? [];
+        Object.keys(LANDMARKS).forEach((name, i) => {
+          const el = elements[i];
+          if (el?.status === 'OK') landmarkDistances[name] = el.distance.text;
+        });
+        if (Object.keys(landmarkDistances).length > 0) {
+          await setCachedDistances(addressHash, String(address).trim(), landmarkDistances);
+        }
+      }
     }
 
     // ─── Step 3: Build neighborhood context ──────────────────────────────
@@ -359,7 +335,7 @@ serve(async (req: Request) => {
       .map(([name, dist]) => `${name} (${dist})`)
       .join(', ');
 
-    // ─── Step 4: GPT-4o-mini listing generation ───────────────────────────
+    // ─── Step 4: Listing generation (Claude primary, OpenAI fallback) ─────
     const lifestyleHints = (neighborhoodLifestyle as string[]).slice(0, 4).join('; ');
     const neighborhoodName = neighborhood ?? 'Charleston';
 
@@ -384,19 +360,55 @@ ${visionSummary ? `Photo note (exterior/curb only if visible): ${visionSummary}`
 ${generateMLS ? `MLS_DESCRIPTION: 180–260 words. Describe why buyers value this area—dining, beaches, schools vibe, commute, Lowcountry character (tidal creeks, marsh context as regional flavor, not "this home has marsh frontage" unless photos prove it). Do NOT state bedroom count, bathroom count, square footage, or interior features. End with this exact sentence on its own line: "Add more details for a full property-specific listing—include bedrooms, bathrooms, square footage, and amenities on your next generation."` : ''}
 ${generateAirbnb ? 'AIRBNB_COPY: 120–180 words as a neighborhood / area guest guide only—no specific home claims—or null if inappropriate.' : ''}
 ${generateSocial ? 'SOCIAL: 3 short posts about the area/hyperlocal vibe, max 200 chars each + hashtags.' : ''}
+${generateEmail ? 'EMAIL_COPY: 150–200 words. Write as a Charleston agent sending a tasteful buyer-list email about this area / opportunity—warm, professional, no false property specs; invite replies and showings without inventing bed/bath/sqft.' : ''}
 
 improvement_suggestions: first MUST be exactly: "Add more details for full listing? Enter bedrooms, bathrooms, square footage, and amenities on a new generation for property-specific MLS copy." Second: one other actionable tip.
 
-Respond ONLY with valid JSON: { "mls_copy", "airbnb_copy", "social_captions", "improvement_suggestions" }. Null unused fields.`;
+Respond ONLY with valid JSON: { "mls_copy", "airbnb_copy", "social_captions"${generateEmail ? ', "email_copy"' : ''}, "improvement_suggestions" }. Null unused fields.`;
     } else {
-      systemPrompt = `You are a top ${neighborhoodName} agent with 15+ years writing MLS listings. Write in an elegant, human, immersive voice — never robotic or repetitive.
+      const toneModifier = getToneModifier(tone);
+      const lowcountryFeatures = parseLowcountryFeatures(visionSummary);
+
+      const mandatoryNeighborhoodBlock = neighborhoodContext
+        ? `=== MANDATORY NEIGHBORHOOD VOICE (${neighborhoodName}) ===
+${neighborhoodContext}
+You MUST incorporate at least 3 vocabulary terms from this guide naturally into the copy.
+Lifestyle selling points to reference (pick 2-3): ${lifestyleHints || '(none provided — use the guide above to infer them)'}
+===`
+        : `=== MANDATORY NEIGHBORHOOD VOICE (${neighborhoodName}) ===
+You MUST incorporate at least 3 of the following Lowcountry vocabulary terms naturally into the copy: ${vocab.join(', ')}.
+Lifestyle selling points to reference (pick 2-3): ${lifestyleHints || '(none provided)'}
+===`;
+
+      systemPrompt = `=== ROLE ===
+You are a top-producing ${neighborhoodName} real estate agent with 15+ years of experience writing MLS listings for Charleston, SC. You write the way the best Charleston agents speak — elegant, human, immersive, and unmistakably local. Never robotic, never list-like, never generic.
+
+=== VOICE RULES ===
+- Write in flowing prose with varied sentence rhythm. No bullet lists in the MLS body.
+- Every paragraph must contain at least one concrete sensory detail (sight, sound, scent, light, breeze, touch, or taste). Atmosphere is not optional.
+- Use the Lowcountry vocabulary palette where it does not falsely attribute a feature to this property: ${vocab.join(', ')}.
+- Never use generic real estate clichés: "must see," "stunning," "move-in ready," "won't last long," "luxury living at its finest," "your dream home awaits," "priced to sell," "rare opportunity."
+- Show, don't announce. Let cadence and specificity do the work of "luxury" or "charming."
+
+=== FACT RULES ===
 ${FACT_ONLY_RULES}
-Never invent or assume factual claims beyond the AUTHORIZED FACTS block. Use rich, immersive language and emotional storytelling—elegant and narrative, not bland or list-like.
-Neighborhood atmosphere vocabulary (use only where it does not falsely attribute a feature to this property): ${vocab.join(', ')}.
-${neighborhoodContext ? `Neighborhood copywriting guide: ${neighborhoodContext}` : ''}
-${lifestyleHints ? `Key lifestyle selling points: ${lifestyleHints}` : ''}
-Tone requested: ${tone ?? 'standard'}.
-Never use generic real estate clichés ("must see", "stunning", "move-in ready", "won't last long").
+- PIAZZA GUARDRAIL: Use the word "piazza" ONLY if "Screened Piazza," "Wraparound Porch," or a similar porch amenity appears in the amenities list, OR the photo analysis explicitly mentions a porch or piazza. Otherwise use neutral terms like "entry," "front steps," or omit the feature entirely. This guardrail is non-negotiable.
+- Never invent or assume factual claims beyond the AUTHORIZED FACTS block. Atmospheric storytelling is encouraged (breeze, light, neighborhood rhythm, Holy City lifestyle) as long as you do not claim a specific unlisted physical feature on this property.
+
+=== TONE (${(tone ?? 'standard').toString().toUpperCase()}) ===
+${toneModifier}
+
+=== STRUCTURE (MLS, 400–450 words total) ===
+Write the MLS in four cleanly flowing paragraphs, in this order and at these word budgets:
+1. ARRIVAL (60–80 words): The approach — street, light, neighborhood feel, the moment of pulling up. No false claims about this home's exterior unless in AUTHORIZED FACTS or photos.
+2. INTERIOR FLOW (150–180 words): Move through the home using only beds/baths/sqft, the amenities list, and photo-derived details. Describe rhythm, light, and flow between spaces — never invent additional rooms, finishes, or layouts.
+3. OUTDOOR + LOCATION (80–100 words): Exterior (only if in facts/photos), landmark distances from the verified list, and area lifestyle that ties the home to its neighborhood.
+4. CLOSE (40–60 words): A confident, human invitation to schedule a private tour. No clichés.
+
+Each paragraph must include at least one concrete sensory detail. If the writing risks going generic, anchor it in something specific you can actually see, smell, or hear in the AUTHORIZED FACTS / photo analysis.
+
+${mandatoryNeighborhoodBlock}
+
 ${generateMLS ? MLS_FEW_SHOT_EXAMPLES : ''}`;
 
       const authorizedFacts = `AUTHORIZED FACTS — text-only; every structural/feature claim in MLS must be traceable to this list or photo-derived line:
@@ -407,78 +419,78 @@ Bedrooms: ${bedrooms ?? 'not specified'} | Bathrooms: ${bathrooms ?? 'not specif
 Amenities / features you MAY mention by name: ${allAmenities.length ? allAmenities.join(', ') : 'none listed—do not invent features'}
 Landmark distances (use these exact distances only): ${nearbyLandmarks || 'none'}
 ${visionSummary ? `Photo-derived details (ONLY other source for finishes/layout/features): ${visionSummary}` : 'No photo analysis—do not describe interior finishes, rooms, or exterior features not in amenities.'}
+${lowcountryFeatures ? `Charleston-specific photo features detected (use these CONFIDENTLY in the copy — they are visible in the photos): ${lowcountryFeatures}` : ''}
 You have full creative freedom on voice, mood, and non-specific atmosphere. Do not add facts.`;
 
       const mlsInstructions = generateMLS ? `
-Generate MLS_DESCRIPTION (target 400–450 words). Structure:
-1. Opening hook: arrival / street / neighborhood feel (no false claims about this home's exterior unless in facts/photos).
-2. Interior: room-by-room ONLY using beds/baths/sqft + amenities + photo details—no extra rooms or finishes.
-3. Exterior & lifestyle: landmark distances from list; area lifestyle; mention piazza/marsh/pool/dock ONLY if in amenities or photos.
-4. Closing: private tour CTA.
-End with: [Word count: XXX]` : '';
+Generate MLS_DESCRIPTION following the STRUCTURE section in the system prompt (ARRIVAL 60–80 / INTERIOR FLOW 150–180 / OUTDOOR+LOCATION 80–100 / CLOSE 40–60; total 400–450 words). End with this exact line on its own row: [Word count: XXX]` : '';
+
+      const airbnbInstructions = generateAirbnb ? `
+Generate AIRBNB_COPY (200–250 words). Write as a Charleston Superhost messaging a friend who's about to visit — warm, specific, generous with insider detail. Lead with what makes this stay special for a visitor (not the listing-agent angle). Highlight walkability, the beach/dining/day-trip options nearby, and the rhythm of a Charleston weekend a guest would actually want. Use "you" and "your" generously — make them feel personally hosted. Only claim features from AUTHORIZED FACTS, LOWCOUNTRY_FEATURES, and photo-derived details. End with 3–4 short practical amenity bullets covering: WiFi, parking, kitchen, and check-in (mark each with "•" at the start of the line; brief one-liner each). Bullets are the only place lists are allowed.` : '';
 
       userPrompt = `${authorizedFacts}
 
 ${generateMLS ? mlsInstructions : ''}
-${generateAirbnb ? 'Generate AIRBNB_COPY: 200-250 words; only claim features from AUTHORIZED FACTS and photo-derived details.' : ''}
+${airbnbInstructions}
 ${generateSocial ? 'Generate SOCIAL_1, SOCIAL_2, SOCIAL_3: max 200 chars + hashtags; facts from listing only.' : ''}
+${generateEmail ? `Generate EMAIL_COPY: 150–200 words as a single email body to your buyer list / sphere. Subject line not required. Agent voice: warm, confident, Charleston-local. Use only AUTHORIZED FACTS and photo-derived details—no invented features. Include a clear soft CTA (reply, questions, schedule a tour). Plain paragraphs; no heavy HTML.` : ''}
 
 Respond ONLY with valid JSON in this exact shape:
 {
   "mls_copy": "...",
   "airbnb_copy": "...",
-  "social_captions": ["...", "...", "..."],
+  "social_captions": ["...", "...", "..."]${generateEmail ? ',\n  "email_copy": "..."' : ''},
   "improvement_suggestions": ["specific suggestion 1", "specific suggestion 2"]
 }
 For unused sections return null (not empty string). improvement_suggestions must be 2 actionable, specific tips.`;
     }
 
-    const openAiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user',   content: userPrompt },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 2500,
-        temperature: 0.5,
-      }),
-    });
+    if (isRelist) {
+      const toneLabel = String(tone ?? 'standard');
+      const notesLine = sanitizedRelistNotes
+        ? `Notes from agent: ${sanitizedRelistNotes}`
+        : 'Notes from agent: (none — keep momentum, acknowledge return, do not invent context.)';
+      const priceLine = relistPrice
+        ? `New list price: $${Number(relistPrice).toLocaleString()}.`
+        : '';
+      systemPrompt += `
 
-    if (!openAiRes.ok) {
-      const errText = await openAiRes.text();
-      throw new Error(`OpenAI error ${openAiRes.status}: ${errText}`);
+=== RELIST MODE ===
+This is a RELIST. Acknowledge the property is back on the market with fresh momentum. Tone shift: ${toneLabel}. ${notesLine} ${priceLine} Do not call out that it was previously listed in negative terms; lean into renewed energy and the opportunity for the next buyer.`;
     }
 
-    const openAiData = await openAiRes.json();
-    const generated  = JSON.parse(openAiData.choices[0].message.content);
+    const generatedJson = await generateCompletion({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      responseFormat: { type: 'json_object' },
+      maxTokens: 2500,
+      temperature: 0.55,
+    });
 
-    // ─── Step 4b: Refinement + fact-check (full listing only) ────────────
+    type GenPayload = {
+      mls_copy?: string | null;
+      airbnb_copy?: string | null;
+      social_captions?: string[] | null;
+      email_copy?: string | null;
+      improvement_suggestions?: string[] | null;
+    };
+    let generated: GenPayload;
+    try {
+      generated = JSON.parse(generatedJson) as GenPayload;
+    } catch {
+      throw new Error('Model returned invalid JSON');
+    }
+
+    // ─── Step 4b: Combined refine + fact-check in a single call (full listing only) ─
+    // Pipeline: Call 1 = generate (above). Call 2 = combined refine + fact-check.
     let finalMlsCopy: string | null = generated.mls_copy ?? null;
     if (finalMlsCopy) {
       const draftMls = stripWordCountLine(finalMlsCopy);
       if (overviewOnly) {
         finalMlsCopy = draftMls;
       } else {
-        let refined: string;
-        try {
-          refined = await refineMlsCopy(finalMlsCopy, openAiKey);
-        } catch (_) {
-          refined = draftMls;
-        }
-        refined = stripWordCountLine(refined);
-        if (hasBedBathContradiction(refined, bedrooms, bathrooms)) {
-          finalMlsCopy = draftMls;
-        } else {
-          finalMlsCopy = refined || draftMls;
-        }
-        finalMlsCopy = stripWordCountLine(finalMlsCopy) || finalMlsCopy;
         const factsJson = JSON.stringify({
           bedrooms,
           bathrooms,
@@ -486,22 +498,32 @@ For unused sections return null (not empty string). improvement_suggestions must
           price,
           amenities: allAmenities,
           visionSummary: visionSummary || null,
+          lowcountryFeatures: parseLowcountryFeatures(visionSummary),
           landmarks: nearbyLandmarks,
           neighborhood,
           propertyType,
         });
+        let polished: string;
         try {
-          finalMlsCopy = await factCheckMls(finalMlsCopy, factsJson, openAiKey);
-        } catch (_) { /* keep previous */ }
+          polished = await refineAndFactCheckMls(draftMls, factsJson);
+        } catch (_) {
+          polished = draftMls;
+        }
+        polished = stripWordCountLine(polished);
+        finalMlsCopy = hasBedBathContradiction(polished, bedrooms, bathrooms)
+          ? draftMls
+          : (polished || draftMls);
         finalMlsCopy = stripWordCountLine(finalMlsCopy) || finalMlsCopy;
       }
     }
 
     // ─── Step 5: Score authenticity + confidence ─────────────────────────
+    const socialArr = Array.isArray(generated.social_captions) ? (generated.social_captions as string[]) : [];
     const allGeneratedCopy = [
       finalMlsCopy ?? '',
-      generated.airbnb_copy ?? '',
-      ...(generated.social_captions ?? []),
+      (generated.airbnb_copy as string | null | undefined) ?? '',
+      ...socialArr,
+      ...(generateEmail ? [String((generated.email_copy as string | null | undefined) ?? '')] : []),
     ].join(' ');
 
     const scores = scoreAuthenticity(
@@ -515,8 +537,10 @@ For unused sections return null (not empty string). improvement_suggestions must
     // ─── Step 6: Update generation row ───────────────────────────────────
     const { error: updateErr } = await supabase.from('generations').update({
       mls_copy:                finalMlsCopy,
-      airbnb_copy:             generated.airbnb_copy ?? null,
-      social_captions:         generated.social_captions ?? null,
+      airbnb_copy:             (generated.airbnb_copy as string | null | undefined) ?? null,
+      social_captions:         socialArr.length ? socialArr : null,
+      email_copy:              generateEmail ? ((generated.email_copy as string | null | undefined) ?? null) : null,
+      tone:                    (tone as string) ?? 'standard',
       authenticity_score:      scores.authenticity,
       confidence_score:        scores.confidence,
       improvement_suggestions: generated.improvement_suggestions ?? null,

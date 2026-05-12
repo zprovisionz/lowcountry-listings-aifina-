@@ -1,9 +1,16 @@
 // supabase/functions/generate-comps/index.ts
 // Pro+ tier: calls GPT-4o-mini for 3 comparable listings (price, DOM, differentiators).
 // Required: OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+//
+// TODO(cleanup): This edge function is currently UNWIRED from the user-facing UI.
+// The Reports page was switched to a Coming-Soon + waitlist (real MLS comps, Q3 2026)
+// because AI-generated comps are not honest market data. This function is kept for
+// potential backfill / ops tooling — DO NOT re-expose it to end users without
+// pairing it with a real MLS data feed and a clear "AI-estimated" disclaimer.
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { generateCompletion } from '../_shared/ai-client.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -49,8 +56,9 @@ serve(async (req: Request) => {
   }
 
   const openAiKey = Deno.env.get('OPENAI_API_KEY');
-  if (!openAiKey) {
-    return new Response(JSON.stringify({ error: 'OpenAI not configured' }), {
+  const anthropicKey = Deno.env.get('ANTHROPIC_API_KEY');
+  if (!openAiKey && !anthropicKey) {
+    return new Response(JSON.stringify({ error: 'AI not configured (set ANTHROPIC_API_KEY and/or OPENAI_API_KEY)' }), {
       status: 500,
       headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
     });
@@ -96,34 +104,16 @@ Respond with this exact JSON structure (no markdown):
   "market_notes": "1-2 sentences on current Lowcountry market context for this segment."
 }`;
 
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 800,
-        temperature: 0.4,
-      }),
+    const content = await generateCompletion({
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      responseFormat: { type: 'json_object' },
+      maxTokens: 800,
+      temperature: 0.4,
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      return new Response(JSON.stringify({ error: `OpenAI error: ${errText}` }), {
-        status: 500,
-        headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-      });
-    }
-
-    const data = await res.json();
-    const content = data.choices?.[0]?.message?.content;
     const parsed = JSON.parse(content ?? '{}');
 
     return new Response(JSON.stringify(parsed), {

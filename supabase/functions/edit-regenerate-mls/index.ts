@@ -3,6 +3,7 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { generateCompletion } from '../_shared/ai-client.ts';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +24,6 @@ serve(async (req: Request) => {
   }
 
   try {
-    const openAiKey = Deno.env.get('OPENAI_API_KEY')!;
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -64,37 +64,23 @@ serve(async (req: Request) => {
 
     const presetLine = preset && PRESET_HINTS[preset] ? `\nPreset instruction: ${PRESET_HINTS[preset]}` : '';
 
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openAiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Revise the MLS description per the agent instructions. Remove or avoid any factual claims not in the INPUT FACTS JSON. Preserve elegant Charleston voice and similar length. Return only the revised MLS text.',
-          },
-          {
-            role: 'user',
-            content: `INPUT FACTS (JSON):\n${factsJson}\n\nCURRENT MLS:\n${currentMls}\n\nAGENT NOTES:\n${userNotes || '(none)'}${presetLine}\n\nReturn the full revised MLS description only.`,
-          },
-        ],
-        max_tokens: 1200,
-        temperature: 0.45,
-      }),
+    const revisedRaw = await generateCompletion({
+      messages: [
+        {
+          role: 'system',
+          content:
+            'Revise the MLS description per the agent instructions. Remove or avoid any factual claims not in the INPUT FACTS JSON. Preserve elegant Charleston voice and similar length. Return only the revised MLS text.',
+        },
+        {
+          role: 'user',
+          content: `INPUT FACTS (JSON):\n${factsJson}\n\nCURRENT MLS:\n${currentMls}\n\nAGENT NOTES:\n${userNotes || '(none)'}${presetLine}\n\nReturn the full revised MLS description only.`,
+        },
+      ],
+      maxTokens: 1200,
+      temperature: 0.45,
     });
+    const revised = revisedRaw.trim();
 
-    if (!res.ok) {
-      const t = await res.text();
-      throw new Error(`OpenAI ${res.status}: ${t}`);
-    }
-
-    const data = await res.json();
-    const revised = data.choices?.[0]?.message?.content?.trim();
     if (!revised || revised.length < 80) {
       return new Response(JSON.stringify({ error: 'Revision too short; try again' }), {
         status: 422,

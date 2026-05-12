@@ -173,6 +173,7 @@ serve(async (req: Request) => {
         generateMLS: true,
         generateAirbnb: true,
         generateSocial: true,
+        generateEmail: true,
         photoUrls: [],
         neighborhoodContext: null,
         neighborhoodLifestyle: [],
