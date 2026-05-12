@@ -1,11 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGenerations } from '../../hooks/useGenerations';
+import { supabase } from '../../lib/supabase';
 import StatCard from '../../components/ui/StatCard';
+import QuickGenerateCard from '../../components/dashboard/QuickGenerateCard';
+import { PLAN_LIMITS } from '../../config';
 
 const TIER_FEATURES: Record<string, string[]> = {
-  free:      ['10 generations/mo','MLS descriptions only','Basic analytics'],
+  free:      ['3 generations/mo · All formats','MLS + Airbnb + Social + Email','No staging credits'],
   starter:   ['100 generations/mo','MLS + Airbnb + Social','10 staging credits'],
   pro:       ['Unlimited generations','Virtual staging (40 credits)','MLS data pull'],
   pro_plus:  ['Unlimited + priority queue','100 staging credits','Advanced reports'],
@@ -13,17 +16,51 @@ const TIER_FEATURES: Record<string, string[]> = {
 };
 
 export default function DashboardPage() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const { generations, loading, fetchGenerations } = useGenerations();
   const navigate = useNavigate();
+  const [weekGen, setWeekGen] = useState<{ thisWeek: number; lastWeek: number } | null>(null);
 
   useEffect(() => { fetchGenerations(); }, [fetchGenerations]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const now = new Date();
+      const day = now.getDay();
+      const toMonday = day === 0 ? -6 : 1 - day;
+      const thisStart = new Date(now);
+      thisStart.setDate(now.getDate() + toMonday);
+      thisStart.setHours(0, 0, 0, 0);
+      const lastStart = new Date(thisStart);
+      lastStart.setDate(lastStart.getDate() - 7);
+      const [{ count: cThis }, { count: cLast }] = await Promise.all([
+        supabase
+          .from('generations')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'complete')
+          .gte('created_at', thisStart.toISOString()),
+        supabase
+          .from('generations')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('status', 'complete')
+          .gte('created_at', lastStart.toISOString())
+          .lt('created_at', thisStart.toISOString()),
+      ]);
+      setWeekGen({ thisWeek: cThis ?? 0, lastWeek: cLast ?? 0 });
+    })();
+  }, [user]);
 
   const completed = generations.filter(g => g.status === 'complete');
   const usedPct = profile ? Math.min(100,(profile.generations_used / Math.max(profile.generations_limit,1)) * 100) : 0;
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
+
+      {/* ── Quick Generate (one-screen path) ── */}
+      <QuickGenerateCard />
 
       {/* ── Welcome banner ── */}
       <div className="glass-featured anim-fade-up" style={{ padding:'24px 28px' }}>
@@ -54,11 +91,35 @@ export default function DashboardPage() {
 
       {/* ── Stat cards ── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:14 }}>
-        <StatCard value={profile?.generations_used ?? 0} label="Gens Used"     sub={`of ${profile?.generations_limit === -1 ? '∞' : profile?.generations_limit ?? 10} this month`} color="cyan"    icon="⚡" delay={0}   />
+        <StatCard value={profile?.generations_used ?? 0} label="Gens Used"     sub={`of ${profile?.generations_limit === -1 ? '∞' : profile?.generations_limit ?? PLAN_LIMITS.free.generations} this month`} color="cyan"    icon="⚡" delay={0}   />
         <StatCard value={completed.length}               label="Completed"      sub="All time"         color="cyan"    icon="✦"  delay={80}  onClick={() => navigate('/history')} />
         <StatCard value={profile?.staging_credits_used ?? 0} label="Staging Used" sub={`of ${profile?.staging_credits_limit === -1 ? '∞' : profile?.staging_credits_limit ?? 0}`} color="magenta" icon="🏠" delay={160} />
         <StatCard value={`${usedPct.toFixed(0)}%`}       label="Quota Used"    sub={usedPct > 80 ? '⚠ Consider upgrading' : 'Quota healthy'} color={usedPct > 80 ? 'magenta' : 'green'} icon="◈" delay={240} onClick={() => navigate('/account')} />
       </div>
+
+      {weekGen && (
+        <div className="glass-dash anim-fade-up d-50" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 6 }}>
+              THIS WEEK · COMPLETED GENERATIONS
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+              <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 28, color: 'var(--text-hi)' }}>{weekGen.thisWeek}</span>
+              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: 'var(--text-mid)' }}>
+                vs last week {weekGen.lastWeek}
+                {weekGen.thisWeek !== weekGen.lastWeek && (
+                  <span style={{ marginLeft: 8, color: weekGen.thisWeek >= weekGen.lastWeek ? '#00ff96' : '#ff8080' }}>
+                    {weekGen.thisWeek >= weekGen.lastWeek ? '↑' : '↓'} {Math.abs(weekGen.thisWeek - weekGen.lastWeek)}
+                  </span>
+                )}
+              </span>
+            </div>
+          </div>
+          <button type="button" onClick={() => navigate('/analytics')} className="btn btn-ghost btn-sm">
+            Full analytics →
+          </button>
+        </div>
+      )}
 
       {/* ── Main row ── */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:18, flexWrap:'wrap' }}>
@@ -150,7 +211,7 @@ export default function DashboardPage() {
             {([
               { icon:'✦', label:'New Listing',    sub:'4-step wizard',     to:'/generate', color:'var(--cyan)'    },
               { icon:'◷', label:'View History',   sub:'Past generations',  to:'/history',  color:'var(--magenta)' },
-              { icon:'◈', label:'Market Reports', sub:'Comps & analytics', to:'/reports',  color:'var(--cyan)'    },
+              { icon:'◈', label:'Market Reports', sub:'Coming Q3 · join waitlist', to:'/reports',  color:'var(--cyan)'    },
               { icon:'◎', label:'Team Settings',  sub:'Manage your team',  to:'/team',     color:'var(--magenta)' },
             ]).map(({ icon, label, sub, to, color }) => (
               <div

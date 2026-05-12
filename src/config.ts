@@ -27,9 +27,11 @@ export const GOOGLE_MAPS = {
   libraries: ['places'] as const,
 } as const;
 
-export const OPENAI = {
-  chatCompletionsUrl: 'https://api.openai.com/v1/chat/completions',
-  defaultModel: 'gpt-4o-mini',
+export const AI = {
+  anthropicMessagesUrl: 'https://api.anthropic.com/v1/messages',
+  openaiChatCompletionsUrl: 'https://api.openai.com/v1/chat/completions',
+  primaryModel: 'claude-3-5-sonnet-20241022',
+  fallbackModel: 'gpt-4o-mini',
 } as const;
 
 export const GOOGLE_MAPS_SERVER = {
@@ -63,6 +65,64 @@ export const TIERS = {
     team:      { name: 'Team',      monthly: 149 },
   },
 } as const;
+
+/**
+ * Per-tier plan limits — single source of truth for the React app.
+ * `generations: null` means unlimited (mapped to DB sentinel `-1` at write time).
+ * `formats` flags which output formats are unlocked on each tier.
+ */
+export const PLAN_LIMITS = {
+  free: {
+    generations: 3,
+    stagingCredits: 0,
+    formats: { mls: true, airbnb: true, social: true, email: true },
+  },
+  starter: {
+    generations: 100,
+    stagingCredits: 10,
+    formats: { mls: true, airbnb: true, social: true, email: true },
+  },
+  pro: {
+    generations: null,
+    stagingCredits: 40,
+    formats: { mls: true, airbnb: true, social: true, email: true },
+  },
+  pro_plus: {
+    generations: null,
+    stagingCredits: 100,
+    formats: { mls: true, airbnb: true, social: true, email: true },
+  },
+  team: {
+    generations: null,
+    stagingCredits: 200,
+    formats: { mls: true, airbnb: true, social: true, email: true },
+  },
+} as const;
+
+export type PlanFormat = 'mls' | 'airbnb' | 'social' | 'email';
+
+/** Default output format flags, applied when a profile has no `default_formats`. */
+export const DEFAULT_FORMAT_FLAGS: Record<PlanFormat, boolean> = {
+  mls: true,
+  airbnb: true,
+  social: true,
+  email: true,
+};
+
+/** DB column `generations_limit` uses -1 as the "unlimited" sentinel. */
+export const UNLIMITED_GEN_DB_SENTINEL = -1;
+
+/** Pretty-print a plan's generation cap (e.g. "3 / month", "Unlimited"). */
+export function formatGenerationsLabel(tier: keyof typeof PLAN_LIMITS): string {
+  const cap = PLAN_LIMITS[tier].generations;
+  return cap === null ? 'Unlimited' : `${cap} / month`;
+}
+
+/** Pretty-print a plan's monthly staging-credit allocation. */
+export function formatStagingLabel(tier: keyof typeof PLAN_LIMITS): string {
+  const credits = PLAN_LIMITS[tier].stagingCredits;
+  return credits === 0 ? 'None' : `${credits} credits / mo`;
+}
 
 export const DEBUG = {
   /**

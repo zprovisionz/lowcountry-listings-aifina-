@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import type { WizardData } from '../../types/database';
 import { STAGING_STYLES } from '../../types/database';
 
@@ -15,7 +16,7 @@ export default function Step4Review({ data, onChange }: Props) {
     ) : null;
 
   const FormatToggle = ({ fieldKey, label, desc, badge }: {
-    fieldKey: 'generateMLS' | 'generateAirbnb' | 'generateSocial';
+    fieldKey: 'generateMLS' | 'generateAirbnb' | 'generateSocial' | 'generateEmail';
     label: string; desc: string; badge: string;
   }) => {
     const on = data[fieldKey];
@@ -144,16 +145,42 @@ export default function Step4Review({ data, onChange }: Props) {
           <FormatToggle fieldKey="generateMLS"     label="MLS Listing Description"       desc="350–450 words · RESO-compliant MLS format with authentic Lowcountry voice" badge="~400 words" />
           <FormatToggle fieldKey="generateAirbnb"  label="Airbnb / Short-Term Rental"    desc="200–250 words · Guest experience-first, Lowcountry vacation picture"        badge="~225 words" />
           <FormatToggle fieldKey="generateSocial"  label="Social Media Captions"         desc="3 platform-ready posts · Instagram, Facebook, LinkedIn + local hashtags"    badge="3 posts" />
+          <FormatToggle fieldKey="generateEmail"   label="Email Blast Copy"              desc="150–200 words · Agent-to-buyer-list format — warm CTA, facts-only, Charleston voice" badge="~175 words" />
         </div>
       </div>
 
       {/* Warning if nothing selected */}
-      {!data.generateMLS && !data.generateAirbnb && !data.generateSocial && (
+      {!data.generateMLS && !data.generateAirbnb && !data.generateSocial && !data.generateEmail && (
         <div style={{ padding: '12px 16px', background: 'rgba(255,160,0,0.07)', border: '1px solid rgba(255,160,0,0.25)', borderRadius: 10 }}>
           <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, color: '#ffaa44' }}>
             ⚠ Select at least one output format to generate.
           </span>
         </div>
+      )}
+
+      {data.generateMLS && (
+        <label
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 12,
+            cursor: 'pointer',
+            padding: '14px 16px',
+            borderRadius: 12,
+            border: '1px solid rgba(0,255,255,0.18)',
+            background: 'rgba(0,255,255,0.04)',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={data.complianceAcknowledged}
+            onChange={e => onChange({ complianceAcknowledged: e.target.checked })}
+            style={{ marginTop: 3 }}
+          />
+          <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: 'var(--text-mid)', lineHeight: 1.65 }}>
+            I acknowledge this listing copy is AI-assisted and I will verify all facts before publishing to MLS.
+          </span>
+        </label>
       )}
 
       {/* AI notice */}
@@ -166,12 +193,12 @@ export default function Step4Review({ data, onChange }: Props) {
       }}>
         <span style={{ fontSize: 20, flexShrink: 0 }}>⚡</span>
         <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12.5, color: 'var(--text-mid)', lineHeight: 1.65 }}>
-          <strong style={{ color: 'var(--cyan)', fontFamily: "'Playfair Display', Georgia, serif" }}>GPT-4o-mini</strong> will generate your listing using Lowcountry-specific context, landmark proximity data, and neighborhood voice. Generation typically takes 15–30 seconds.
+          <strong style={{ color: 'var(--cyan)', fontFamily: "'Playfair Display', Georgia, serif" }}>Claude 3.5 Sonnet</strong> will generate your listing using Lowcountry-specific context, landmark proximity data, and neighborhood voice. Generation typically takes 15–30 seconds.
         </div>
       </div>
     </div>
   );
 }
 
-const headSt:  React.CSSProperties = { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 22, color: 'var(--text-hi)', margin: '0 0 6px' };
-const subSt:   React.CSSProperties = { fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: 'var(--text-mid)', margin: 0, lineHeight: 1.7 };
+const headSt:  CSSProperties = { fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 800, fontSize: 22, color: 'var(--text-hi)', margin: '0 0 6px' };
+const subSt:   CSSProperties = { fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: 'var(--text-mid)', margin: 0, lineHeight: 1.7 };

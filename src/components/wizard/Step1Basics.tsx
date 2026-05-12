@@ -43,13 +43,14 @@ export default function Step1Basics({
         <CharlestonAddressField
           variant="wizard"
           manualValue={data.address ?? ''}
-          onManualChange={(v) =>
+          onManualChange={(v) => {
             onChange({
               address: v,
               placeId: '',
-              neighborhood: v.trim() ? detectNeighborhood(v) : '',
-            })
-          }
+              neighborhood: '',
+            });
+            if (v.trim()) void detectNeighborhood(v).then(n => onChange({ neighborhood: n }));
+          }}
           onPick={(sel) =>
             onChange({
               address: sel.formattedAddress,

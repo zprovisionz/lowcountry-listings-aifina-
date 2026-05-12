@@ -1,9 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useStripe } from '../../hooks/useStripe';
 import { supabase } from '../../lib/supabase';
+import { captureProductEvent } from '../../lib/product-analytics';
+import { ensureNeighborhoodsLoaded } from '../../lib/detectNeighborhood';
+import { AMENITY_OPTIONS, type AgentTone } from '../../types/database';
+import { DEFAULT_FORMAT_FLAGS } from '../../config';
+
+type FormatKey = 'mls' | 'airbnb' | 'social' | 'email';
+const TONE_OPTIONS: { value: AgentTone; label: string }[] = [
+  { value: 'standard',   label: 'Standard' },
+  { value: 'luxury',     label: 'Luxury' },
+  { value: 'family',     label: 'Family' },
+  { value: 'investment', label: 'Investment' },
+];
+const FORMAT_LABELS: Record<FormatKey, string> = {
+  mls:    'MLS Description',
+  airbnb: 'Airbnb Copy',
+  social: 'Social Captions',
+  email:  'Email Blast',
+};
 
 interface Tier {
   name: string;
@@ -16,7 +34,7 @@ interface Tier {
 }
 
 const TIERS: Tier[] = [
-  { name:'Free',    key:'free',     price:'$0/mo',   gens:'10/mo',        staging:'None',       color:'var(--text-lo)', border:'rgba(255,255,255,0.1)' },
+  { name:'Free',    key:'free',     price:'$0/mo',   gens:'3/mo',         staging:'None',       color:'var(--text-lo)', border:'rgba(255,255,255,0.1)' },
   { name:'Starter', key:'starter',  price:'$19/mo',  gens:'100/mo',       staging:'10 credits', color:'var(--cyan)',    border:'rgba(0,255,255,0.28)' },
   { name:'Pro',     key:'pro',      price:'$39/mo',  gens:'Unlimited',    staging:'40 credits', color:'var(--cyan)',    border:'rgba(0,255,255,0.5)' },
   { name:'Pro+',    key:'pro_plus', price:'$59/mo',  gens:'Unlimited',    staging:'100 credits',color:'var(--magenta)',  border:'rgba(255,0,255,0.5)' },
@@ -128,6 +146,9 @@ export default function AccountPage() {
         </div>
       </div>
 
+      {/* My Defaults — persisted agent preferences */}
+      <MyDefaultsSection />
+
       {/* Current plan */}
       <div style={{
         padding: '24px 26px',
@@ -179,7 +200,10 @@ export default function AccountPage() {
                 )}
                 {!isCurrent && TIERS.indexOf(t) > TIERS.findIndex(x => x.key === profile?.tier) && (
                   <button
-                    onClick={() => createCheckoutSession('subscription', t.key)}
+                    onClick={() => {
+                      captureProductEvent('upgrade_clicked', { tier: t.key, source: 'account' });
+                      createCheckoutSession('subscription', t.key);
+                    }}
                     disabled={stripeLoading}
                     style={{
                       marginTop: 10, width: '100%',
@@ -332,6 +356,214 @@ export default function AccountPage() {
   );
 }
 
+function MyDefaultsSection() {
+  const { profile, refreshProfile } = useAuth();
+  const { toast } = useToast();
+  const [tone, setTone] = useState<AgentTone>('standard');
+  const [formats, setFormats] = useState<Record<FormatKey, boolean>>({ ...DEFAULT_FORMAT_FLAGS });
+  const [amenities, setAmenities] = useState<string[]>([]);
+  const [neighborhood, setNeighborhood] = useState<string>('');
+  const [neighborhoodOptions, setNeighborhoodOptions] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!profile) return;
+    setTone((profile.default_tone as AgentTone) ?? 'standard');
+    if (profile.default_formats) {
+      setFormats({
+        mls:    profile.default_formats.mls    ?? true,
+        airbnb: profile.default_formats.airbnb ?? true,
+        social: profile.default_formats.social ?? true,
+        email:  profile.default_formats.email  ?? true,
+      });
+    } else {
+      setFormats({ ...DEFAULT_FORMAT_FLAGS });
+    }
+    setAmenities(profile.default_amenities_presets ?? []);
+    setNeighborhood(profile.default_neighborhood ?? '');
+  }, [profile]);
+
+  useEffect(() => {
+    let cancelled = false;
+    ensureNeighborhoodsLoaded()
+      .then((payload) => {
+        if (cancelled) return;
+        const names = (payload.neighborhoods ?? [])
+          .map((n) => n.name)
+          .sort((a, b) => a.localeCompare(b));
+        setNeighborhoodOptions(names);
+      })
+      .catch(() => { /* silent */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const dirty = useMemo(() => {
+    if (!profile) return false;
+    const currentTone = (profile.default_tone as AgentTone) ?? 'standard';
+    if (currentTone !== tone) return true;
+    const currentFormats = profile.default_formats ?? DEFAULT_FORMAT_FLAGS;
+    for (const k of Object.keys(formats) as FormatKey[]) {
+      if (Boolean(currentFormats[k] ?? DEFAULT_FORMAT_FLAGS[k]) !== formats[k]) return true;
+    }
+    const a = (profile.default_amenities_presets ?? []).slice().sort().join('|');
+    const b = amenities.slice().sort().join('|');
+    if (a !== b) return true;
+    if ((profile.default_neighborhood ?? '') !== neighborhood) return true;
+    return false;
+  }, [profile, tone, formats, amenities, neighborhood]);
+
+  const toggleFormat = (key: FormatKey) =>
+    setFormats((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const toggleAmenity = (a: string) =>
+    setAmenities((prev) => (prev.includes(a) ? prev.filter((x) => x !== a) : [...prev, a]));
+
+  const handleSave = async () => {
+    if (!profile) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        default_tone: tone,
+        default_formats: formats,
+        default_amenities_presets: amenities,
+        default_neighborhood: neighborhood || null,
+      })
+      .eq('id', profile.id);
+    if (error) {
+      toast(error.message ?? 'Failed to save defaults.', 'error');
+    } else {
+      captureProductEvent('agent_defaults_saved', {
+        tone,
+        format_count: Object.values(formats).filter(Boolean).length,
+        amenity_count: amenities.length,
+        has_neighborhood: !!neighborhood,
+      });
+      toast('Defaults saved.', 'success');
+      await refreshProfile();
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{
+      padding: '24px 26px',
+      background: 'rgba(10,10,32,0.75)',
+      border: '1px solid rgba(0,255,255,0.14)',
+      borderRadius: 16, backdropFilter: 'blur(20px)',
+    }}>
+      <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em', marginBottom: 6 }}>
+        MY DEFAULTS · AGENT PRESET
+      </div>
+      <h3 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 700, fontSize: 18, color: 'var(--text-hi)', margin: '0 0 4px' }}>
+        Generate the way you work
+      </h3>
+      <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: 'var(--text-mid)', margin: '0 0 18px', lineHeight: 1.65 }}>
+        Prefill tone, output formats, amenities, and neighborhood every time you start a new listing. Remix sessions keep the source listing's values.
+      </p>
+
+      <div style={{ display: 'grid', gap: 18 }}>
+        {/* Tone */}
+        <div>
+          <label htmlFor="default-tone" style={labelStyle}>Default Tone</label>
+          <select
+            id="default-tone"
+            value={tone}
+            onChange={(e) => setTone(e.target.value as AgentTone)}
+            style={{ ...inputStyle, width: '100%' }}
+          >
+            {TONE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Formats */}
+        <div>
+          <div style={{ ...labelStyle, marginBottom: 8 }}>Default Output Formats</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {(Object.keys(FORMAT_LABELS) as FormatKey[]).map((key) => {
+              const on = formats[key];
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleFormat(key)}
+                  style={{
+                    padding: '8px 14px',
+                    background: on ? 'rgba(0,255,255,0.1)' : 'rgba(0,255,255,0.03)',
+                    border: `1px solid ${on ? 'rgba(0,255,255,0.55)' : 'rgba(0,255,255,0.15)'}`,
+                    borderRadius: 8,
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontWeight: 600, fontSize: 12.5,
+                    color: on ? 'var(--cyan)' : 'var(--text-mid)',
+                    cursor: 'pointer',
+                    boxShadow: on ? '0 0 14px rgba(0,255,255,0.12)' : 'none',
+                    transition: 'all .2s',
+                  }}
+                >
+                  {on ? '✓ ' : ''}{FORMAT_LABELS[key]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Amenity presets */}
+        <div>
+          <div style={{ ...labelStyle, marginBottom: 8 }}>
+            Default Amenities Preset ({amenities.length} selected)
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {AMENITY_OPTIONS.map((a) => {
+              const on = amenities.includes(a);
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => toggleAmenity(a)}
+                  className={`amenity-chip${on ? ' active' : ''}`}
+                >
+                  {on && <span style={{ marginRight: 4, fontSize: 10 }}>✓</span>}
+                  {a}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Neighborhood */}
+        <div>
+          <label htmlFor="default-neighborhood" style={labelStyle}>Default Neighborhood (optional)</label>
+          <select
+            id="default-neighborhood"
+            value={neighborhood}
+            onChange={(e) => setNeighborhood(e.target.value)}
+            style={{ ...inputStyle, width: '100%' }}
+          >
+            <option value="">(none — auto-detect)</option>
+            {neighborhoodOptions.map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!dirty || saving}
+            className="btn btn-primary"
+            style={{ opacity: !dirty || saving ? 0.6 : 1 }}
+          >
+            {saving ? 'Saving…' : 'Save defaults'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DeleteAccountConfirm({ email, onClose }: { email: string; onClose: () => void }) {
   const subject = encodeURIComponent('Account deletion request');
   const body = encodeURIComponent(
@@ -401,3 +633,4 @@ function useEscClose(onClose: () => void) {
 
 const labelStyle: React.CSSProperties = { display: 'block', fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, letterSpacing: '.14em', color: 'var(--text-lo)', textTransform: 'uppercase', marginBottom: 7 };
 const inputStyle: React.CSSProperties = { padding: '11px 14px', background: 'rgba(5,7,24,0.9)', border: '1px solid rgba(0,255,255,0.22)', borderRadius: 9, color: 'var(--text-hi)', fontFamily: 'DM Sans, sans-serif', fontSize: 13.5, outline: 'none', transition: 'border-color .2s', caretColor: 'var(--cyan)', display: 'block' };
+

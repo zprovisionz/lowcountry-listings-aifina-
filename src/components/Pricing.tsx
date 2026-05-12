@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useStripe } from '../hooks/useStripe';
+import { captureProductEvent } from '../lib/product-analytics';
+import { PLAN_LIMITS } from '../config';
 
 interface Tier {
   name: string;
@@ -21,15 +23,12 @@ interface Tier {
 const TIERS: Tier[] = [
   {
     name: 'Free', tierKey: 'free', monthly: 0, annual: 0,
-    gens: '10 / month', staging: 'None',
+    gens: '3 / month', staging: 'None',
     features: [
-      'MLS descriptions (350–450 words)',
-      'Google Places address search',
-      'Neighborhood auto-detection',
-      '3 of 8 landmark distances',
-      'Basic analytics dashboard',
+      'MLS · Airbnb · Social · Email copy',
+      'All output formats',
     ],
-    excluded: ['Airbnb / social copy', 'Virtual staging', 'Bulk CSV'],
+    excluded: ['Virtual staging', 'Bulk CSV'],
     bestFor: 'Testing & light users',
     cta: 'Start Free', color: 'neutral',
   },
@@ -37,7 +36,7 @@ const TIERS: Tier[] = [
     name: 'Starter', tierKey: 'starter', monthly: 19, annual: 182,
     gens: '100 / month', staging: '10 credits / mo',
     features: [
-      'MLS + Airbnb + Social copy',
+      `MLS + Airbnb + Social${PLAN_LIMITS.starter.formats.email ? ' + Email' : ''} copy`,
       'All 8 landmark distances',
       'Authenticity & confidence scoring',
       'Bulk CSV generation',
@@ -54,8 +53,8 @@ const TIERS: Tier[] = [
       'Everything in Starter',
       'Unlimited generations',
       'Full staging (6 styles, 40 credits)',
-      'Comparable listings (comps)',
       'Performance analytics',
+      'Edit & regenerate any section',
       '+$5 / 10-pack staging credits',
     ],
     bestFor: 'High-volume solo agents',
@@ -99,6 +98,7 @@ export default function Pricing() {
       navigate('/account');
       return;
     }
+    captureProductEvent('upgrade_clicked', { tier: tierKey, source: 'pricing' });
     createCheckoutSession('subscription', tierKey);
   };
 
@@ -107,6 +107,7 @@ export default function Pricing() {
       navigate('/login?redirect=/account');
       return;
     }
+    captureProductEvent('upgrade_clicked', { tier: 'team', source: 'pricing' });
     createCheckoutSession('subscription', 'team');
   };
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useToast } from '../../contexts/ToastContext';
+import { captureProductEvent } from '../../lib/product-analytics';
 
 interface CopyButtonProps {
   text: string;
@@ -16,6 +17,7 @@ export default function CopyButton({ text, label = 'Copy', onCopy }: CopyButtonP
       await navigator.clipboard.writeText(text);
       setCopied(true);
       toast('Copied to clipboard!', 'success');
+      captureProductEvent('copy_copied', { label: label ?? 'copy' });
       onCopy?.();
       setTimeout(() => setCopied(false), 2200);
     } catch {
