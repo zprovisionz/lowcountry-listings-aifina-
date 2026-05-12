@@ -21,6 +21,10 @@ export interface Database {
           extra_gen_credits: number;
           extra_staging_credits: number;
           is_test_user?: boolean;
+          default_tone: string | null;
+          default_formats: Record<string, boolean> | null;
+          default_amenities_presets: string[] | null;
+          default_neighborhood: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -43,11 +47,15 @@ export interface Database {
           mls_copy: string | null;
           airbnb_copy: string | null;
           social_captions: string[] | null;
+          email_copy: string | null;
+          tone: string | null;
+          staged_photo_urls: string[] | null;
           authenticity_score: number | null;
           confidence_score: number | null;
           improvement_suggestions: string[] | null;
           landmark_distances: Record<string, string> | null;
           status: 'pending' | 'generating' | 'complete' | 'error';
+          relist_of: string | null;
           created_at: string;
         };
         Insert: Partial<Database['public']['Tables']['generations']['Row']>;
@@ -148,6 +156,22 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['credit_purchases']['Row']>;
         Relationships: [];
       };
+      early_access_waitlist: {
+        Row: {
+          id: string;
+          email: string;
+          source: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          email: string;
+          source?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database['public']['Tables']['early_access_waitlist']['Row']>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -181,6 +205,15 @@ export interface BulkJobResult {
 export type Tier = 'free' | 'starter' | 'pro' | 'pro_plus' | 'team';
 export type UserRole = 'owner' | 'editor' | 'viewer';
 
+export type AgentTone = 'standard' | 'luxury' | 'family' | 'investment';
+
+export interface AgentDefaultFormats {
+  mls?: boolean;
+  airbnb?: boolean;
+  social?: boolean;
+  email?: boolean;
+}
+
 export interface Profile {
   id: string;
   email: string;
@@ -199,6 +232,14 @@ export interface Profile {
   extra_gen_credits: number;
   extra_staging_credits: number;
   is_test_user?: boolean;
+  /** Persisted agent default tone (applied when starting a new generation, not on remix). */
+  default_tone: AgentTone | null;
+  /** Persisted output-format flags. Missing keys fall back to PLAN defaults. */
+  default_formats: AgentDefaultFormats | null;
+  /** Persisted amenity ids to seed Step 3 / Quick Generate. */
+  default_amenities_presets: string[] | null;
+  /** Optional default neighborhood label (e.g. when an agent works one area). */
+  default_neighborhood: string | null;
 }
 
 export interface TeamInvite {
@@ -252,11 +293,15 @@ export interface Generation {
   mls_copy: string | null;
   airbnb_copy: string | null;
   social_captions: string[] | null;
+  email_copy: string | null;
+  tone: string | null;
   authenticity_score: number | null;
   confidence_score: number | null;
   improvement_suggestions: string[] | null;
   landmark_distances: Record<string, string> | null;
   status: 'pending' | 'generating' | 'complete' | 'error';
+  /** When this generation was created via Relist, the source generation id. */
+  relist_of: string | null;
   created_at: string;
 }
 
@@ -298,9 +343,13 @@ export interface WizardData {
   generateMLS: boolean;
   generateAirbnb: boolean;
   generateSocial: boolean;
+  /** Agent-to-buyer email blast (~150–200 words) */
+  generateEmail: boolean;
   tone: 'luxury' | 'family' | 'investment' | 'standard';
   /** Quick path: MLS = neighborhood overview only; no bed/bath/sqft required */
   overviewOnly: boolean;
+  /** MLS step: required acknowledgment before generating when MLS output is selected */
+  complianceAcknowledged: boolean;
 }
 
 export const WIZARD_DEFAULTS: WizardData = {
@@ -310,9 +359,10 @@ export const WIZARD_DEFAULTS: WizardData = {
   photoFiles: [], photoUrls: [],
   amenities: [], customAmenities: '',
   stagingStyle: '', applyStaging: false,
-  generateMLS: true, generateAirbnb: true, generateSocial: true,
+  generateMLS: true, generateAirbnb: true, generateSocial: true, generateEmail: true,
   tone: 'standard',
   overviewOnly: false,
+  complianceAcknowledged: false,
 };
 
 export const AMENITY_OPTIONS = [
