@@ -19,7 +19,10 @@ export default function LoginPage() {
 
   const searchParams = new URLSearchParams(location.search);
   const redirectQuery = searchParams.get('redirect');
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? redirectQuery ?? '/dashboard';
+  const fromState = (location.state as { from?: { pathname: string; search?: string } })?.from;
+  const from = fromState
+    ? `${fromState.pathname}${fromState.search ?? ''}`
+    : redirectQuery ?? '/dashboard';
 
   useEffect(() => { if (user) navigate(from, { replace: true }); }, [user, navigate, from]);
 

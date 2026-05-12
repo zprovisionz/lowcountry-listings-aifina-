@@ -8,23 +8,17 @@ import { useGenerations } from '../../hooks/useGenerations';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DEBUG, TIMING_MS } from '../../config';
+import { STAGING_STYLES } from '../../types/database';
+import { captureProductEvent } from '../../lib/product-analytics';
 
-type Tab = 'mls' | 'airbnb' | 'social' | 'staging';
+type Tab = 'mls' | 'airbnb' | 'social' | 'email' | 'staging';
 
 const TABS: { key:Tab; label:string; icon:string; words:string }[] = [
   { key:'mls',     label:'MLS Description',  icon:'📋', words:'350–450 words' },
   { key:'airbnb',  label:'Airbnb Copy',       icon:'🏠', words:'200–250 words' },
   { key:'social',  label:'Social Captions',   icon:'📣', words:'3 posts' },
+  { key:'email',   label:'Email Blast',       icon:'✉️', words:'150–200 words' },
   { key:'staging', label:'Virtual Staging',   icon:'🛋', words:'fal.ai' },
-];
-
-const STAGING_STYLES = [
-  { id: 'coastal_modern',         label: 'Coastal Modern' },
-  { id: 'lowcountry_traditional', label: 'Lowcountry Traditional' },
-  { id: 'contemporary',          label: 'Contemporary' },
-  { id: 'minimalist',            label: 'Minimalist' },
-  { id: 'luxury_resort',         label: 'Luxury Resort' },
-  { id: 'empty_clean',           label: 'Empty & Clean' },
 ];
 
 export default function ResultsPage() {
@@ -48,6 +42,18 @@ export default function ResultsPage() {
   const [editNotes,     setEditNotes]     = useState('');
   const [editPreset,    setEditPreset]    = useState('');
   const [editBusy,      setEditBusy]      = useState(false);
+  const [exportOpen,    setExportOpen]    = useState(false);
+  const exportPanelRef  = useRef<HTMLDivElement | null>(null);
+  const [mlsChecklistOpen, setMlsChecklistOpen] = useState(false);
+  const [mlsChecklist, setMlsChecklist] = useState({
+    specs: false,
+    amenities: false,
+    distances: false,
+    fairHousing: false,
+    boardRules: false,
+  });
+  const [lowConfidenceProceed, setLowConfidenceProceed] = useState(false);
+  const lowConfOverrideLogged = useRef(false);
 
   // ── Load generation + subscribe to Realtime updates ──────────────────
   useEffect(() => {
@@ -88,6 +94,30 @@ export default function ResultsPage() {
     loadGen();
     return () => clearPoll();
   }, [id, trackEvent]);
+
+  useEffect(() => {
+    if (!exportOpen) return;
+    const close = (e: MouseEvent) => {
+      if (exportPanelRef.current && !exportPanelRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [exportOpen]);
+
+  useEffect(() => {
+    setLowConfidenceProceed(false);
+    lowConfOverrideLogged.current = false;
+    setMlsChecklistOpen(false);
+    setMlsChecklist({
+      specs: false,
+      amenities: false,
+      distances: false,
+      fairHousing: false,
+      boardRules: false,
+    });
+  }, [id]);
 
   // ── Load existing staging jobs + subscribe Realtime ──────────────────
   useEffect(() => {
@@ -155,7 +185,8 @@ export default function ResultsPage() {
     const { error } = await supabase.functions.invoke('stage-photo', {
       body: { generationId: id, photoUrl: stagingPhoto, stagingStyle, userId: user.id },
     });
-    if (error) { setStagingBusy(false); toast(error.message ?? 'Staging failed', 'error'); }
+    if (error) { setStagingBusy(false); toast(error.message ?? 'Staging failed', 'error'); return; }
+    captureProductEvent('staging_requested', { generation_id: id, staging_style: stagingStyle });
   }, [user, id, stagingPhoto, stagingStyle, toast]);
 
   /* ── Loading ── */
@@ -182,7 +213,7 @@ export default function ResultsPage() {
           Generating Your Listing…
         </h2>
         <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:14, color:'var(--text-mid)', lineHeight:1.75, margin:'0 0 26px' }}>
-          GPT-4o-mini is crafting hyper-local copy with neighborhood intelligence,
+          Claude 3.5 Sonnet is crafting hyper-local copy with neighborhood intelligence,
           landmark distances, and authentic Charleston vocabulary.
         </p>
         <div style={{ display:'flex', flexDirection:'column', gap:8, textAlign:'left' }}>
@@ -216,10 +247,79 @@ export default function ResultsPage() {
   );
 
   const wc = (t:string|null) => t ? t.trim().split(/\s+/).length : 0;
+  const buildAllOutputsText = () => {
+    const mls = gen.mls_copy ?? '';
+    const air = gen.airbnb_copy ?? '';
+    const soc = (gen.social_captions ?? []).join('\n\n');
+    return `--- MLS ---\n${mls}\n\n--- AIRBNB ---\n${air}\n\n--- SOCIAL ---\n${soc}`;
+  };
+
+  const mlsPlain = (gen?.mls_copy ?? '').trim();
+  const mlsCharCount = mlsPlain.length;
+
+  const handleCopyAllOutputs = async () => {
+    if (!id || !gen) return;
+    try {
+      await navigator.clipboard.writeText(buildAllOutputsText());
+      await trackEvent(id, 'copy', { scope: 'all_outputs' });
+      toast('All outputs copied.', 'success');
+    } catch {
+      toast('Copy failed.', 'error');
+    }
+    setExportOpen(false);
+  };
+
+  const handlePrintPdf = async () => {
+    if (!id) return;
+    await trackEvent(id, 'download', { format: 'pdf' });
+    setExportOpen(false);
+    requestAnimationFrame(() => window.print());
+  };
+
+  const handleMlsExportCopy = async () => {
+    if (!id) return;
+    try {
+      await navigator.clipboard.writeText(mlsPlain);
+      await trackEvent(id, 'download', { format: 'mls_text' });
+      toast('MLS text copied.', 'success');
+    } catch {
+      toast('Copy failed.', 'error');
+    }
+    setExportOpen(false);
+  };
+
+  const handleDownloadAllTxt = async () => {
+    if (!id || !gen) return;
+    await trackEvent(id, 'download', { format: 'all_copy' });
+    const blob = new Blob([buildAllOutputsText()], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `listing-${gen.address.replace(/[^\w\s-]/g, '').slice(0, 40).trim() || 'export'}.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    setExportOpen(false);
+    toast('Download started.', 'success');
+  };
+
+  const handleEmailExportCopy = async () => {
+    if (!id || !gen?.email_copy) return;
+    try {
+      await navigator.clipboard.writeText(gen.email_copy.trim());
+      await trackEvent(id, 'download', { format: 'email' });
+      toast('Email copy saved to clipboard.', 'success');
+    } catch {
+      toast('Copy failed.', 'error');
+    }
+    setExportOpen(false);
+  };
   const hasPhotos = !!(gen.photo_urls && gen.photo_urls.length > 0);
   const hasCompleteStaging = stagingJobs.some(j => j.status === 'complete' && !!j.staged_url);
   const showStagingNew = hasPhotos && !hasCompleteStaging;
   const allowUiBypass = !!(DEBUG.bypassBilling && (import.meta.env.DEV || profile?.is_test_user));
+  const printStagedUrls = Array.from(new Set([
+    ...(gen.staged_photo_urls ?? []),
+    ...stagingJobs.filter(j => j.status === 'complete' && j.staged_url).map(j => j.staged_url as string),
+  ]));
 
   return (
     <div style={{ maxWidth:900, margin:'0 auto', display:'flex', flexDirection:'column', gap:22 }}>
@@ -247,7 +347,67 @@ export default function ResultsPage() {
             </span>
           </div>
         </div>
-        <button onClick={() => navigate('/generate')} className="btn btn-ghost btn-sm">✦ New Listing</button>
+        <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
+          <div ref={exportPanelRef} style={{ position:'relative' }}>
+            <button
+              type="button"
+              onClick={() => setExportOpen(o => !o)}
+              className="btn btn-ghost btn-sm"
+              style={{ fontSize:12, letterSpacing:'.06em' }}
+            >
+              ⎘ Export ▾
+            </button>
+            {exportOpen && (
+              <div
+                className="glass-dash"
+                style={{
+                  position:'absolute', right:0, top:'100%', marginTop:8, zIndex:40,
+                  minWidth:280, padding:'14px 16px', borderRadius:12,
+                  boxShadow:'0 12px 40px rgba(0,0,0,0.45)',
+                  border:'1px solid rgba(0,255,255,0.2)',
+                }}
+              >
+                <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:10 }}>
+                  EXPORT KIT
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ justifyContent:'flex-start', fontSize:12 }} onClick={handleCopyAllOutputs}>
+                    Copy all outputs (MLS + Airbnb + Social)
+                  </button>
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ justifyContent:'flex-start', fontSize:12 }} onClick={handlePrintPdf}>
+                    Download as PDF (print)
+                  </button>
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ justifyContent:'flex-start', fontSize:12 }} onClick={handleDownloadAllTxt}>
+                    Download all copy (.txt)
+                  </button>
+                  <div style={{ borderTop:'1px solid rgba(0,255,255,0.1)', marginTop:6, paddingTop:10 }}>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--text-lo)', letterSpacing:'.12em', marginBottom:6 }}>
+                      MLS-READY (plain text)
+                    </div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:11, color: mlsCharCount > 1000 ? '#ff8080' : 'var(--cyan)', marginBottom:6 }}>
+                      {mlsCharCount} / 1000 chars
+                      {mlsCharCount > 1000 && <span style={{ display:'block', fontSize:10, marginTop:4 }}>⚠ Over typical MLS remark limits — trim before publishing.</span>}
+                    </div>
+                    <button type="button" className="btn btn-primary btn-sm" style={{ width:'100%' }} onClick={handleMlsExportCopy} disabled={!mlsPlain}>
+                      Copy MLS text
+                    </button>
+                  </div>
+                  {gen.email_copy && (
+                    <div style={{ borderTop:'1px solid rgba(0,255,255,0.1)', marginTop:6, paddingTop:10 }}>
+                      <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--text-lo)', letterSpacing:'.12em', marginBottom:6 }}>
+                        EMAIL BLAST
+                      </div>
+                      <button type="button" className="btn btn-accent btn-sm" style={{ width:'100%' }} onClick={handleEmailExportCopy}>
+                        Copy email-ready text
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <button onClick={() => navigate('/generate')} className="btn btn-ghost btn-sm">✦ New Listing</button>
+        </div>
       </div>
 
       {/* Scores row */}
@@ -336,7 +496,9 @@ export default function ResultsPage() {
                   ? !!gen.airbnb_copy
                   : t.key === 'social'
                     ? !!(gen.social_captions?.length)
-                    : true; // staging is always usable (shows “no photos” state if needed)
+                    : t.key === 'email'
+                      ? !!gen.email_copy
+                      : true; // staging is always usable (shows “no photos” state if needed)
             const isActive = tab === t.key;
             return (
               <button
@@ -426,6 +588,116 @@ export default function ResultsPage() {
                   </div>
                   {text}
                 </div>
+                {tab === 'mls' && (
+                  <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {gen.confidence_score != null && gen.confidence_score < 75 && (
+                      <div
+                        className="glass"
+                        style={{
+                          padding: '14px 16px',
+                          borderRadius: 10,
+                          border: '1px solid rgba(255, 200, 80, 0.45)',
+                          background: 'rgba(255, 200, 80, 0.07)',
+                        }}
+                      >
+                        <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: '#ffcc66', letterSpacing: '.12em', marginBottom: 8 }}>
+                          LOW CONFIDENCE ({gen.confidence_score}/100)
+                        </div>
+                        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: 'var(--text-mid)', margin: '0 0 12px', lineHeight: 1.65 }}>
+                          This draft scored below our usual verification threshold. Review carefully before MLS publication.
+                        </p>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 12.5, color: 'var(--text-hi)' }}>
+                          <input
+                            type="checkbox"
+                            checked={lowConfidenceProceed}
+                            onChange={e => {
+                              const checked = e.target.checked;
+                              setLowConfidenceProceed(checked);
+                              if (
+                                checked &&
+                                id &&
+                                user &&
+                                gen.confidence_score != null &&
+                                !lowConfOverrideLogged.current
+                              ) {
+                                lowConfOverrideLogged.current = true;
+                                void trackEvent(id, 'generate', {
+                                  event: 'low_confidence_override',
+                                  score: gen.confidence_score,
+                                });
+                                captureProductEvent('low_confidence_override', {
+                                  score: gen.confidence_score,
+                                  generation_id: id,
+                                });
+                              }
+                            }}
+                          />
+                          I understand, proceed anyway
+                        </label>
+                      </div>
+                    )}
+                    <p
+                      style={{
+                        fontFamily: 'DM Sans, sans-serif',
+                        fontSize: 11.5,
+                        color: 'var(--text-lo)',
+                        lineHeight: 1.65,
+                        margin: 0,
+                        borderTop: '1px solid rgba(0,255,255,0.1)',
+                        paddingTop: 14,
+                      }}
+                    >
+                      {`This listing description was created with AI assistance. You are responsible for verifying every fact, measurement, and claim against your source documents and your MLS provider's rules before publication or syndication. Lowcountry Listings AI does not guarantee compliance with your board's specific advertising standards.`}
+                    </p>
+                    <div className="glass" style={{ borderRadius: 10, border: '1px solid rgba(0,255,255,0.12)', overflow: 'hidden' }}>
+                      <button
+                        type="button"
+                        onClick={() => setMlsChecklistOpen(o => !o)}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '12px 14px',
+                          background: 'rgba(0,255,255,0.04)',
+                          border: 'none',
+                          color: 'var(--cyan)',
+                          fontFamily: "'DM Mono', ui-monospace, monospace",
+                          fontSize: 10,
+                          letterSpacing: '.1em',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {mlsChecklistOpen ? '▼' : '▶'} Agent Verification Checklist
+                      </button>
+                      {mlsChecklistOpen && (
+                        <div style={{ padding: '12px 16px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {(
+                            [
+                              ['specs', 'I verified bedrooms, bathrooms, and square footage against my MLS / source of truth.'],
+                              ['amenities', 'I verified amenities, finishes, and exterior features against photos and disclosures.'],
+                              ['distances', 'I verified neighborhood references and landmark distances where applicable.'],
+                              ['fairHousing', 'I reviewed this copy for fair housing compliance.'],
+                              ['boardRules', 'I confirmed this copy meets my MLS board advertising rules.'],
+                            ] as const
+                          ).map(([key, label]) => (
+                            <label
+                              key={key}
+                              style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontSize: 12.5, color: 'var(--text-mid)' }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={mlsChecklist[key]}
+                                onChange={e =>
+                                  setMlsChecklist(prev => ({ ...prev, [key]: e.target.checked }))
+                                }
+                              />
+                              <span>{label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })()}
@@ -451,6 +723,33 @@ export default function ResultsPage() {
               ))}
               <div style={{ display:'flex', justifyContent:'flex-end' }}>
                 <CopyButton text={(gen.social_captions??[]).join('\n\n---\n\n')} label="COPY ALL 3" onCopy={() => trackEvent(id!,'copy')} />
+              </div>
+            </div>
+          )}
+
+          {/* Email blast */}
+          {tab === 'email' && (
+            <div>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, flexWrap:'wrap', gap:10 }}>
+                <div>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+                    AGENT-TO-BUYER EMAIL BLAST
+                  </div>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-ghost)', marginTop:3 }}>{wc(gen.email_copy)} words</div>
+                </div>
+                <CopyButton
+                  text={gen.email_copy ?? ''}
+                  label="COPY EMAIL"
+                  onCopy={() => id && trackEvent(id, 'download', { format: 'email' })}
+                />
+              </div>
+              <div style={{
+                background:'rgba(0,0,0,0.4)', border:'1px solid rgba(255,0,255,0.12)',
+                borderRadius:12, padding:'20px 22px',
+                fontFamily:'DM Sans,sans-serif', fontSize:14.5, lineHeight:1.9,
+                color:'#c8e4ec', whiteSpace:'pre-wrap',
+              }}>
+                {gen.email_copy}
               </div>
             </div>
           )}
@@ -506,14 +805,14 @@ export default function ResultsPage() {
                     <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                       {STAGING_STYLES.map(s => (
                         <button
-                          key={s.id}
-                          onClick={() => setStagingStyle(s.id)}
+                          key={s.value}
+                          onClick={() => setStagingStyle(s.value)}
                           style={{
                             padding:'7px 14px', borderRadius:20, fontSize:12,
                             fontFamily:'DM Sans,sans-serif', cursor:'pointer', transition:'all .15s',
-                            background: stagingStyle === s.id ? 'rgba(0,255,255,0.15)' : 'rgba(255,255,255,0.04)',
-                            border: stagingStyle === s.id ? '1px solid var(--cyan)' : '1px solid rgba(255,255,255,0.1)',
-                            color: stagingStyle === s.id ? 'var(--cyan)' : 'var(--text-mid)',
+                            background: stagingStyle === s.value ? 'rgba(0,255,255,0.15)' : 'rgba(255,255,255,0.04)',
+                            border: stagingStyle === s.value ? '1px solid var(--cyan)' : '1px solid rgba(255,255,255,0.1)',
+                            color: stagingStyle === s.value ? 'var(--cyan)' : 'var(--text-mid)',
                           }}
                         >{s.label}</button>
                       ))}
@@ -554,7 +853,7 @@ export default function ResultsPage() {
                         <div style={{ padding:'20px', display:'flex', alignItems:'center', gap:12 }}>
                           <div style={{ width:16,height:16,borderRadius:'50%',border:'2px solid rgba(0,255,255,0.2)',borderTopColor:'var(--cyan)',animation:'spinRing .8s linear infinite',flexShrink:0 }} />
                           <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-lo)' }}>
-                            Staging in progress — fal.ai is applying {STAGING_STYLES.find(s => s.id === job.staging_style)?.label ?? job.staging_style} style…
+                            Staging in progress — fal.ai is applying {STAGING_STYLES.find(s => s.value === job.staging_style)?.label ?? job.staging_style} style…
                           </span>
                         </div>
                       )}
@@ -577,7 +876,7 @@ export default function ResultsPage() {
                           </div>
                           <div style={{ padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
                             <span style={{ fontFamily:'DM Sans,sans-serif', fontSize:12, color:'var(--text-mid)' }}>
-                              {STAGING_STYLES.find(s => s.id === job.staging_style)?.label} — {new Date(job.created_at).toLocaleTimeString()}
+                              {STAGING_STYLES.find(s => s.value === job.staging_style)?.label} — {new Date(job.created_at).toLocaleTimeString()}
                             </span>
                             <a href={job.staged_url} download target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ fontSize:11 }}>
                               Download
@@ -623,6 +922,78 @@ export default function ResultsPage() {
         <button onClick={() => navigate('/history')} className="btn btn-ghost" style={{ fontSize:13 }}>← Back to History</button>
       </div>
 
+      <div id="listing-print-root" style={{ fontFamily: 'Georgia, serif', fontSize: 11, lineHeight: 1.5, color: '#111' }}>
+        <header style={{ borderBottom: '2px solid #222', paddingBottom: 12, marginBottom: 16 }}>
+          <h1 style={{ fontSize: 22, margin: '0 0 6px' }}>{gen.address}</h1>
+          <div>{gen.neighborhood ?? 'Charleston metro'}{gen.neighborhood ? ' · ' : ''}{new Date(gen.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</div>
+          <div style={{ marginTop: 8 }}>
+            Authenticity {gen.authenticity_score ?? '—'}% · Confidence {gen.confidence_score ?? '—'}%
+          </div>
+        </header>
+        <section style={{ marginBottom: 14 }}>
+          <h2 style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Landmark distances</h2>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+            <tbody>
+              {gen.landmark_distances && Object.entries(gen.landmark_distances).map(([place, dist]) => (
+                <tr key={place} style={{ borderBottom: '1px solid #ddd' }}>
+                  <td style={{ padding: '4px 6px' }}>{place}</td>
+                  <td style={{ padding: '4px 6px', textAlign: 'right' }}>{dist}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+        {gen.mls_copy && (
+          <section style={{ marginBottom: 14 }}>
+            <h2 style={{ fontSize: 13, textTransform: 'uppercase' }}>MLS</h2>
+            <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{gen.mls_copy}</p>
+          </section>
+        )}
+        {gen.airbnb_copy && (
+          <section style={{ marginBottom: 14 }}>
+            <h2 style={{ fontSize: 13, textTransform: 'uppercase' }}>Airbnb</h2>
+            <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{gen.airbnb_copy}</p>
+          </section>
+        )}
+        {(gen.social_captions?.length ?? 0) > 0 && (
+          <section style={{ marginBottom: 14 }}>
+            <h2 style={{ fontSize: 13, textTransform: 'uppercase' }}>Social</h2>
+            {(gen.social_captions ?? []).map((c, i) => (
+              <p key={i} style={{ whiteSpace: 'pre-wrap', margin: '0 0 8px' }}>{c}</p>
+            ))}
+          </section>
+        )}
+        {gen.email_copy && (
+          <section style={{ marginBottom: 14 }}>
+            <h2 style={{ fontSize: 13, textTransform: 'uppercase' }}>Email blast</h2>
+            <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>{gen.email_copy}</p>
+          </section>
+        )}
+        {printStagedUrls.length > 0 && (
+          <section style={{ marginBottom: 14 }}>
+            <h2 style={{ fontSize: 13, textTransform: 'uppercase' }}>Staged photos</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {printStagedUrls.map((url) => (
+                <img key={url} src={url} alt="" style={{ width: 160, height: 120, objectFit: 'cover', border: '1px solid #ccc' }} />
+              ))}
+            </div>
+          </section>
+        )}
+        {gen.photo_urls && gen.photo_urls.length > 0 && (
+          <section style={{ marginBottom: 14 }}>
+            <h2 style={{ fontSize: 13, textTransform: 'uppercase' }}>Listing photos</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {gen.photo_urls.map((url) => (
+                <img key={url} src={url} alt="" style={{ width: 140, height: 105, objectFit: 'cover', border: '1px solid #ccc' }} />
+              ))}
+            </div>
+          </section>
+        )}
+        <footer style={{ marginTop: 24, paddingTop: 12, borderTop: '1px solid #999', fontSize: 9, color: '#444' }}>
+          <strong>Lowcountry Listings AI</strong> · Charleston metro · AI-Generated — Verify Before Publishing
+        </footer>
+      </div>
+
       {editModalOpen && gen.mls_copy && (
         <EditMlsModal
           editNotes={editNotes}
@@ -635,7 +1006,36 @@ export default function ResultsPage() {
         />
       )}
 
-      <style>{`@keyframes spinRing{to{transform:rotate(360deg)}}`}</style>
+      <style>{`
+        @media print {
+          body * { visibility: hidden !important; }
+          #listing-print-root, #listing-print-root * { visibility: visible !important; }
+          #listing-print-root {
+            position: absolute !important;
+            left: 0 !important; top: 0 !important;
+            width: 100% !important;
+            background: #fff !important;
+            color: #111 !important;
+            padding: 24px !important;
+            height: auto !important;
+            overflow: visible !important;
+            opacity: 1 !important;
+          }
+        }
+        @media screen {
+          #listing-print-root {
+            position: fixed;
+            left: -9999px;
+            top: 0;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+          }
+        }
+        @keyframes spinRing{to{transform:rotate(360deg)}}
+      `}</style>
     </div>
   );
 }

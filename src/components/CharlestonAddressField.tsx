@@ -165,7 +165,7 @@ export default function CharlestonAddressField({
         onPickRef.current({
           formattedAddress: addr,
           placeId,
-          neighborhood: detectNeighborhood(addr),
+          neighborhood: await detectNeighborhood(addr),
         });
       } catch {
         setGeoError('Google Places error. Try manual entry or check billing/API settings.');
@@ -250,11 +250,14 @@ export default function CharlestonAddressField({
               const trimmed = effectiveManual.trim();
               if (!trimmed) return;
               setHasPick(true);
-              onPickRef.current({
-                formattedAddress: trimmed,
-                placeId: '',
-                neighborhood: detectNeighborhood(trimmed),
-              });
+              void (async () => {
+                const neighborhood = await detectNeighborhood(trimmed);
+                onPickRef.current({
+                  formattedAddress: trimmed,
+                  placeId: '',
+                  neighborhood,
+                });
+              })();
             }}
             placeholder={
               mapsState === 'error'
