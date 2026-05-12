@@ -3,7 +3,6 @@ import { AuthProvider }  from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import ProtectedRoute    from './components/layout/ProtectedRoute';
 import AppLayout         from './components/layout/AppLayout';
-import ErrorBoundary     from './components/ErrorBoundary';
 import SupabaseConfigMissing from './components/SupabaseConfigMissing';
 import { isSupabaseConfigured } from './lib/supabase';
 
@@ -27,6 +26,8 @@ import LandingApp    from './LandingApp';
 import PrivacyPage   from './pages/legal/PrivacyPage';
 import TermsPage     from './pages/legal/TermsPage';
 import NotFoundPage  from './pages/NotFoundPage';
+import NeighborhoodsIndexPage from './pages/neighborhoods/NeighborhoodsIndexPage';
+import NeighborhoodPage       from './pages/neighborhoods/NeighborhoodPage';
 
 export default function App() {
   if (!isSupabaseConfigured) {
@@ -37,7 +38,6 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-          <ErrorBoundary>
           <Routes>
             {/* ── Public ── */}
             <Route path="/"              element={<LandingApp />} />
@@ -45,6 +45,8 @@ export default function App() {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/privacy"       element={<PrivacyPage />} />
             <Route path="/terms"         element={<TermsPage />} />
+            <Route path="/neighborhoods" element={<NeighborhoodsIndexPage />} />
+            <Route path="/neighborhoods/:slug" element={<NeighborhoodPage />} />
             <Route path="/join"          element={<AcceptInvitePage />} />
 
             {/* ── Protected app ── */}
@@ -63,7 +65,6 @@ export default function App() {
             {/* 404 */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
-          </ErrorBoundary>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>

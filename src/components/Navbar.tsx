@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 const NAV_LINKS = [
   { label: 'Features',  href: '#features' },
   { label: 'Pricing',   href: '#pricing' },
-  { label: 'Use Cases', href: '#testimonials' },
+  { label: 'Use Cases', href: '#use-cases' },
   { label: 'FAQ',       href: '#faq' },
 ];
 
@@ -20,7 +20,7 @@ export default function Navbar() {
     const onScroll = () => {
       setScrolled(window.scrollY > 48);
       // Highlight active section
-      const sections = ['features', 'pricing', 'testimonials', 'faq'];
+      const sections = ['features', 'pricing', 'use-cases', 'faq'];
       for (const id of sections) {
         const el = document.getElementById(id);
         if (el) {

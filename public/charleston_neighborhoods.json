@@ -270,11 +270,11 @@
     "Magnolia Plantation":               { "lat": 32.8187, "lng": -80.0986 }
   },
   "staging_styles": [
-    { "id": "coastal_lowcountry", "label": "Coastal Lowcountry", "description": "Natural rattan, linen, driftwood tones, palmetto motifs" },
-    { "id": "modern_coastal",     "label": "Modern Coastal",     "description": "Clean lines, white and navy palette, minimal coastal accents" },
-    { "id": "southern_classic",   "label": "Southern Classic",   "description": "Warm woods, antique brass, traditional Southern furnishings" },
-    { "id": "luxury_resort",      "label": "Luxury Resort",      "description": "Hotel-grade furnishings, neutral palette, curated art" },
-    { "id": "scandinavian_light", "label": "Scandinavian Light", "description": "Bright whites, warm wood, minimalist, airy" },
-    { "id": "empty_clean",        "label": "Empty & Clean",      "description": "Remove all furniture for clean architectural photos" }
+    { "id": "coastal_modern", "label": "Coastal Modern", "description": "Light coastal palette, clean lines, Lowcountry staging" },
+    { "id": "lowcountry_traditional", "label": "Lowcountry Traditional", "description": "Classic Southern warmth, natural textures, Charleston character" },
+    { "id": "contemporary", "label": "Contemporary", "description": "Bold geometry, curated art, modern luxury" },
+    { "id": "minimalist", "label": "Minimalist", "description": "Bright, airy, uncluttered, Scandinavian-inspired calm" },
+    { "id": "luxury_resort", "label": "Luxury Resort", "description": "Hotel-grade furnishings, neutral palette, curated art" },
+    { "id": "empty_clean", "label": "Empty & Clean", "description": "Remove clutter; architectural photography focus" }
   ]
 }

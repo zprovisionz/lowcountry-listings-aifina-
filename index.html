@@ -45,6 +45,106 @@
       #root { opacity: 0; animation: rootFadeIn .4s .1s ease forwards; }
       @keyframes rootFadeIn { to { opacity: 1; } }
     </style>
+
+    <!-- JSON-LD: SoftwareApplication (pricing tiers mirror Pricing.tsx) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Lowcountry Listings AI",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Web",
+      "url": "https://lowcountrylistings.ai/",
+      "description": "AI-powered real estate listing copy built exclusively for the Charleston, SC metro — verified landmark distances, neighborhood vocabulary, virtual staging, and MLS/Airbnb/social outputs.",
+      "image": "https://lowcountrylistings.ai/og-image.png",
+      "offers": [
+        { "@type": "Offer", "name": "Free",     "price": "0",   "priceCurrency": "USD", "category": "subscription" },
+        { "@type": "Offer", "name": "Starter",  "price": "19",  "priceCurrency": "USD", "category": "subscription" },
+        { "@type": "Offer", "name": "Pro",      "price": "39",  "priceCurrency": "USD", "category": "subscription" },
+        { "@type": "Offer", "name": "Pro+",     "price": "59",  "priceCurrency": "USD", "category": "subscription" },
+        { "@type": "Offer", "name": "Team",     "price": "149", "priceCurrency": "USD", "category": "subscription" }
+      ],
+      "areaServed": {
+        "@type": "AdministrativeArea",
+        "name": "Charleston Metro (Charleston, Berkeley, Dorchester Counties), South Carolina"
+      },
+      "publisher": { "@type": "Organization", "name": "Lowcountry Listings AI" }
+    }
+    </script>
+
+    <!-- JSON-LD: FAQPage (mirrors src/components/FAQ.tsx) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How accurate are the landmark distances?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Every distance is calculated via the Google Maps Distance Matrix API — actual driving distance, not straight-line approximation. We call it in real time when you enter an address, so the '0.4 miles to Shem Creek' in your listing is a real measurement, not a guess. The 8 landmarks are fixed: Downtown Charleston (King Street), Shem Creek, Sullivan's Island, Isle of Palms, Folly Beach, Ravenel Bridge, Angel Oak, and Magnolia Plantation."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is this actually Charleston-only — what if I list in Summerville or Goose Creek?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes — the address search is geographically bounded to Charleston, Berkeley, and Dorchester counties. If a property is outside that boundary, the address won't resolve. Summerville and Goose Creek are both within Dorchester/Berkeley county, so they're fully covered. Properties beyond the tri-county area simply won't be accepted — this is intentional. Our AI's hyper-local voice only works where it was trained."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my listing data private and secure?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "All data lives in Supabase with row-level security (RLS) enforced at the database level — meaning your generations are cryptographically isolated from other users. We never use your listing data to train or fine-tune AI models. Your property details, photos, and generated copy are yours and only visible to your account (and your team, if you're on the Team plan)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does virtual staging work, and how long does it take?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "After generating a listing, you can upload any room photo and choose from 6 staging styles: Coastal Modern, Lowcountry Traditional, Contemporary, Minimalist, Luxury Resort, or Empty & Clean. We send it to fal.ai's image-to-image model and stream progress back in real time. Most images are staged in 25–45 seconds. You'll see a before/after slider in the results — and you can download the staged image directly to your listing photos."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use this for Airbnb, VRBO, or short-term rentals?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutely — STR is a first-class use case. The wizard includes a 'Short-Term Rental' property type selector, and all Starter and above plans generate guest-focused Airbnb copy (200–250 words) calibrated for what guests actually search for: walkability, tidal-creek sunrise views, pier distances, and Lowcountry lifestyle. Hosts find that hyper-local copy converts better than generic descriptions because it answers the questions guests are already asking."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD: Organization / LocalBusiness for Charleston, SC area -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Lowcountry Listings AI",
+      "url": "https://lowcountrylistings.ai/",
+      "logo": "https://lowcountrylistings.ai/og-image.png",
+      "email": "hello@lowcountrylistings.ai",
+      "description": "Charleston-only AI listing copy platform built in Mount Pleasant, SC for real estate agents, property managers, and Airbnb hosts.",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Mount Pleasant",
+        "addressRegion": "SC",
+        "addressCountry": "US"
+      },
+      "areaServed": [
+        { "@type": "AdministrativeArea", "name": "Charleston County, South Carolina" },
+        { "@type": "AdministrativeArea", "name": "Berkeley County, South Carolina" },
+        { "@type": "AdministrativeArea", "name": "Dorchester County, South Carolina" }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

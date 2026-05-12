@@ -1,5 +1,8 @@
 User-agent: *
 Allow: /
+Allow: /neighborhoods
+Allow: /neighborhoods/*
+
 Disallow: /dashboard
 Disallow: /generate
 Disallow: /results
