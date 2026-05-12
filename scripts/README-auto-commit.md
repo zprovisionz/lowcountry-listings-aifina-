@@ -19,13 +19,13 @@ This repo includes `auto-commit.sh` to create a WIP commit when there are staged
    git config user.name "Your Name"
    ```
 
-3. Install a cron job (edit with `crontab -e`). Use the **absolute** path to this repo (quotes matter if the path has spaces):
+3. Install a cron job (edit with `crontab -e`). Use the **same absolute path** to this repo for both the script and the log file (quotes matter if the path has spaces):
 
    ```cron
-   */15 * * * * "/home/guy/Desktop/Lowcountry AI/lowcountry-listings-ai-final/scripts/auto-commit.sh" >> "/home/you/Desktop/Lowcountry AI/lowcountry-listings-ai-final/.auto-commit.log" 2>&1
+   */15 * * * * "/ABSOLUTE/PATH/TO/REPO/scripts/auto-commit.sh" >> "/ABSOLUTE/PATH/TO/REPO/.auto-commit.log" 2>&1
    ```
 
-   Replace `/home/you/Desktop/...` with your real path.
+   Replace `/ABSOLUTE/PATH/TO/REPO` with your real clone path on disk.
 
 ## Behavior
 
