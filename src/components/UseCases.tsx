@@ -40,9 +40,9 @@ const CAPABILITIES = [
   { value: '< 60s', label: 'Typical generation time' },
 ];
 
-export default function Testimonials() {
+export default function UseCases() {
   return (
-    <section id="testimonials" style={{
+    <section id="use-cases" style={{
       padding: '110px 0',
       background:
         'radial-gradient(ellipse 60% 50% at 75% 40%, rgba(0,255,255,0.028) 0%, transparent 70%),' +
