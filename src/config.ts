@@ -10,7 +10,6 @@ export const TIMING_MS = {
   resultsPollInterval: 2_000,
   resultsPollMaxAttempts: 45, // ~90s at 2s interval
   authSafetyTimeout: 10_000,
-  mapsFallbackDelay: 10_000,
   copyFeedbackDuration: 2_200,
   toastDuration: 4_000,
 } as const;

@@ -24,7 +24,7 @@ Open `http://localhost:5173`.
 - **4-step wizard**: Basics (address, type, beds/baths/sqft required unless “neighborhood overview only”) → Photos → Amenities (required for full listing) → Review & generate
 - **MLS safety**: Fact-locked prompts, refinement + fact-check passes; **Edit & regenerate** on results (agent notes + presets)
 - **Outputs**: MLS description (350–450 words), Airbnb/VRBO copy (200–250 words), 3 social captions
-- **Features**: Google Places address autocomplete, OpenAI Vision photo extraction, 8 landmark driving distances, authenticity & confidence scoring, virtual staging (fal.ai, 6 styles; VISION.md references 4 core styles), bulk CSV upload, team accounts, market comps, analytics
+- **Features**: Google Places **Place Autocomplete (new)** on the address field, OpenAI Vision photo extraction, 8 landmark driving distances, authenticity & confidence scoring, virtual staging (fal.ai, 6 styles; VISION.md references 4 core styles), bulk CSV upload, team accounts, market comps, analytics
 - **Monetization**: Stripe subscriptions (Free, Starter, Pro, Pro+, Team) + pay-per-use credit packs
 
 See [VISION.md](VISION.md) for the full product scope and Phase 1 requirements.
@@ -34,7 +34,7 @@ See [VISION.md](VISION.md) for the full product scope and Phase 1 requirements.
 - **Frontend**: React 18, TypeScript, Vite, React Router, Tailwind CSS v4
 - **Backend**: Supabase (PostgreSQL, Auth, Realtime, Storage, Edge Functions)
 - **AI**: OpenAI GPT-4o-mini, Vision API; fal.ai for virtual staging
-- **Maps**: Google Maps (Places, Geocoding, Distance Matrix)
+- **Maps**: Google Maps Platform (Maps JavaScript API + **Places API (new)** for address autocomplete; Geocoding + Distance Matrix on Edge Functions)
 - **Payments**: Stripe (Checkout, Webhooks, Billing Portal)
 
 ## Setup
@@ -58,10 +58,19 @@ Create `.env.local` in the project root with:
 |----------|----------|-------------|
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL (Settings → API) |
 | `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key |
-| `VITE_GOOGLE_MAPS_API_KEY` | Yes | Google Cloud API key with Maps JavaScript API + Places enabled (client-side) |
+| `VITE_GOOGLE_MAPS_API_KEY` | Yes | Browser key: enable **Maps JavaScript API** + **Places API (new)**; link a **billing account**; restrict key by HTTP referrer (e.g. `http://localhost:5173/*`, production origin `https://your-domain/*`) |
 | `VITE_DEBUG_BYPASS_BILLING` | No | Dev/debug: bypass UI quota gates (requires allowlisting in prod) |
 
 These are used by the Vite app at build and runtime. Do not commit real keys; use `.env.local` (gitignored).
+
+#### Google Cloud checklist (address autocomplete)
+
+1. **Billing**: Maps Platform calls require billing on the GCP project (`BillingNotEnabledMapError` if missing).
+2. **APIs**: Enable **Maps JavaScript API** and **Places API (new)** for the client key.
+3. **Key restrictions**: Application restriction = *HTTP referrers*; include local dev and prod URLs.
+4. If the map script fails to load, the UI still allows **Type manually** and **Retry Google**.
+
+Server-side distance/geocode still uses `GOOGLE_MAPS_SERVER_KEY` in Edge Function secrets (Geocoding + Distance Matrix).
 
 ### Supabase Edge Functions (server-side)
 
@@ -109,7 +118,12 @@ Run Supabase migrations in order (SQL Editor or `supabase db push`):
 
 This project supports an **unrestricted testing mode** for your own account while keeping quota enforcement for normal users.
 
-- **UI bypass (local/dev)**: set `VITE_DEBUG_BYPASS_BILLING=true` in `.env.local`. You’ll see a **TEST MODE** badge in the top bar.\n- **Server-side bypass (Edge Functions)**:\n  - Set Edge secret `ALLOW_TEST_MODE=true`\n  - Allowlist your user in DB: set `profiles.is_test_user = true` for your `profiles.id`\n\nWhen both are enabled, generation + bulk + staging won’t consume quotas for allowlisted users.
+- **UI bypass (local/dev)**: set `VITE_DEBUG_BYPASS_BILLING=true` in `.env.local`. You’ll see a **TEST MODE** badge in the top bar.
+- **Server-side bypass (Edge Functions)**:
+  - Set Edge secret `ALLOW_TEST_MODE=true`
+  - Allowlist your user in DB: set `profiles.is_test_user = true` for your `profiles.id`
+
+When both are enabled, generation + bulk + staging won’t consume quotas for allowlisted users.
 
 ### Run locally
 
@@ -123,6 +137,7 @@ Open `http://localhost:5173`. Sign up or sign in via Supabase Auth (email or Goo
 
 ```bash
 npm run build
+npm run test       # unit tests (Vitest)
 npm run preview   # optional: preview production build
 ```
 
@@ -130,10 +145,10 @@ npm run preview   # optional: preview production build
 
 ```
 src/
-  components/     # UI (wizard steps, layout, modals, etc.)
+  components/     # UI (CharlestonAddressField, wizard steps, layout, modals, …)
   contexts/      # Auth, Toast
   hooks/         # useGenerations, useStripe, useTeam
-  lib/           # supabase client, storage, neighborhoods
+  lib/           # supabase client, googleMaps loader, storage, neighborhoods
   pages/         # Route-level pages (dashboard, generate, results, account, …)
   types/         # database.ts and app types
 supabase/

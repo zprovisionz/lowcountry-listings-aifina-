@@ -10,7 +10,7 @@ Run these in a production-like environment (or staging with real Supabase + Stri
    - If Google OAuth is enabled: sign in with Google and confirm redirect back to the app and dashboard.
 
 2. **Address search and generate flow**
-   - Go to **Generate** and in step 1 type a Charleston-area address. Confirm Google Places suggestions appear and you can select one; if Maps is slow or unavailable, confirm the fallback allows typing an address after ~10 seconds.
+   - Go to **Generate** step 1: confirm **Google Places** suggestions (new Place Autocomplete widget) appear when billing/APIs/referrers are correct; use **Type manually** immediately if you prefer, or if Maps fails to load; use **Retry Google** after fixing Cloud Console settings.
    - Select property type, complete the wizard (photos optional), choose at least one output format in Review, and click **Generate Listing**. Confirm either the real generation completes and you are redirected to the results page, or the 90s timeout triggers and you see the fallback copy and are still redirected (no infinite “Generating…”).
 
 3. **Results page and copy**

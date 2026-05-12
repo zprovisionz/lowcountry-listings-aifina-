@@ -13,3 +13,6 @@ dist/
 # OS/editor
 .DS_Store
 .vscode/
+
+# local cron log (see scripts/README-auto-commit.md)
+.auto-commit.log

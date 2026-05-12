@@ -18,7 +18,7 @@ In the project’s **Settings → Environment Variables**, add the following. Us
 |------|--------|--------|
 | `VITE_SUPABASE_URL` | `https://xxxxx.supabase.co` | From Supabase Dashboard → Settings → API |
 | `VITE_SUPABASE_ANON_KEY` | `eyJ...` | Supabase anon/public key |
-| `VITE_GOOGLE_MAPS_API_KEY` | `AIza...` | Google Cloud API key (Maps JavaScript API + Places) |
+| `VITE_GOOGLE_MAPS_API_KEY` | `AIza...` | Browser key: **Maps JavaScript API** + **Places API (new)**; billing enabled; HTTP referrer restrictions |
 
 - All three are required for the app to work (auth, data, address search).
 - Do not add Supabase service role key or Stripe secret keys here; they are used only in Supabase Edge Functions (server-side).
@@ -32,7 +32,7 @@ In the project’s **Settings → Environment Variables**, add the following. Us
 
 1. **Supabase Auth**: In Supabase Dashboard → Authentication → URL Configuration, set **Site URL** to your Vercel production URL (e.g. `https://your-app.vercel.app`) and add it to **Redirect URLs** (and add `https://your-app.vercel.app/auth/callback` for OAuth).
 2. **Stripe**: If using live Stripe, set the webhook endpoint to your Supabase Edge Function URL for `stripe-webhook` and use the same Site URL where needed for redirects.
-3. **Google**: Ensure the Maps API key allows your Vercel domain in referrer restrictions (or use no restriction for testing).
+3. **Google**: Ensure billing is enabled on the GCP project, **Places API (new)** is on, and the Maps API key allows your Vercel domain (and `http://localhost:5173/*` for local dev) in HTTP referrer restrictions.
 
 ## Local Supabase + Edge Functions (recommended before deploying)
 
