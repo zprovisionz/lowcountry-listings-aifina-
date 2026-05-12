@@ -4,6 +4,8 @@ import { ToastProvider } from './contexts/ToastContext';
 import ProtectedRoute    from './components/layout/ProtectedRoute';
 import AppLayout         from './components/layout/AppLayout';
 import ErrorBoundary     from './components/ErrorBoundary';
+import SupabaseConfigMissing from './components/SupabaseConfigMissing';
+import { isSupabaseConfigured } from './lib/supabase';
 
 // Auth
 import LoginPage    from './pages/auth/LoginPage';
@@ -27,6 +29,10 @@ import TermsPage     from './pages/legal/TermsPage';
 import NotFoundPage  from './pages/NotFoundPage';
 
 export default function App() {
+  if (!isSupabaseConfigured) {
+    return <SupabaseConfigMissing />;
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>

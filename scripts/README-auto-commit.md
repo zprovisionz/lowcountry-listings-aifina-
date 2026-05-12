@@ -22,7 +22,7 @@ This repo includes `auto-commit.sh` to create a WIP commit when there are staged
 3. Install a cron job (edit with `crontab -e`). Use the **absolute** path to this repo (quotes matter if the path has spaces):
 
    ```cron
-   */15 * * * * "/home/you/Desktop/Lowcountry AI/lowcountry-listings-ai-final/scripts/auto-commit.sh" >> "/home/you/Desktop/Lowcountry AI/lowcountry-listings-ai-final/.auto-commit.log" 2>&1
+   */15 * * * * "/home/guy/Desktop/Lowcountry AI/lowcountry-listings-ai-final/scripts/auto-commit.sh" >> "/home/you/Desktop/Lowcountry AI/lowcountry-listings-ai-final/.auto-commit.log" 2>&1
    ```
 
    Replace `/home/you/Desktop/...` with your real path.

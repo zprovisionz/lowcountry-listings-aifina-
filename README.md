@@ -1,3 +1,6 @@
+  ```cron
+   */15 * * * * "/home/guy/Desktop/Lowcountry AI/lowcountry-listings-ai-final/scripts/auto-commit.sh" >> "/home/you/Desktop/Lowcountry AI/lowcountry-listings-ai-final/.auto-commit.log" 2>&1
+   ```
 # Lowcountry Listings AI
 
 Charleston-only AI listing generator built in Mount Pleasant for local agents who need speed *without* generic AI nonsense. Generate MLS-ready copy with verified landmark distances, Lowcountry vocabulary, and fact-locked guardrails that reduce hallucinations and protect your reputation.

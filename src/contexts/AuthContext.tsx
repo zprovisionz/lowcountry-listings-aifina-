@@ -3,7 +3,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Profile } from '../types/database';
 import { TIMING_MS } from '../config';
 
@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (userId: string) => {
+    if (!isSupabaseConfigured) return;
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -39,6 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
+
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
 
     // Safety: never show spinner longer than 10s
     const timeoutId = setTimeout(() => {
@@ -90,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [fetchProfile]);
 
   const handleSignOut = async () => {
+    if (!isSupabaseConfigured) return;
     await supabase.auth.signOut();
     setUser(null); setSession(null); setProfile(null);
   };

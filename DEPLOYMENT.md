@@ -43,7 +43,9 @@ supabase start
 supabase functions serve generate-listing --env-file ./supabase/.env.local
 ```
 
-Create `./supabase/.env.local` containing your server-side secrets (OpenAI, service role key, server Maps key, Stripe, etc.). Do not commit it.
+Create `./supabase/.env.local` containing your server-side secrets (OpenAI, server Maps key, Stripe, etc.). Do not commit it.
+
+When using `supabase functions serve --env-file ./supabase/.env.local`, the CLI **ignores** variables whose names start with `SUPABASE_` (it injects local `SUPABASE_URL` / keys itself). Put `OPENAI_API_KEY`, `GOOGLE_MAPS_SERVER_KEY`, `ANTHROPIC_API_KEY`, and similar non-`SUPABASE_` secrets in that file for local runs.
 
 ## 5. `vercel.json` in this repo
 
