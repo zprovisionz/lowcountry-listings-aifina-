@@ -67,8 +67,9 @@ These are used by the Vite app at build and runtime. Do not commit real keys; us
 
 1. **Billing**: Maps Platform calls require billing on the GCP project (`BillingNotEnabledMapError` if missing).
 2. **APIs**: Enable **Maps JavaScript API** and **Places API (new)** for the client key.
-3. **Key restrictions**: Application restriction = *HTTP referrers*; include local dev and prod URLs.
-4. If the map script fails to load, the UI still allows **Type manually** and **Retry Google**.
+3. **Key restrictions**: Application restriction = *HTTP referrers*; include local dev and prod URLs (and preview origins like `https://*.vercel.app/*` if you test previews).
+4. **Console: `The caller does not have permission` on `gmp-place-autocomplete`**: Same checklist as above — most often **Places API (new)** not enabled, **billing** not linked, or the key’s **HTTP referrer** list missing the exact page origin (not “IP addresses” restriction, which is for server keys only).
+5. If the map script fails to load, the UI still allows **Type manually** and **Retry Google**.
 
 Server-side distance/geocode still uses `GOOGLE_MAPS_SERVER_KEY` in Edge Function secrets (Geocoding + Distance Matrix).
 

@@ -63,6 +63,15 @@ function readPlacePrediction(ev: Event): GmpSelectLike['placePrediction'] | unde
   return e.placePrediction ?? e.detail?.placePrediction;
 }
 
+function readGmpErrorMessage(ev: Event): string {
+  const d = (ev as CustomEvent<{ message?: string; error?: { message?: string } }>).detail;
+  if (!d || typeof d !== 'object') return '';
+  if (typeof d.message === 'string') return d.message;
+  const inner = d.error;
+  if (inner && typeof inner.message === 'string') return inner.message;
+  return '';
+}
+
 export default function CharlestonAddressField({
   manualValue: controlledManual,
   onManualChange,
@@ -146,9 +155,17 @@ export default function CharlestonAddressField({
     el.locationBias = boundsLiteral;
     el.locationRestriction = null;
 
-    el.addEventListener('gmp-error', () => {
+    el.addEventListener('gmp-error', (ev) => {
+      const raw = readGmpErrorMessage(ev);
+      const permissionish =
+        /no permission|does not have permission|REQUEST_DENIED|forbidden/i.test(raw);
+      if (import.meta.env.DEV && raw) {
+        console.warn('[gmp-place-autocomplete]', raw);
+      }
       setPlacesUiError(
-        'Address lookup unavailable — type full address manually (check API key, billing, and HTTP referrer for this host).',
+        permissionish
+          ? 'Google rejected autocomplete (permission). In Google Cloud: enable Places API (New) + Maps JavaScript API, link billing, and add this site’s URL to the browser key’s HTTP referrer allowlist. You can type the address manually below.'
+          : 'Address lookup unavailable — type full address manually (check API key, billing, and HTTP referrer for this host).',
       );
     });
 
