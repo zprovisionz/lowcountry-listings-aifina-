@@ -30,7 +30,8 @@ export default function Hero() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      overflow: 'hidden',
+      /* overflow:visible so gmp-place-autocomplete prediction list is not clipped */
+      overflow: 'visible',
       padding: '130px 24px 90px',
       background:
         'radial-gradient(ellipse 90% 70% at 50% -20%, oklch(0.72 0.13 195 / 0.12) 0%, transparent 55%),' +
@@ -169,7 +170,9 @@ export default function Hero() {
             padding: 28,
             backdropFilter: 'blur(24px)',
             boxShadow: '0 24px 64px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.04)',
-            position: 'relative', overflow: 'hidden',
+            position: 'relative',
+            /* visible: Places dropdown extends below this card; hidden clipped all suggestions */
+            overflow: 'visible',
           }}>
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: 1,

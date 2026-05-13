@@ -67,6 +67,11 @@ export function buildGoogleMapsScriptUrl(key: string, callbackName: string): str
 export function loadGoogleMaps(): Promise<void> {
   const key = getBrowserKey();
   if (!key) {
+    if (import.meta.env.DEV) {
+      console.warn(
+        '[Google Maps] VITE_GOOGLE_MAPS_API_KEY is missing. Set it in .env.local and in Vercel (Preview + Production) for address autocomplete.',
+      );
+    }
     setLoadState('error');
     return Promise.reject(new Error('Missing VITE_GOOGLE_MAPS_API_KEY'));
   }

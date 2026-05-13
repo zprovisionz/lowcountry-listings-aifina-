@@ -4,6 +4,8 @@
 /* Google Places (new): PlaceAutocompleteElement inside our host */
 .gmp-place-autocomplete-host {
   width: 100%;
+  position: relative;
+  z-index: 5;
 }
 
 .gmp-place-autocomplete-host gmp-place-autocomplete {

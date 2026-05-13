@@ -29,8 +29,11 @@ type GmpSelectLike = Event & {
 type PlaceAutocompleteElementCtor = new (opts?: object) => HTMLElement & {
   placeholder: string;
   includedRegionCodes: string[];
+  /** Soft hint toward tri-county; strict filter still applied on pick via isWithinCharlestonMetro */
+  locationBias: google.maps.LatLngBoundsLiteral | null;
   locationRestriction: google.maps.LatLngBoundsLiteral | null;
   addEventListener(type: 'gmp-select', listener: (ev: GmpSelectLike) => void): void;
+  addEventListener(type: 'gmp-error', listener: (ev: Event) => void): void;
 };
 
 export type CharlestonAddressFieldProps = {
@@ -84,6 +87,7 @@ export default function CharlestonAddressField({
   const [internalManual, setInternalManual] = useState('');
   const [hasPick, setHasPick] = useState(false);
   const [geoError, setGeoError] = useState('');
+  const [placesUiError, setPlacesUiError] = useState('');
   const [loadingPick, setLoadingPick] = useState(false);
   const [loadHint, setLoadHint] = useState(false);
 
@@ -120,6 +124,7 @@ export default function CharlestonAddressField({
 
   const attachPac = useCallback(async () => {
     if (manualMode || disabled || !hostRef.current) return;
+    setPlacesUiError('');
     teardownPac();
     try {
       await loadGoogleMaps();
@@ -138,7 +143,14 @@ export default function CharlestonAddressField({
     const el = new Ctor({});
     el.placeholder = placeholder;
     el.includedRegionCodes = ['us'];
-    el.locationRestriction = boundsLiteral;
+    el.locationBias = boundsLiteral;
+    el.locationRestriction = null;
+
+    el.addEventListener('gmp-error', () => {
+      setPlacesUiError(
+        'Address lookup unavailable — type full address manually (check API key, billing, and HTTP referrer for this host).',
+      );
+    });
 
     const onSelect = async (ev: GmpSelectLike) => {
       const pred = readPlacePrediction(ev);
@@ -200,6 +212,7 @@ export default function CharlestonAddressField({
 
   const handleClear = () => {
     setGeoError('');
+    setPlacesUiError('');
     setHasPick(false);
     if (pacRef.current && 'value' in pacRef.current) {
       try {
@@ -342,6 +355,7 @@ export default function CharlestonAddressField({
             disabled={disabled}
             onClick={() => {
               setGeoError('');
+              setPlacesUiError('');
               setManualMode(true);
               teardownPac();
             }}
@@ -370,6 +384,7 @@ export default function CharlestonAddressField({
               resetGoogleMapsLoad();
               setManualMode(false);
               setGeoError('');
+              setPlacesUiError('');
               void loadGoogleMaps().catch(() => {});
             }}
             style={{
@@ -417,8 +432,25 @@ export default function CharlestonAddressField({
             fontFamily: "'DM Mono', ui-monospace, monospace",
           }}
         >
-          Google Maps did not load (check API key billing, enabled APIs, and HTTP referrer restrictions). Use{' '}
-          <strong>Type manually</strong> above.
+          Address lookup unavailable — type full address manually. Google Maps did not load (API key, billing,
+          enabled APIs, or HTTP referrer). Use <strong>Type manually</strong> above.
+        </div>
+      )}
+
+      {placesUiError && !manualMode && mapsState === 'ready' && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: '9px 14px',
+            background: 'rgba(255,200,80,0.07)',
+            border: '1px solid rgba(255,200,80,0.28)',
+            borderRadius: 8,
+            fontSize: 11,
+            color: 'rgba(255,220,140,0.95)',
+            fontFamily: "'DM Mono', ui-monospace, monospace",
+          }}
+        >
+          {placesUiError}
         </div>
       )}
 

@@ -516,6 +516,82 @@ body { background: var(--space); color: var(--text-hi); font-family: 'DM Sans', 
   opacity: 0.55;
 }
 
+/* Landing features grid — one surface, hero-aligned hover (neon-table-row cue) */
+.features-grid-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  padding: 22px 22px 20px 24px;
+  background: var(--space-card);
+  border: 1px solid var(--cyan-border);
+  border-radius: 18px;
+  backdrop-filter: blur(24px) saturate(1.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition: background 0.2s ease, border-color 0.22s ease, box-shadow 0.25s var(--ease-expo);
+  overflow: hidden;
+}
+.features-grid-card > * {
+  position: relative;
+  z-index: 1;
+}
+.features-grid-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--cyan-dim), transparent);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+}
+.features-grid-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--cyan);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 0.18s ease;
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 0;
+}
+.features-grid-card:hover {
+  background: oklch(0.72 0.13 195 / 0.055);
+  border-color: oklch(0.72 0.13 195 / 0.3);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.features-grid-card:hover::after {
+  transform: scaleY(1);
+}
+
+.features-icon-mark {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cyan);
+  opacity: 0.92;
+}
+.features-icon-mark svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .section-inner { max-width: 1240px; margin: 0 auto; padding: 0 28px; }
 .section-header { text-align: center; margin-bottom: 72px; }
 .section-heading {

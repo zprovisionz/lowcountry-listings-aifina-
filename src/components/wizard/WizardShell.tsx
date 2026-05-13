@@ -68,7 +68,7 @@ export default function WizardShell({
       </div>
 
       {/* Content card */}
-      <div className="glass-dash anim-fade-up d-100" style={{ overflow:'hidden' }}>
+      <div className="glass-dash anim-fade-up d-100" style={{ overflow: 'visible' }}>
         {/* Card header bar */}
         <div style={{
           padding:'14px 26px',
