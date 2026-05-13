@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./styles/neon-theme.css";
+@import "./styles/landing-patch.css";
 
 /* Google Places (new): PlaceAutocompleteElement inside our host */
 .gmp-place-autocomplete-host {

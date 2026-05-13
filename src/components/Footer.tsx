@@ -7,7 +7,7 @@ const PRODUCT_LINKS: { label: string; href: string }[] = [
   { label: 'Virtual Staging',      href: '/#features' },
   { label: 'Authenticity Scoring', href: '/#features' },
   { label: 'Team Accounts',         href: '/#pricing' },
-  { label: 'Use Cases',            href: '/#testimonials' },
+  { label: 'Use Cases',            href: '/#use-cases' },
 ];
 const COMPANY_LINKS: { label: string; href: string }[] = [
   { label: 'FAQ',              href: '/#faq' },

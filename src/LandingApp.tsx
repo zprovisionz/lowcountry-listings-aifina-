@@ -2,7 +2,7 @@ import Navbar       from './components/Navbar';
 import Hero         from './components/Hero';
 import Features     from './components/Features';
 import Pricing      from './components/Pricing';
-import Testimonials from './components/Testimonials';
+import UseCases     from './components/UseCases';
 import FAQ          from './components/FAQ';
 import Footer       from './components/Footer';
 
@@ -19,7 +19,7 @@ export default function LandingApp() {
           <div className="divider" />
           <Pricing />
           <div className="divider" />
-          <Testimonials />
+          <UseCases />
           <div className="divider" />
           <FAQ />
         </main>
