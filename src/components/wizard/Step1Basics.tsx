@@ -83,7 +83,7 @@ export default function Step1Basics({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 11,
+              fontSize: 12,
               flexShrink: 0,
             }}
           >

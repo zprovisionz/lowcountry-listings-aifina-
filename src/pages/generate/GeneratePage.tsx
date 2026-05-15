@@ -17,6 +17,7 @@ import { DEBUG, TIMING_MS } from '../../config';
 
 const INVOKE_TIMEOUT_MS = TIMING_MS.invokeTimeout;
 
+/** DEV ONLY: fills a generation row with placeholder copy when the edge function times out or errors. Never invoked in production. */
 async function applyMockFallback(genId: string, data: WizardData) {
   await supabase.from('generations').update({
     status: 'complete',
@@ -161,13 +162,18 @@ export default function GeneratePage() {
         invokeResult = await Promise.race([invokePromise, timeoutPromise]);
       } catch (raceErr) {
         if (raceErr instanceof Error && raceErr.message === 'TIMEOUT') {
-          try {
-            await applyMockFallback(gen.id, data);
-            await refreshProfile();
-            toast('Server took too long — showing a draft fallback. Use Edit & regenerate when you\'re ready.', 'warning');
-            navigate(`/results/${gen.id}`);
-          } catch (fallbackErr) {
-            toast((fallbackErr as Error)?.message ?? 'Generation timed out. Please try again.', 'error');
+          if (import.meta.env.DEV) {
+            try {
+              await applyMockFallback(gen.id, data);
+              await refreshProfile();
+              toast('Server took too long — showing a draft fallback (dev only).', 'warning');
+              navigate(`/results/${gen.id}`);
+            } catch (fallbackErr) {
+              toast((fallbackErr as Error)?.message ?? 'Generation timed out. Please try again.', 'error');
+            }
+          } else {
+            await supabase.from('generations').update({ status: 'error' }).eq('id', gen.id);
+            toast('Generation timed out. Please try again — no draft copy was saved.', 'error');
           }
           setSubmitting(false);
           return;
@@ -177,10 +183,21 @@ export default function GeneratePage() {
 
       const fnErr = invokeResult?.error;
       if (fnErr) {
-        await applyMockFallback(gen.id, data);
-        await refreshProfile();
-        toast('AI server hiccup — showing a draft fallback. Use Edit & regenerate when you\'re ready.', 'warning');
-        navigate(`/results/${gen.id}`);
+        if (import.meta.env.DEV) {
+          await applyMockFallback(gen.id, data);
+          await refreshProfile();
+          toast('AI server hiccup — showing a draft fallback (dev only).', 'warning');
+          navigate(`/results/${gen.id}`);
+        } else {
+          await supabase.from('generations').update({ status: 'error' }).eq('id', gen.id);
+          toast(
+            typeof fnErr === 'object' && fnErr !== null && 'message' in fnErr
+              ? String((fnErr as { message?: string }).message)
+              : 'Generation failed. Please try again — no draft copy was saved.',
+            'error'
+          );
+        }
+        setSubmitting(false);
         return;
       }
 

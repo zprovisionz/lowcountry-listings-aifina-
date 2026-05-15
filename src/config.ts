@@ -64,12 +64,25 @@ export const TIERS = {
   },
 } as const;
 
+/** Product defaults aligned with `apply_tier_limits` (migration 011) and Pricing copy. */
+export const PLAN_LIMITS = {
+  free: { generations: 3, stagingCredits: 0 },
+  starter: { generations: 100, stagingCredits: 10 },
+  pro: { generations: null as null | number, stagingCredits: 40 },
+  pro_plus: { generations: null as null | number, stagingCredits: 100 },
+  team: { generations: null as null | number, stagingCredits: 200 },
+} as const;
+
 export const DEBUG = {
   /**
-   * When true, UI can optionally bypass quota gates for debugging.
-   * Server-side bypass is still controlled separately via the `ALLOW_TEST_MODE` Edge secret
-   * and `profiles.is_test_user` allowlisting.
+   * When true, UI can optionally bypass quota gates for debugging (local only).
+   * Forced off in production builds so a mis-set Vercel env cannot disable billing UI.
+   * Server-side bypass: `ALLOW_TEST_MODE` Edge secret + `profiles.is_test_user`.
+   * Manual QA: see docs/STRIPE_LAUNCH_QA.md
    */
-  bypassBilling: (import.meta.env.VITE_DEBUG_BYPASS_BILLING ?? '').toLowerCase() === 'true',
+  bypassBilling:
+    import.meta.env.PROD
+      ? false
+      : (import.meta.env.VITE_DEBUG_BYPASS_BILLING ?? '').toLowerCase() === 'true',
 } as const;
 

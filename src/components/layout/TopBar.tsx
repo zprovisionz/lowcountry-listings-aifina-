@@ -6,7 +6,7 @@ const PAGE_META: Record<string, { title:string; sub:string }> = {
   '/dashboard': { title:'Dashboard',   sub:'Welcome back to Lowcountry AI' },
   '/generate':  { title:'Generate',    sub:'4-step listing wizard' },
   '/history':   { title:'History',     sub:'Your past generations' },
-  '/reports':   { title:'Reports',     sub:'Market reports & comps' },
+  '/reports':   { title:'Reports',     sub:'Market intelligence — roadmap' },
   '/team':      { title:'Team',        sub:'Manage your team & roles' },
   '/account':   { title:'Account',     sub:'Billing & preferences' },
   '/results':   { title:'Results',     sub:'Your generated listing' },

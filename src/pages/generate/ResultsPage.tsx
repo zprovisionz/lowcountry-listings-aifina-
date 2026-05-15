@@ -27,6 +27,10 @@ const STAGING_STYLES = [
   { id: 'empty_clean',           label: 'Empty & Clean' },
 ];
 
+/** NAR-style disclosure for AI staging outputs */
+const STAGING_DISCLOSURE =
+  'Digitally staged — furniture and furnishings are not included with the property.';
+
 export default function ResultsPage() {
   const { id } = useParams<{ id:string }>();
   const navigate = useNavigate();
@@ -162,7 +166,7 @@ export default function ResultsPage() {
   if (loading) return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:'60vh', gap:20 }}>
       <div style={{ width:44,height:44,border:'2px solid rgba(0,255,255,0.2)',borderTopColor:'var(--cyan)',borderRadius:'50%',animation:'spinRing .8s linear infinite' }} />
-      <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:11, color:'var(--text-lo)', letterSpacing:'.14em' }}>LOADING RESULTS…</span>
+      <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:12, color:'var(--text-lo)', letterSpacing:'.14em' }}>LOADING RESULTS…</span>
       <style>{`@keyframes spinRing{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
@@ -192,7 +196,7 @@ export default function ResultsPage() {
               background:'rgba(0,255,255,0.04)', borderRadius:8, border:'1px solid rgba(0,255,255,0.1)',
             }}>
               <div style={{ width:13,height:13,borderRadius:'50%',border:'1.5px solid rgba(0,255,255,0.3)',borderTopColor:'var(--cyan)',animation:`spinRing ${0.7+i*0.1}s linear infinite`,flexShrink:0 }} />
-              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-lo)' }}>{step}</span>
+              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)' }}>{step}</span>
             </div>
           ))}
         </div>
@@ -229,7 +233,7 @@ export default function ResultsPage() {
         <div>
           <button onClick={() => navigate('/history')} style={{
             background:'none', border:'none', color:'var(--text-lo)', fontFamily:"'DM Mono', ui-monospace, monospace",
-            fontSize:10, cursor:'pointer', letterSpacing:'.1em', marginBottom:8, padding:0,
+            fontSize:'var(--text-ui-label)', cursor:'pointer', letterSpacing:'.1em', marginBottom:8, padding:0,
             display:'flex', alignItems:'center', gap:5, transition:'color .2s',
           }}
           onMouseEnter={e=>(e.currentTarget as HTMLElement).style.color='var(--cyan)'}
@@ -242,7 +246,7 @@ export default function ResultsPage() {
             {gen.neighborhood && (
               <span className="tag" style={{ marginBottom:0 }}>{gen.neighborhood}</span>
             )}
-            <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)' }}>
+            <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)' }}>
               {new Date(gen.created_at).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}
             </span>
           </div>
@@ -260,7 +264,7 @@ export default function ResultsPage() {
         {/* Landmark distances */}
         {gen.landmark_distances && (
           <div style={{ flex:1, minWidth:200 }}>
-            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>
               LANDMARK DISTANCES
             </div>
             {Object.entries(gen.landmark_distances).slice(0,4).map(([place,dist],i) => (
@@ -278,10 +282,10 @@ export default function ResultsPage() {
         {/* Suggestions */}
         {gen.improvement_suggestions && gen.improvement_suggestions.length > 0 && (
           <div style={{ flex:1, minWidth:180 }}>
-            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>SUGGESTIONS</div>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>SUGGESTIONS</div>
             {gen.improvement_suggestions.map(s => (
               <div key={s} style={{ display:'flex', alignItems:'flex-start', gap:7, marginBottom:8, fontFamily:'DM Sans,sans-serif', fontSize:12.5, color:'var(--text-mid)', lineHeight:1.55 }}>
-                <span style={{ color:'var(--magenta)', flexShrink:0, marginTop:2, fontSize:10 }}>◈</span>
+                <span style={{ color:'var(--magenta)', flexShrink:0, marginTop:2, fontSize:12 }}>◈</span>
                 {s}
               </div>
             ))}
@@ -292,7 +296,7 @@ export default function ResultsPage() {
       {/* Virtual staging CTA (discoverability) */}
       <div className="glass-featured anim-fade-up d-150" style={{ padding:'18px 22px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:14 }}>
         <div style={{ display:'flex', flexDirection:'column', gap:6, minWidth:240 }}>
-          <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+          <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>
             VIRTUAL STAGING · POWERED BY FAL.AI
           </div>
           <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontSize:16, fontWeight:800, color:'var(--text-hi)' }}>
@@ -305,7 +309,7 @@ export default function ResultsPage() {
         <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
           {!hasPhotos ? (
             <>
-              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-ghost)', letterSpacing:'.08em' }}>
+              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-ghost)', letterSpacing:'.08em' }}>
                 No photos on this listing
               </span>
               <button onClick={() => navigate('/generate')} className="btn btn-primary">Generate with photos →</button>
@@ -356,7 +360,7 @@ export default function ResultsPage() {
                     padding: '3px 7px',
                     borderRadius: 999,
                     fontFamily: "'DM Mono', ui-monospace, monospace",
-                    fontSize: 8,
+                    fontSize: 'var(--text-ui-label)',
                     letterSpacing: '.12em',
                     color: 'var(--magenta)',
                     border: '1px solid rgba(255,0,255,0.35)',
@@ -365,7 +369,7 @@ export default function ResultsPage() {
                     NEW
                   </span>
                 )}
-                <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--text-ghost)', letterSpacing:'.08em' }}>
+                <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-ghost)', letterSpacing:'.08em' }}>
                   {t.words}
                 </span>
               </button>
@@ -388,16 +392,16 @@ export default function ResultsPage() {
             return (
               <div>
                 {basedOnInputs && (
-                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-ghost)', letterSpacing:'.06em', marginBottom:12 }}>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-ghost)', letterSpacing:'.06em', marginBottom:12 }}>
                     Based on your inputs: {basedOnInputs}
                   </div>
                 )}
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, flexWrap:'wrap', gap:10 }}>
                   <div>
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>
                       {tab==='mls' ? 'RESO-COMPLIANT MLS DESCRIPTION' : 'AIRBNB / VRBO GUEST-FACING COPY'}
                     </div>
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-ghost)', marginTop:3 }}>{wc(text)} words</div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-ghost)', marginTop:3 }}>{wc(text)} words</div>
                   </div>
                   <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
                     {tab==='mls' && text && user && (
@@ -433,13 +437,13 @@ export default function ResultsPage() {
           {/* Social */}
           {tab === 'social' && (
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:4 }}>
+              <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:4 }}>
                 3 PLATFORM-READY CAPTIONS WITH LOWCOUNTRY HASHTAGS
               </div>
               {(gen.social_captions??[]).map((caption,i) => (
                 <div key={i} className={i%2===0?'glass':'glass-magenta'} style={{ padding:'18px 20px', borderRadius:12 }}>
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-                    <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color: i%2===0 ? 'var(--cyan)' : 'var(--magenta)', letterSpacing:'.12em' }}>
+                    <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: i%2===0 ? 'var(--cyan)' : 'var(--magenta)', letterSpacing:'.12em' }}>
                       CAPTION {i+1}
                     </span>
                     <CopyButton text={caption} label="COPY" onCopy={() => trackEvent(id!,'copy')} />
@@ -458,9 +462,23 @@ export default function ResultsPage() {
           {/* Virtual Staging */}
           {tab === 'staging' && (
             <div ref={stagingRef} style={{ display:'flex', flexDirection:'column', gap:20 }}>
-              <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+              <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>
                 AI VIRTUAL STAGING · POWERED BY FAL.AI
               </div>
+              <p
+                style={{
+                  fontFamily: 'DM Sans,sans-serif',
+                  fontSize: 12,
+                  color: 'var(--text-mid)',
+                  lineHeight: 1.55,
+                  margin: 0,
+                  maxWidth: 720,
+                  borderLeft: '2px solid var(--cyan-border)',
+                  paddingLeft: 12,
+                }}
+              >
+                {STAGING_DISCLOSURE} Use the same wording in MLS or advertising when you publish staged images.
+              </p>
 
               {/* No photos warning */}
               {(!gen.photo_urls || gen.photo_urls.length === 0) && (
@@ -476,7 +494,7 @@ export default function ResultsPage() {
               {gen.photo_urls && gen.photo_urls.length > 0 && (
                 <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
                   <div>
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>SELECT PHOTO TO STAGE</div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>SELECT PHOTO TO STAGE</div>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(100px,1fr))', gap:8 }}>
                       {gen.photo_urls.map((url, i) => (
                         <div
@@ -502,7 +520,7 @@ export default function ResultsPage() {
                   </div>
 
                   <div>
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>STAGING STYLE</div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>STAGING STYLE</div>
                     <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                       {STAGING_STYLES.map(s => (
                         <button
@@ -522,7 +540,7 @@ export default function ResultsPage() {
 
                   {/* Quota info */}
                   {profile && (
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-ghost)', letterSpacing:'.08em' }}>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-ghost)', letterSpacing:'.08em' }}>
                       STAGING CREDITS: {profile.staging_credits_used} / {profile.staging_credits_limit === -1 ? '∞' : profile.staging_credits_limit} USED
                     </div>
                   )}
@@ -547,13 +565,13 @@ export default function ResultsPage() {
               {/* Staging job results */}
               {stagingJobs.length > 0 && (
                 <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em' }}>STAGED RESULTS</div>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>STAGED RESULTS</div>
                   {stagingJobs.map(job => (
                     <div key={job.id} className="glass" style={{ borderRadius:12, overflow:'hidden' }}>
                       {job.status === 'processing' && (
                         <div style={{ padding:'20px', display:'flex', alignItems:'center', gap:12 }}>
                           <div style={{ width:16,height:16,borderRadius:'50%',border:'2px solid rgba(0,255,255,0.2)',borderTopColor:'var(--cyan)',animation:'spinRing .8s linear infinite',flexShrink:0 }} />
-                          <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-lo)' }}>
+                          <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)' }}>
                             Staging in progress — fal.ai is applying {STAGING_STYLES.find(s => s.id === job.staging_style)?.label ?? job.staging_style} style…
                           </span>
                         </div>
@@ -568,46 +586,18 @@ export default function ResultsPage() {
                           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:1, background:'rgba(0,0,0,0.5)' }}>
                             <div style={{ position:'relative' }}>
                               <img src={job.original_url} alt="Original" style={{ width:'100%', display:'block', objectFit:'cover', aspectRatio:'4/3' }} />
-                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'rgba(255,255,255,0.7)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>BEFORE</div>
+                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'rgba(255,255,255,0.7)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>BEFORE</div>
                             </div>
                             <div style={{ position:'relative' }}>
                               <img src={job.staged_url} alt="Staged" style={{ width:'100%', display:'block', objectFit:'cover', aspectRatio:'4/3' }} />
-                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--cyan)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>STAGED</div>
+                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--cyan)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>STAGED</div>
                             </div>
                           </div>
-                          <div style={{ padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
-                            <span style={{ fontFamily:'DM Sans,sans-serif', fontSize:12, color:'var(--text-mid)' }}>
-                              {STAGING_STYLES.find(s => s.id === job.staging_style)?.label} — {new Date(job.created_at).toLocaleTimeString()}
-                            </span>
-                            <a href={job.staged_url} download target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ fontSize:11 }}>
-                              Download
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Property details strip */}
-      <div className="anim-fade-up d-300" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:10 }}>
-        {[
-          { label:'Type',      value:gen.property_type?.replace('_',' ') },
-          { label:'Bedrooms',  value:gen.bedrooms },
-          { label:'Bathrooms', value:gen.bathrooms },
-          { label:'Sq Ft',     value:gen.sqft ? Number(gen.sqft).toLocaleString() : null },
-          { label:'Amenities', value:gen.amenities.length ? `${gen.amenities.length} features` : null },
-        ].filter(r=>r.value!=null).map(({ label, value }) => (
-          <div key={label} style={{
+ "|        <div key={label} style={{
             padding:'12px 16px', textAlign:'center',
             background:'rgba(10,10,32,0.5)', border:'1px solid rgba(0,255,255,0.09)', borderRadius:10,
           }}>
-            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:8, color:'var(--text-lo)', letterSpacing:'.12em', marginBottom:6 }}>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.12em', marginBottom:6 }}>
               {label.toUpperCase()}
             </div>
             <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:17, color:'var(--text-hi)' }}>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useStripe } from '../hooks/useStripe';
+import { PLAN_LIMITS } from '../config';
 
 interface Tier {
   name: string;
@@ -21,7 +22,7 @@ interface Tier {
 const TIERS: Tier[] = [
   {
     name: 'Free', tierKey: 'free', monthly: 0, annual: 0,
-    gens: '10 / month', staging: 'None',
+    gens: `${PLAN_LIMITS.free.generations} / month`, staging: 'None',
     features: [
       'MLS descriptions (350–450 words)',
       'Google Places address search',
@@ -54,7 +55,7 @@ const TIERS: Tier[] = [
       'Everything in Starter',
       'Unlimited generations',
       'Full staging (6 styles, 40 credits)',
-      'Comparable listings (comps)',
+      'Edit & regenerate any output section',
       'Performance analytics',
       '+$5 / 10-pack staging credits',
     ],

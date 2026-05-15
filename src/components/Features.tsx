@@ -1,330 +1,283 @@
 // ─────────────────────────────────────────────────────────────────────────────
-//  Features.tsx  ·  Full replacement
+//  Features.tsx
 //
-//  Bento grid layout: 5 feature cards across 3 rows.
-//  Row 1: Hyper-local (wide) spanning 2 cols, Verified Distances (narrow)
-//  Row 2: Photo Vision (narrow), Virtual Staging (narrow), Scoring (narrow) → 3 cols
-//  Row 3: CSV Bulk (narrow), Team Dashboard (narrow) → 2 cols
-//
-//  Every card has:
-//    - icon box  |  tag pill  (DM Mono)
-//    - Playfair headline
-//    - benefit line  (DM Mono uppercase)
-//    - DM Sans body copy
-//    - accent variant ('cyan' | 'magenta')
-//    - optional stat badge (top-right corner)
-//    - scroll-reveal via IntersectionObserver
-//
-//  No fake testimonials. No fabricated quotes.
-//  All copy matches what ships on the current landing page.
+//  Bento grid: 3-column rhythm — row 1: pillar (×2) + landmark; rows 2–3: three
+//  cards each (8 cards total). Each card is built to scan in two seconds:
+//  category → title → one-sentence summary → 2–3 proof chips.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef } from 'react';
 import type { CSSProperties, ReactElement } from 'react';
 
-/* ── Shared reveal hook ─────────────────────────────────────────────────── */
 function useReveal<T extends HTMLElement>(threshold = 0.1) {
   const ref = useRef<T>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const obs = new IntersectionObserver(([e]) => {
-      if (e.isIntersecting) { el.setAttribute('data-revealed', ''); obs.disconnect(); }
-    }, { threshold });
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          el.setAttribute('data-revealed', '');
+          obs.disconnect();
+        }
+      },
+      { threshold },
+    );
     obs.observe(el);
     return () => obs.disconnect();
   }, [threshold]);
   return ref;
 }
 
-/* ── Token aliases (resolve from CSS vars in neon-theme.css) ────────────── */
 type Accent = 'cyan' | 'magenta';
-const PALETTE: Record<Accent, { color: string; ghost: string; border: string; gradient: string }> = {
-  cyan: {
-    color:    'var(--cyan)',
-    ghost:    'var(--cyan-ghost)',
-    border:   'var(--cyan-border)',
-    gradient: 'linear-gradient(135deg, oklch(0.72 0.13 195 / 0.75), oklch(0.65 0.16 210 / 0.75))',
-  },
-  magenta: {
-    color:    'var(--magenta)',
-    ghost:    'var(--magenta-ghost)',
-    border:   'var(--magenta-border)',
-    gradient: 'linear-gradient(135deg, oklch(0.82 0.20 345 / 0.75), oklch(0.72 0.22 340 / 0.75))',
-  },
-};
 
-/* ── Icon components (inline SVG — no external deps) ────────────────────── */
-const Icons: Record<string, (c: string) => ReactElement> = {
+type IconKey =
+  | 'neighborhood'
+  | 'landmark'
+  | 'photo'
+  | 'staging'
+  | 'scoring'
+  | 'csv'
+  | 'team'
+  | 'multi';
+
+const Icons: Record<IconKey, (c: string) => ReactElement> = {
   neighborhood: (c) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6M3 15h6"/><path d="M15 9h4M15 15h4"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18M3 9h6M3 15h6" /><path d="M15 9h4M15 15h4" />
     </svg>
   ),
   landmark: (c) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="10" r="3"/><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="10" r="3" /><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z" />
     </svg>
   ),
   photo: (c) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
     </svg>
   ),
   staging: (c) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 20h20v-4H2v4zM2 12h20V8H2v4z"/><path d="M6 8V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 20h20v-4H2v4zM2 12h20V8H2v4z" /><path d="M6 8V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3" />
     </svg>
   ),
   scoring: (c) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
     </svg>
   ),
   csv: (c) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><polyline points="14 2 14 8 20 8"/>
-      <line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" /><polyline points="14 2 14 8 20 8" />
+      <line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="16" y2="17" />
     </svg>
   ),
   team: (c) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
     </svg>
   ),
   multi: (c) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 4h16v16H4z"/><path d="M4 9h16M4 14h16M9 4v16M14 4v16"/>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 4h16v16H4z" /><path d="M4 9h16M4 14h16M9 4v16M14 4v16" />
     </svg>
   ),
 };
 
-/* ── Feature card data ───────────────────────────────────────────────────── */
 type FeatureCard = {
-  icon: string;
-  tag: string;
+  icon: IconKey;
+  category: string;
   accent: Accent;
   title: string;
-  benefit: string;
-  desc: string;
-  badge?: { num: string; lbl: string };
-  stat?: { num: string; lbl: string };   // for wide cards only
-  wide?: boolean;
+  summary: string;
+  proofs: string[];
+  variant?: 'pillar' | 'standard';
+  /** Optional headline metric — only rendered on `pillar` variant */
+  headlineMetric?: { value: string; label: string };
 };
+
+/** Metro coverage strip (geography); Distance Matrix landmarks remain the 8 in config.ts. */
+export const TRI_COUNTY_COVERAGE_AREAS = [
+  'Mount Pleasant',
+  'Isle of Palms',
+  "Sullivan's Island",
+  'Downtown',
+  'North Charleston',
+  'West Ashley',
+  'James Island',
+  'Johns Island',
+  'Summerville',
+] as const;
 
 const FEATURES: FeatureCard[] = [
   {
     icon: 'neighborhood',
-    tag: 'Hyper-Local',
+    category: 'Hyper-local AI',
     accent: 'cyan',
-    title: 'Neighborhood Intelligence',
-    benefit: 'Sound like a local, every time',
-    desc:
-      'Auto-detects neighborhood from any address and injects authentic vocabulary — "piazza" not "porch", tidal creek views, live oak canopy. Covers 13 Charleston-area neighborhoods, each with curated selling points and lifestyle context.',
-    stat: { num: '13', lbl: 'neighborhoods' },
-    wide: true,
+    variant: 'pillar',
+    title: 'Speaks Charleston, not Realtor.',
+    summary:
+      'Detects the neighborhood from any address and writes copy with local vocabulary — not a national template.',
+    proofs: ['13 neighborhood profiles', 'Piazza, not porch', 'Tidal creek context'],
+    headlineMetric: { value: '13', label: 'neighborhoods' },
   },
   {
     icon: 'landmark',
-    tag: 'Verified Data',
+    category: 'Verified data',
     accent: 'cyan',
-    title: '8 Verified Landmark Distances',
-    benefit: 'Real driving distances, not guesses',
-    desc:
-      'Google Maps Distance Matrix calculates exact driving distances to King Street, Shem Creek, Sullivan\'s Island, Isle of Palms, Folly Beach, Ravenel Bridge, Angel Oak, and Magnolia Plantation — automatically woven into every listing.',
-    badge: { num: '8', lbl: 'landmarks' },
+    title: 'Real driving distances, not guesses.',
+    summary:
+      'Google Maps Distance Matrix calculates exact times to the eight Charleston landmarks buyers actually search for.',
+    proofs: ['King St + Shem Creek', "Folly, IOP, Sullivan's", 'Ravenel, Angel Oak, Magnolia'],
   },
   {
     icon: 'photo',
-    tag: 'Vision AI',
+    category: 'Vision AI',
     accent: 'magenta',
-    title: 'Photo Feature Extraction',
-    benefit: 'Your photos write the listing',
-    desc:
-      'Upload up to 10 photos. OpenAI Vision identifies shiplap walls, coffered ceilings, chef\'s kitchens, piazza details, and Lowcountry architectural finishes — then weaves them into your copy automatically.',
-    badge: { num: '10', lbl: 'photos max' },
+    title: 'Your photos write the listing.',
+    summary:
+      'Upload up to ten photos. Vision identifies architectural details and weaves them into the draft automatically.',
+    proofs: ['10 photos max', 'Shiplap, coffered, piazza', 'OpenAI Vision'],
   },
   {
     icon: 'staging',
-    tag: 'Virtual Staging',
+    category: 'Virtual staging',
     accent: 'magenta',
-    title: '6 AI Staging Styles',
-    benefit: 'Transform empty rooms in 30 seconds',
-    desc:
-      'Choose from Coastal Modern, Lowcountry Traditional, Contemporary, Minimalist, Luxury Resort, or Empty & Clean. Powered by fal.ai with real-time progress tracking and before/after comparison built in.',
-    badge: { num: '6', lbl: 'styles' },
+    title: 'Empty rooms, furnished in 30 seconds.',
+    summary:
+      'Six styles tuned for Charleston interiors, with real-time progress and a before/after comparison built in.',
+    proofs: ['Coastal modern', 'Lowcountry traditional', 'Powered by fal.ai'],
   },
   {
     icon: 'scoring',
-    tag: 'Scoring',
+    category: 'Scoring',
     accent: 'cyan',
-    title: 'Authenticity Scoring',
-    benefit: 'Know exactly how local your copy sounds',
-    desc:
-      'Every listing gets a Lowcountry Authenticity Score, a Confidence Score, and 2 specific improvement suggestions. Scores reward piazza usage, landmark references, and neighborhood vocabulary — and penalize generic clichés.',
-    badge: { num: '94%', lbl: 'top score' },
+    title: 'Know how local your copy sounds.',
+    summary:
+      'Every draft gets a Lowcountry Authenticity score, a Confidence score, and two specific improvement suggestions.',
+    proofs: ['0 – 100 scale', '2 actionable fixes', 'Penalises clichés'],
   },
   {
     icon: 'csv',
-    tag: 'Bulk Tools',
+    category: 'Bulk tools',
     accent: 'cyan',
-    title: 'CSV Bulk Generation',
-    benefit: 'Scale to your whole portfolio',
-    desc:
-      'Upload a spreadsheet of addresses and generate listings at scale — perfect for property managers and brokerages handling multiple Charleston-area properties at once.',
+    title: 'Scale to a whole portfolio.',
+    summary:
+      'Upload a spreadsheet of addresses and generate listings in one pass — built for property managers and brokerages.',
+    proofs: ['CSV in', 'Bulk export', 'Brokerage-ready'],
   },
   {
     icon: 'team',
-    tag: 'Team',
+    category: 'Teams',
     accent: 'magenta',
-    title: 'Multi-User Team Dashboard',
-    benefit: 'Your whole team, one subscription',
-    desc:
-      'Shared quotas, Owner/Editor/Viewer roles, and custom brokerage branding (logo + colors). Built for 3–15+ agent teams with full audit trails and a shared staging credit pool.',
+    title: 'Your whole team, one subscription.',
+    summary:
+      'Shared quotas, Owner / Editor / Viewer roles, and custom brokerage branding — built for 3–15+ agent teams.',
+    proofs: ['Shared quota', 'Role-based access', 'Custom branding'],
   },
   {
     icon: 'multi',
-    tag: 'Multi-Format',
+    category: 'Multi-format',
     accent: 'magenta',
-    title: 'MLS + Airbnb + Social',
-    benefit: 'One input, three ready-to-publish outputs',
-    desc:
-      'One address generates a 350–450 word RESO-compliant MLS description, 200–250 word Airbnb guest copy, and 3 social captions with hyper-local hashtags — all calibrated for their respective audiences.',
+    title: 'One address, three publish-ready drafts.',
+    summary:
+      'MLS, Airbnb, and social copy generated together — each tuned to its own audience, length, and tone.',
+    proofs: ['RESO-compliant MLS', 'Airbnb guest copy', 'Social + hashtags'],
   },
 ];
 
-const LANDMARKS = ['King Street', 'Shem Creek', 'Sullivan\'s Island', 'Isle of Palms', 'Folly Beach', 'Ravenel Bridge', 'Angel Oak', 'Magnolia Plantation'];
-
-/* ── Feature card component ─────────────────────────────────────────────── */
 function FeatCard({ card, index }: { card: FeatureCard; index: number }) {
   const ref = useReveal<HTMLDivElement>(0.08);
-  const p = PALETTE[card.accent];
-  const isWide = !!card.wide;
+  const isPillar = card.variant === 'pillar';
 
   return (
     <div
       ref={ref}
       className="feat-card"
       data-accent={card.accent}
-      style={{ '--reveal-delay': `${index * 65}ms` } as CSSProperties}
+      data-variant={isPillar ? 'pillar' : 'standard'}
+      style={{ '--reveal-delay': `${index * 60}ms` } as CSSProperties}
       role="article"
       aria-label={card.title}
     >
-      {/* top gradient line */}
-      <div className="feat-card__topline" style={{ background: p.gradient }} />
-      {/* left accent bar on hover */}
-      <div className="feat-card__leftbar" style={{ background: p.gradient }} />
-
-      {/* optional badge — narrow cards */}
-      {card.badge && !isWide && (
-        <div className="feat-card__badge"
-          style={{ background: p.ghost, borderColor: p.border }}
-          aria-label={`${card.badge.num} ${card.badge.lbl}`}
-        >
-          <span className="feat-card__badge-num" style={{ color: p.color }}>{card.badge.num}</span>
-          <span className="feat-card__badge-lbl">{card.badge.lbl}</span>
-        </div>
-      )}
-
-      <div className={`feat-card__inner${isWide ? ' feat-card__inner--wide' : ''}`}>
-        {/* main content column */}
-        <div className="feat-card__content">
-          <div className="feat-card__meta">
-            <div className="feat-card__iconbox" style={{ color: p.color }}>
-              {Icons[card.icon]?.(p.color)}
-            </div>
-            <span className="feat-card__tag"
-              style={{ color: p.color, background: p.ghost, borderColor: p.border }}>
-              {card.tag}
+      <div className="feat-card__inner">
+        <div className="feat-card__head">
+          <span className="feat-card__category">
+            <span className="feat-card__icon" aria-hidden="true">
+              {Icons[card.icon]('currentColor')}
             </span>
-          </div>
-          <h3 className="feat-card__title">{card.title}</h3>
-          <p className="feat-card__benefit" style={{ color: p.color }}>{card.benefit}</p>
-          <p className="feat-card__desc">{card.desc}</p>
+            {card.category}
+          </span>
+          {isPillar && card.headlineMetric && (
+            <span className="feat-card__headline-metric" aria-label={`${card.headlineMetric.value} ${card.headlineMetric.label}`}>
+              <span className="feat-card__headline-metric-value">{card.headlineMetric.value}</span>
+              <span className="feat-card__headline-metric-label">{card.headlineMetric.label}</span>
+            </span>
+          )}
         </div>
 
-        {/* stat block — wide cards only */}
-        {isWide && card.stat && (
-          <div className="feat-card__statblock" aria-label={`${card.stat.num} ${card.stat.lbl}`}>
-            <div className="feat-card__stat-num" style={{ color: p.color }}>{card.stat.num}</div>
-            <div className="feat-card__stat-lbl">{card.stat.lbl}</div>
-          </div>
-        )}
+        <h3 className="feat-card__title">{card.title}</h3>
+        <p className="feat-card__summary">{card.summary}</p>
+
+        <ul className="feat-card__proofs" aria-label="Specifics">
+          {card.proofs.map((p) => (
+            <li key={p} className="feat-card__proof">
+              {p}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
 }
 
-/* ── Features section ───────────────────────────────────────────────────── */
 export default function Features() {
-  const hdrRef  = useReveal<HTMLDivElement>(0.15);
+  const hdrRef = useReveal<HTMLDivElement>(0.15);
 
-  const wideCard   = FEATURES.filter(c => c.wide);
-  const narrowRow1 = FEATURES.filter(c => !c.wide).slice(0, 3);   // landmark, photo, staging
-  const narrowRow2 = FEATURES.filter(c => !c.wide).slice(3, 5);   // scoring, csv
-  const narrowRow3 = FEATURES.filter(c => !c.wide).slice(5);      // team, multi
+  const [pillar, landmark, photo, staging, scoring, csv, team, multiFormat] = FEATURES;
 
-  // flat index for reveal stagger
-  const all = [...wideCard, ...narrowRow1, ...narrowRow2, ...narrowRow3];
-  const idx = (c: FeatureCard) => all.findIndex(x => x.title === c.title);
+  const ordered: FeatureCard[] = [pillar, landmark, photo, staging, scoring, csv, team, multiFormat];
+  const idx = (c: FeatureCard) => ordered.findIndex((x) => x.title === c.title);
 
   return (
     <section id="features" className="features-section" aria-labelledby="features-heading">
-      {/* ambient background */}
       <div className="features-section__bg" aria-hidden="true" />
 
       <div className="section-inner">
-
-        {/* ── Section header ── */}
         <div ref={hdrRef} className="features-header section-header" data-align="center">
           <div className="tag">Everything Charleston Agents Need</div>
           <h2 id="features-heading" className="section-heading">
             Nothing <span style={{ color: 'var(--cyan)' }}>Generic.</span>
           </h2>
           <p className="section-sub">
-            Built ground-up for Charleston, Berkeley, and Dorchester county.
-            Every feature calibrated for Lowcountry real estate — not a national template.
+            Built ground-up for Charleston, Berkeley, and Dorchester county. Every feature
+            calibrated for Lowcountry real estate — not a national template.
           </p>
         </div>
 
-        {/* ── Landmark strip ── */}
-        <div className="features-landmarks" role="list" aria-label="Covered landmarks">
-          <span className="features-landmarks__label" aria-hidden="true">Landmark Coverage</span>
-          {LANDMARKS.map(lm => (
-            <span key={lm} className="features-landmarks__chip" role="listitem">{lm}</span>
+        <div className="features-landmarks" role="list" aria-label="Tri-county metro coverage">
+          <span className="features-landmarks__label" aria-hidden="true">Metro coverage</span>
+          {TRI_COUNTY_COVERAGE_AREAS.map((area) => (
+            <span key={area} className="features-landmarks__chip" role="listitem">
+              {area}
+            </span>
           ))}
         </div>
 
-        {/* ── Bento grid ── */}
         <div className="features-bento" role="list" aria-label="Feature list">
-
-          {/* Row 1: wide card + narrow card side by side */}
-          <div className="features-bento__cell features-bento__cell--wide" style={{ display: 'grid', gridTemplateColumns: '1fr 0.9fr', gap: 16 }}>
-            {wideCard.map(c => <FeatCard key={c.title} card={c} index={idx(c)} />)}
-            <FeatCard card={narrowRow1[0]} index={idx(narrowRow1[0])} />
+          <div className="features-bento__cell features-bento__cell--span2">
+            <FeatCard card={pillar} index={idx(pillar)} />
           </div>
-
-          {/* Row 2: 3 narrow cards */}
-          {narrowRow1.slice(1).concat(narrowRow2.slice(0, 1)).map(c => (
+          <div className="features-bento__cell">
+            <FeatCard card={landmark} index={idx(landmark)} />
+          </div>
+          {[photo, staging, scoring, csv, team, multiFormat].map((c) => (
             <div key={c.title} className="features-bento__cell">
               <FeatCard card={c} index={idx(c)} />
             </div>
           ))}
-          <div className="features-bento__cell">
-            <FeatCard card={narrowRow2[1]} index={idx(narrowRow2[1])} />
-          </div>
-
-          {/* Row 3: 2 narrow cards, then a full-width cell for multi-format */}
-          {narrowRow3.slice(0, 1).map(c => (
-            <div key={c.title} className="features-bento__cell">
-              <FeatCard card={c} index={idx(c)} />
-            </div>
-          ))}
-          <div className="features-bento__cell">
-            <FeatCard card={narrowRow3[1]} index={idx(narrowRow3[1])} />
-          </div>
-
         </div>
       </div>
     </section>

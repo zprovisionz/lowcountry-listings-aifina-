@@ -2,6 +2,17 @@
 export interface Database {
   public: {
     Tables: {
+      early_access_waitlist: {
+        Row: {
+          id: string;
+          email: string;
+          source: string;
+          created_at: string;
+        };
+        Insert: { email: string; source?: string };
+        Update: never;
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;

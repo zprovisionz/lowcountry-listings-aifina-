@@ -26,7 +26,7 @@ export default function Step3Amenities({ data, onChange }: { data:WizardData; on
             const on = data.amenities.includes(a);
             return (
               <button key={a} onClick={() => toggle(a)} className={`amenity-chip${on?' active':''}`}>
-                {on && <span style={{ marginRight:5, fontSize:10 }}>✓</span>}
+                {on && <span style={{ marginRight:5, fontSize:12 }}>✓</span>}
                 {a}
               </button>
             );
@@ -91,7 +91,7 @@ export default function Step3Amenities({ data, onChange }: { data:WizardData; on
                   <span style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:11.5, color: active ? 'var(--magenta)' : 'var(--text-mid)', textAlign:'center' }}>
                     {label}
                   </span>
-                  {active && <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:7.5, color:'var(--magenta)', letterSpacing:'.12em' }}>SELECTED</span>}
+                  {active && <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--magenta)', letterSpacing:'.12em' }}>SELECTED</span>}
                 </button>
               );
             })}

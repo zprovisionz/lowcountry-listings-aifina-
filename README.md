@@ -24,7 +24,7 @@ Open `http://localhost:5173`.
 - **4-step wizard**: Basics (address, type, beds/baths/sqft required unless “neighborhood overview only”) → Photos → Amenities (required for full listing) → Review & generate
 - **MLS safety**: Fact-locked prompts, refinement + fact-check passes; **Edit & regenerate** on results (agent notes + presets)
 - **Outputs**: MLS description (350–450 words), Airbnb/VRBO copy (200–250 words), 3 social captions
-- **Features**: Google Places **Place Autocomplete (new)** on the address field, OpenAI Vision photo extraction, 8 landmark driving distances, authenticity & confidence scoring, virtual staging (fal.ai, 6 styles; VISION.md references 4 core styles), bulk CSV upload, team accounts, market comps, analytics
+- **Features**: Google Places **Place Autocomplete (new)** on the address field, OpenAI Vision photo extraction, 8 landmark driving distances, authenticity & confidence scoring, virtual staging (fal.ai, 6 styles; VISION.md references 4 core styles), bulk CSV upload, team accounts, analytics; **market comps** waitlist (MLS-backed data planned — see Reports page)
 - **Monetization**: Stripe subscriptions (Free, Starter, Pro, Pro+, Team) + pay-per-use credit packs
 
 See [VISION.md](VISION.md) for the full product scope and Phase 1 requirements.
@@ -70,6 +70,7 @@ These are used by the Vite app at build and runtime. Do not commit real keys; us
 3. **Key restrictions**: Application restriction = *HTTP referrers*; include local dev and prod URLs (and preview origins like `https://*.vercel.app/*` if you test previews).
 4. **Console: `The caller does not have permission` on `gmp-place-autocomplete`**: Same checklist as above — most often **Places API (new)** not enabled, **billing** not linked, or the key’s **HTTP referrer** list missing the exact page origin (not “IP addresses” restriction, which is for server keys only).
 5. If the map script fails to load, the UI still allows **Type manually** and **Retry Google**.
+6. **Dark UI**: `src/index.css` sets `--gmp-*` / `--gmpx-*` tokens and a dark host frame on `<gmp-place-autocomplete>`. If a future Maps JS build still shows a **light predictions dropdown**, Google may have stopped honoring those tokens — the fallback is a custom dropdown using the Places Autocomplete **service** (not the web component).
 
 Server-side distance/geocode still uses `GOOGLE_MAPS_SERVER_KEY` in Edge Function secrets (Geocoding + Distance Matrix).
 
@@ -169,6 +170,10 @@ supabase/
 ## Pre-launch checks
 
 See [MANUAL_TESTS.md](MANUAL_TESTS.md) for 10 manual tests to run before launch.
+
+- **Audit vs. codebase:** [docs/AUDIT_RECONCILIATION.md](docs/AUDIT_RECONCILIATION.md)
+- **Stripe + billing QA matrix:** [docs/STRIPE_LAUNCH_QA.md](docs/STRIPE_LAUNCH_QA.md)
+- **Env:** `VITE_DEBUG_BYPASS_BILLING` must stay `false` in production (also hard-disabled in `import.meta.env.PROD` in code).
 
 ## License
 

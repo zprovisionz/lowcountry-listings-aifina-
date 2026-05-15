@@ -3,9 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useGenerations } from '../../hooks/useGenerations';
 import StatCard from '../../components/ui/StatCard';
+import { PLAN_LIMITS } from '../../config';
+
+const freeGen = PLAN_LIMITS.free.generations;
 
 const TIER_FEATURES: Record<string, string[]> = {
-  free:      ['10 generations/mo','MLS descriptions only','Basic analytics'],
+  free:      [`${freeGen} generations/mo`,'MLS descriptions only','Basic analytics'],
   starter:   ['100 generations/mo','MLS + Airbnb + Social','10 staging credits'],
   pro:       ['Unlimited generations','Virtual staging (40 credits)','MLS data pull'],
   pro_plus:  ['Unlimited + priority queue','100 staging credits','Advanced reports'],
@@ -20,7 +23,24 @@ export default function DashboardPage() {
   useEffect(() => { fetchGenerations(); }, [fetchGenerations]);
 
   const completed = generations.filter(g => g.status === 'complete');
-  const usedPct = profile ? Math.min(100,(profile.generations_used / Math.max(profile.generations_limit,1)) * 100) : 0;
+  const genLimit =
+    profile?.generations_limit === -1 || profile?.generations_limit == null
+      ? null
+      : profile.generations_limit;
+  const effectiveGenCap =
+    genLimit != null ? genLimit + (profile?.extra_gen_credits ?? 0) : null;
+  const usedPct = profile && genLimit != null && genLimit > 0
+    ? Math.min(100, (profile.generations_used / Math.max(genLimit, 1)) * 100)
+    : 0;
+  const stagingCap =
+    profile?.staging_credits_limit === -1
+      ? null
+      : (profile?.staging_credits_limit ?? PLAN_LIMITS.free.stagingCredits);
+  const genPressure =
+    !!profile &&
+    genLimit != null &&
+    genLimit > 0 &&
+    profile.generations_used / genLimit >= 0.75;
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
@@ -31,7 +51,7 @@ export default function DashboardPage() {
           <div>
             <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
               <span className="dot-live" />
-              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--cyan)', letterSpacing:'.14em' }}>
+              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--cyan)', letterSpacing:'.14em' }}>
                 SYSTEM ONLINE · CHARLESTON METRO
               </span>
             </div>
@@ -52,9 +72,64 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {profile && (
+        <div
+          className="glass-dash anim-fade-up d-80"
+          style={{
+            padding: '14px 20px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 14,
+            border: genPressure ? '1px solid rgba(255,0,255,0.28)' : '1px solid rgba(0,255,255,0.1)',
+          }}
+        >
+          <div style={{ minWidth: 0, flex: '1 1 220px' }}>
+            <div
+              style={{
+                fontFamily: "'DM Mono', ui-monospace, monospace",
+                fontSize: 'var(--text-ui-label)',
+                color: 'var(--text-lo)',
+                letterSpacing: '.14em',
+                marginBottom: 6,
+              }}
+            >
+              USAGE THIS MONTH
+            </div>
+            <div style={{ fontFamily: 'DM Sans,sans-serif', fontSize: 13.5, color: 'var(--text-mid)', lineHeight: 1.5 }}>
+              <strong style={{ color: 'var(--cyan)' }}>{profile.generations_used}</strong>
+              {' '}
+              of{' '}
+              <strong>{genLimit === -1 ? '∞' : genLimit ?? PLAN_LIMITS.free.generations}</strong>
+              {' '}
+              generations used
+              {effectiveGenCap != null && profile.extra_gen_credits ? (
+                <span style={{ color: 'var(--text-lo)' }}> (incl. {profile.extra_gen_credits} bonus)</span>
+              ) : null}
+              <span style={{ color: 'var(--text-lo)', margin: '0 10px' }}>·</span>
+              Staging credits:{' '}
+              <strong style={{ color: 'var(--magenta)' }}>{profile.staging_credits_used}</strong>
+              {' / '}
+              <strong>{stagingCap === null ? '∞' : stagingCap}</strong>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {genPressure && (
+              <button type="button" onClick={() => navigate('/account')} className="btn btn-accent btn-sm">
+                Upgrade or add credits →
+              </button>
+            )}
+            <button type="button" onClick={() => navigate('/account')} className="btn btn-ghost btn-sm">
+              Plans &amp; billing →
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ── Stat cards ── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:14 }}>
-        <StatCard value={profile?.generations_used ?? 0} label="Gens Used"     sub={`of ${profile?.generations_limit === -1 ? '∞' : profile?.generations_limit ?? 10} this month`} color="cyan"    icon="⚡" delay={0}   />
+        <StatCard value={profile?.generations_used ?? 0} label="Gens Used"     sub={`of ${profile?.generations_limit === -1 ? '∞' : profile?.generations_limit ?? PLAN_LIMITS.free.generations} this month`} color="cyan"    icon="⚡" delay={0}   />
         <StatCard value={completed.length}               label="Completed"      sub="All time"         color="cyan"    icon="✦"  delay={80}  onClick={() => navigate('/history')} />
         <StatCard value={profile?.staging_credits_used ?? 0} label="Staging Used" sub={`of ${profile?.staging_credits_limit === -1 ? '∞' : profile?.staging_credits_limit ?? 0}`} color="magenta" icon="🏠" delay={160} />
         <StatCard value={`${usedPct.toFixed(0)}%`}       label="Quota Used"    sub={usedPct > 80 ? '⚠ Consider upgrading' : 'Quota healthy'} color={usedPct > 80 ? 'magenta' : 'green'} icon="◈" delay={240} onClick={() => navigate('/account')} />
@@ -72,13 +147,13 @@ export default function DashboardPage() {
           }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span className="dot-live" style={{ width:6, height:6 }} />
-              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9.5, color:'var(--text-lo)', letterSpacing:'.14em' }}>
+              <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>
                 RECENT GENERATIONS
               </span>
             </div>
             <button onClick={() => navigate('/history')} style={{
               background:'none', border:'none', color:'var(--cyan)',
-              fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, cursor:'pointer', letterSpacing:'.1em',
+              fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', cursor:'pointer', letterSpacing:'.1em',
               transition:'opacity .2s',
             }}>VIEW ALL →</button>
           </div>
@@ -150,7 +225,7 @@ export default function DashboardPage() {
             {([
               { icon:'✦', label:'New Listing',    sub:'4-step wizard',     to:'/generate', color:'var(--cyan)'    },
               { icon:'◷', label:'View History',   sub:'Past generations',  to:'/history',  color:'var(--magenta)' },
-              { icon:'◈', label:'Market Reports', sub:'Comps & analytics', to:'/reports',  color:'var(--cyan)'    },
+              { icon:'◈', label:'Market Reports', sub:'Roadmap & waitlist', to:'/reports',  color:'var(--cyan)'    },
               { icon:'◎', label:'Team Settings',  sub:'Manage your team',  to:'/team',     color:'var(--magenta)' },
             ]).map(({ icon, label, sub, to, color }) => (
               <div

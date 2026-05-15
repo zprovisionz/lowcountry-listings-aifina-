@@ -1,4 +1,6 @@
 // supabase/functions/generate-comps/index.ts
+// TODO(launch): UI no longer calls this endpoint — comps were AI-synthesized, not MLS-backed.
+// Keep deployed for backwards compatibility / internal tests until real RESO data ships.
 // Pro+ tier: calls GPT-4o-mini for 3 comparable listings (price, DOM, differentiators).
 // Required: OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
 

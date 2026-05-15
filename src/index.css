@@ -2,7 +2,9 @@
 @import "./styles/neon-theme.css";
 @import "./styles/landing-patch.css";
 
-/* Google Places (new): PlaceAutocompleteElement inside our host */
+/* Google Places (new): PlaceAutocompleteElement inside our host.
+   The web component uses shadow DOM; theme via --gmp- and --gmpx- custom properties + host frame.
+   If the predictions dropdown stays light after a Maps release, see README (Google Places theming). */
 .gmp-place-autocomplete-host {
   width: 100%;
   position: relative;
@@ -12,4 +14,34 @@
 .gmp-place-autocomplete-host gmp-place-autocomplete {
   display: block;
   width: 100%;
+  box-sizing: border-box;
+  color-scheme: dark;
+  background: var(--space-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+
+  /* Material / Maps UI tokens (both prefixes — Google rolls under either name) */
+  --gmp-color-surface: var(--space-card);
+  --gmp-color-on-surface: var(--text-hi);
+  --gmp-color-on-surface-variant: var(--text-mid);
+  --gmp-color-primary: var(--cyan);
+  --gmp-color-outline: oklch(0.72 0.13 195 / 0.22);
+  --gmp-font-family-base: 'DM Sans', system-ui, sans-serif;
+  --gmp-font-family-headings: 'Playfair Display', Georgia, serif;
+
+  --gmpx-color-surface: var(--space-card);
+  --gmpx-color-on-surface: var(--text-hi);
+  --gmpx-color-on-surface-variant: var(--text-mid);
+  --gmpx-color-primary: var(--cyan);
+  --gmpx-color-outline: oklch(0.72 0.13 195 / 0.22);
+  --gmpx-font-family-base: 'DM Sans', system-ui, sans-serif;
+  --gmpx-font-family-headings: 'Playfair Display', Georgia, serif;
+}
+
+.gmp-place-autocomplete-host gmp-place-autocomplete:focus-within {
+  border-color: var(--cyan-border);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 0 1px oklch(0.72 0.13 195 / 0.15);
 }

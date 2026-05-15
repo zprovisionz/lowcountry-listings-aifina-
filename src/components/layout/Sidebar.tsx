@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { PLAN_LIMITS } from '../../config';
 
 interface NavItem {
   label: string;
@@ -39,7 +40,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { profile, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const limit = profile?.generations_limit ?? 10;
+  const limit = profile?.generations_limit ?? PLAN_LIMITS.free.generations;
   const effectiveLimit = limit === -1 ? 999999 : limit + (profile?.extra_gen_credits ?? 0);
   const usedPct = profile
     ? (effectiveLimit > 0 ? Math.min(100, (profile.generations_used / effectiveLimit) * 100) : 0)

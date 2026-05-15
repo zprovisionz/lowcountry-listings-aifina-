@@ -9,7 +9,7 @@ export default function Step4Review({ data, onChange }: Props) {
   const Row = ({ label, value }: { label: string; value: string | number | null | undefined }) =>
     value ? (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '9px 0', borderBottom: '1px solid rgba(0,255,255,0.06)' }}>
-        <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9.5, color: 'var(--text-lo)', letterSpacing: '.08em' }}>{label}</span>
+        <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: 'var(--text-lo)', letterSpacing: '.08em' }}>{label}</span>
         <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13.5, color: 'var(--text-hi)', textAlign: 'right', maxWidth: '60%' }}>{value}</span>
       </div>
     ) : null;
@@ -37,7 +37,7 @@ export default function Step4Review({ data, onChange }: Props) {
           background: on ? 'rgba(0,255,255,0.18)' : 'rgba(0,0,0,0.3)',
           border: `1.5px solid ${on ? 'rgba(0,255,255,0.65)' : 'rgba(255,255,255,0.12)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'all .2s ease', fontSize: 11, color: 'var(--cyan)',
+          transition: 'all .2s ease', fontSize: 12, color: 'var(--cyan)',
           boxShadow: on ? '0 0 8px rgba(0,255,255,0.3)' : 'none',
         }}>
           {on && '✓'}
@@ -51,7 +51,7 @@ export default function Step4Review({ data, onChange }: Props) {
           background: on ? 'rgba(0,255,255,0.1)' : 'rgba(255,255,255,0.04)',
           border: `1px solid ${on ? 'rgba(0,255,255,0.25)' : 'rgba(255,255,255,0.08)'}`,
           borderRadius: 20,
-          fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5, color: on ? 'var(--cyan)' : 'var(--text-lo)',
+          fontFamily: "'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: on ? 'var(--cyan)' : 'var(--text-lo)',
           whiteSpace: 'nowrap', transition: 'all .2s',
         }}>
           {badge}
@@ -80,7 +80,7 @@ export default function Step4Review({ data, onChange }: Props) {
       <div className="glass-dash" style={{ padding: '20px 22px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
           <span style={{ color: 'var(--cyan)', textShadow: '0 0 8px var(--cyan)' }}>◈</span>
-          <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em' }}>PROPERTY SUMMARY</span>
+          <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: 'var(--text-lo)', letterSpacing: '.14em' }}>PROPERTY SUMMARY</span>
         </div>
 
         {/* Address hero */}
@@ -94,7 +94,7 @@ export default function Step4Review({ data, onChange }: Props) {
           }}>
             📍 {data.address}
             {data.neighborhood && (
-              <span style={{ display: 'block', fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--cyan)', marginTop: 4, letterSpacing: '.08em' }}>
+              <span style={{ display: 'block', fontFamily: "'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: 'var(--cyan)', marginTop: 4, letterSpacing: '.08em' }}>
                 ◆ {data.neighborhood}
               </span>
             )}
@@ -112,7 +112,7 @@ export default function Step4Review({ data, onChange }: Props) {
 
         {data.amenities.length > 0 && (
           <div style={{ paddingTop: 10 }}>
-            <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.08em', marginBottom: 8 }}>
+            <div style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: 'var(--text-lo)', letterSpacing: '.08em', marginBottom: 8 }}>
               FEATURES ({data.amenities.length})
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -138,7 +138,7 @@ export default function Step4Review({ data, onChange }: Props) {
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
           <span style={{ color: 'var(--magenta)', textShadow: '0 0 8px var(--magenta)', fontSize: 13 }}>✦</span>
-          <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9, color: 'var(--text-lo)', letterSpacing: '.14em' }}>OUTPUT FORMATS</span>
+          <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: 'var(--text-lo)', letterSpacing: '.14em' }}>OUTPUT FORMATS</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           <FormatToggle fieldKey="generateMLS"     label="MLS Listing Description"       desc="350–450 words · RESO-compliant MLS format with authentic Lowcountry voice" badge="~400 words" />
@@ -150,7 +150,7 @@ export default function Step4Review({ data, onChange }: Props) {
       {/* Warning if nothing selected */}
       {!data.generateMLS && !data.generateAirbnb && !data.generateSocial && (
         <div style={{ padding: '12px 16px', background: 'rgba(255,160,0,0.07)', border: '1px solid rgba(255,160,0,0.25)', borderRadius: 10 }}>
-          <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 10, color: '#ffaa44' }}>
+          <span style={{ fontFamily: "'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: '#ffaa44' }}>
             ⚠ Select at least one output format to generate.
           </span>
         </div>

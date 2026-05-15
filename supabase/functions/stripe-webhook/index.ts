@@ -93,7 +93,7 @@ serve(async (req: Request) => {
           stripe_subscription_id: null,
           subscription_status: 'canceled',
           tier: 'free',
-          generations_limit: 10,
+          generations_limit: 3,
           staging_credits_limit: 0,
         }).eq('id', userId);
         break;
