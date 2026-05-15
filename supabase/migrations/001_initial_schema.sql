@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════════════
--- LOWCOUNT RY LISTINGS AI — INITIAL SCHEMA
+-- LOWCOUNTRY LISTINGS AI — INITIAL SCHEMA
 -- Run in Supabase SQL Editor or via supabase db push
 -- ═══════════════════════════════════════════════════════════════════
 
