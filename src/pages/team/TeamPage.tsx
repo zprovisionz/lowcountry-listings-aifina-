@@ -178,7 +178,7 @@ export default function TeamPage() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div className="team-stats-grid">
         {[
           { label: 'Shared Generations', used: team.shared_generations_used, limit: team.shared_generations_limit, color: 'var(--cyan)' },
           { label: 'Shared Staging Credits', used: team.shared_staging_used, limit: team.shared_staging_limit, color: 'var(--magenta)' },

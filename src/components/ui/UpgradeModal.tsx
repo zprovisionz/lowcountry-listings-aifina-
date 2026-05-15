@@ -26,26 +26,15 @@ export default function UpgradeModal({ reason, featureName, onClose }: UpgradeMo
       role="dialog"
       aria-modal="true"
       aria-labelledby="upgrade-modal-title"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 300,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-        background: 'rgba(0,0,0,0.7)',
-        backdropFilter: 'blur(8px)',
-      }}
+      className="neon-modal-overlay"
+      style={{ zIndex: 300 }}
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
-        className="glass-magenta"
+        className="glass-magenta neon-modal-panel"
         style={{
           maxWidth: 440,
-          width: '100%',
           padding: 32,
-          borderRadius: 20,
           border: '1px solid rgba(255,0,255,0.35)',
           boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,0,255,0.1)',
         }}

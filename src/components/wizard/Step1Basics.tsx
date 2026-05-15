@@ -147,7 +147,7 @@ export default function Step1Basics({
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(155px,1fr))', gap: 14 }}>
+      <div className="wizard-field-grid">
         {neonField(overviewOnly ? 'Bedrooms (optional)' : 'Bedrooms *', 'bedrooms', 'number', '3')}
         {neonField(overviewOnly ? 'Bathrooms (optional)' : 'Bathrooms *', 'bathrooms', 'number', '2')}
         {neonField(overviewOnly ? 'Sq Ft (optional)' : 'Sq Ft *', 'sqft', 'number', '1850')}

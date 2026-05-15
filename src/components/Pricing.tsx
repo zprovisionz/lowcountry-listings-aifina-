@@ -69,7 +69,7 @@ const TIERS: Tier[] = [
       'Everything in Pro',
       '100 staging credits / month',
       'Priority AI processing',
-      'Advanced market reports',
+      'MLS-backed market reports (waitlist)',
       'Priority support',
       'Early feature access',
     ],
@@ -178,11 +178,7 @@ export default function Pricing() {
         </div>
 
         {/* Cards grid — 4 tiers */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 14, alignItems: 'start',
-        }}>
+        <div className="pricing-tiers-grid">
           {TIERS.map((tier) => {
             const displayPrice = annual && tier.annual > 0
               ? Math.round(tier.annual / 12)
@@ -205,7 +201,7 @@ export default function Pricing() {
             return (
               <div
                 key={tier.name}
-                className={tier.popular ? 'glass-featured' : ''}
+                className={tier.popular ? 'glass-featured pricing-tier-popular' : undefined}
                 style={{
                   position: 'relative',
                   background: tier.popular ? undefined : 'rgba(10,10,32,0.68)',

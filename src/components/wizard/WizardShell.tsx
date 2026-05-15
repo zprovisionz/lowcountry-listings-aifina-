@@ -31,7 +31,7 @@ export default function WizardShell({
 
       {/* Step progress */}
       <div className="glass-dash anim-fade-up" style={{ padding:'22px 26px' }}>
-        <div style={{ display:'flex', alignItems:'center' }}>
+        <div className="wizard-progress-scroll" style={{ display:'flex', alignItems:'center' }}>
           {STEPS.map((step, i) => {
             const n = i + 1;
             const isActive   = n === currentStep;
@@ -46,7 +46,7 @@ export default function WizardShell({
                   >
                     {isDone ? '✓' : step.icon}
                   </div>
-                  <span style={{
+                  <span className="wizard-step-label" style={{
                     fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', letterSpacing:'.08em',
                     textTransform:'uppercase', whiteSpace:'nowrap',
                     color: isDone ? '#00ff96' : isActive ? 'var(--cyan)' : 'var(--text-ghost)',
@@ -70,8 +70,7 @@ export default function WizardShell({
       {/* Content card */}
       <div className="glass-dash anim-fade-up d-100" style={{ overflow: 'visible' }}>
         {/* Card header bar */}
-        <div style={{
-          padding:'14px 26px',
+        <div className="wizard-header-pad" style={{
           borderBottom:'1px solid rgba(0,255,255,0.08)',
           background:'rgba(0,255,255,0.03)',
           display:'flex', justifyContent:'space-between', alignItems:'center',
@@ -88,13 +87,12 @@ export default function WizardShell({
         </div>
 
         {/* Step content */}
-        <div style={{ padding:'32px 28px' }}>
+        <div className="wizard-content-pad">
           {children}
         </div>
 
         {/* Nav */}
-        <div style={{
-          padding:'18px 28px',
+        <div className="wizard-nav-pad" style={{
           borderTop:'1px solid rgba(0,255,255,0.08)',
           background:'rgba(0,0,0,0.2)',
           display:'flex', justifyContent:'space-between', alignItems:'center',

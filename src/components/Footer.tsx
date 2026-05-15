@@ -1,5 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { PLAN_LIMITS } from '../config';
+
+const FREE_GENS = PLAN_LIMITS.free.generations;
 
 const PRODUCT_LINKS: { label: string; href: string }[] = [
   { label: 'Features',             href: '/#features' },
@@ -98,7 +101,7 @@ export default function Footer() {
             ) : (
               <>
                 <a href="/login" className="btn btn-primary" style={{ fontSize: 16, padding: '16px 38px' }}>
-                  🌿 Start Free — 10 Listings/mo
+                  🌿 Start Free — {FREE_GENS} Listings/mo
                 </a>
                 <a href="#pricing" className="btn btn-accent" style={{ fontSize: 16, padding: '16px 38px' }}>
                   View All Plans →
@@ -111,7 +114,7 @@ export default function Footer() {
             fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 9,
             color: 'var(--text-ghost)', letterSpacing: '.14em',
           }}>
-            10 free generations · No credit card · Charleston metro only
+            {FREE_GENS} free generations · No credit card · Charleston metro only
           </p>
 
           {/* Trust badges */}

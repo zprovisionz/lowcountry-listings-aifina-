@@ -74,7 +74,7 @@ export default function Step3Amenities({ data, onChange }: { data:WizardData; on
         </div>
 
         {data.applyStaging && (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(148px,1fr))', gap:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(148px,42vw),1fr))', gap:10 }}>
             {STAGING_STYLES.map(({ value, label, icon }) => {
               const active = data.stagingStyle === value;
               return (

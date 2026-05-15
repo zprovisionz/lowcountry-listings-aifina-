@@ -14,7 +14,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Generate',   to: '/generate',   icon: '✦', badge: 'NEW' },
   { label: 'Bulk CSV',   to: '/bulk',       icon: '▤' },
   { label: 'History',    to: '/history',    icon: '◷' },
-  { label: 'Reports',    to: '/reports',    icon: '◈' },
+  { label: 'Reports',    to: '/reports',    icon: '◈', badge: 'SOON' },
   { label: 'Analytics',  to: '/analytics',  icon: '◫' },
   { label: 'Team',       to: '/team',       icon: '◎' },
 ];

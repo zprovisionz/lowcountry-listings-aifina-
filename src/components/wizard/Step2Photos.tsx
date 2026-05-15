@@ -67,7 +67,7 @@ export default function Step2Photos({ data, onChange }: { data:WizardData; onCha
           <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:10 }}>
             UPLOADED — OPENAI VISION WILL ANALYZE THESE
           </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(128px,1fr))', gap:10 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(128px,42vw),1fr))', gap:10 }}>
             {data.photoUrls.map((url, i) => (
               <div key={url} style={{
                 position:'relative', borderRadius:10, overflow:'hidden',

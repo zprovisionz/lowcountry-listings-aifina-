@@ -255,7 +255,7 @@ export default function ResultsPage() {
       </div>
 
       {/* Scores row */}
-      <div className="glass-dash anim-fade-up d-100" style={{ padding:'26px 28px', display:'flex', alignItems:'flex-start', gap:30, flexWrap:'wrap' }}>
+      <div className="glass-dash anim-fade-up d-100 results-scores-row" style={{ padding:'26px 28px', display:'flex', alignItems:'flex-start', gap:30, flexWrap:'wrap' }}>
         <div style={{ display:'flex', gap:24, flexShrink:0 }}>
           {gen.authenticity_score != null && <ScoreRing value={gen.authenticity_score} label="Authenticity" color="cyan" />}
           {gen.confidence_score    != null && <ScoreRing value={gen.confidence_score}   label="Confidence"  color="magenta" />}
@@ -377,7 +377,7 @@ export default function ResultsPage() {
           })}
         </div>
 
-        <div style={{ padding:'24px 28px' }}>
+        <div className="results-tab-panel" style={{ padding:'24px 28px' }}>
 
           {/* MLS / Airbnb */}
           {(tab === 'mls' || tab === 'airbnb') && (() => {
@@ -583,7 +583,7 @@ export default function ResultsPage() {
                       )}
                       {job.status === 'complete' && job.staged_url && (
                         <div>
-                          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:1, background:'rgba(0,0,0,0.5)' }}>
+                          <div className="staging-compare-grid">
                             <div style={{ position:'relative' }}>
                               <img src={job.original_url} alt="Original" style={{ width:'100%', display:'block', objectFit:'cover', aspectRatio:'4/3' }} />
                               <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'rgba(255,255,255,0.7)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>BEFORE</div>
@@ -593,7 +593,35 @@ export default function ResultsPage() {
                               <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--cyan)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>STAGED</div>
                             </div>
                           </div>
- "|        <div key={label} style={{
+                          <div style={{ padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
+                            <span style={{ fontFamily:'DM Sans,sans-serif', fontSize:12, color:'var(--text-mid)' }}>
+                              {STAGING_STYLES.find(s => s.id === job.staging_style)?.label} — {new Date(job.created_at).toLocaleTimeString()}
+                            </span>
+                            <a href={job.staged_url} download target="_blank" rel="noreferrer" className="btn btn-ghost btn-sm" style={{ fontSize:11, minHeight:44, display:'inline-flex', alignItems:'center' }}>
+                              Download
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Property details strip */}
+      <div className="anim-fade-up d-300 results-export-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(130px,1fr))', gap:10 }}>
+        {[
+          { label:'Type',      value:gen.property_type?.replace('_',' ') },
+          { label:'Bedrooms',  value:gen.bedrooms },
+          { label:'Bathrooms', value:gen.bathrooms },
+          { label:'Sq Ft',     value:gen.sqft ? Number(gen.sqft).toLocaleString() : null },
+          { label:'Amenities', value:gen.amenities.length ? `${gen.amenities.length} features` : null },
+        ].filter(r=>r.value!=null).map(({ label, value }) => (
+          <div key={label} style={{
             padding:'12px 16px', textAlign:'center',
             background:'rgba(10,10,32,0.5)', border:'1px solid rgba(0,255,255,0.09)', borderRadius:10,
           }}>
@@ -666,17 +694,11 @@ function EditMlsModal({
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-mls-title"
-      style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: 20,
-      }}
+      className="neon-modal-overlay"
+      style={{ zIndex: 1000 }}
       onClick={(e) => { if (e.target === e.currentTarget) tryClose(); }}
     >
-      <div
-        className="glass-dash"
-        style={{ maxWidth: 560, width: '100%', maxHeight: '90vh', overflow: 'auto', padding: 24, borderRadius: 16 }}
-      >
+      <div className="glass-dash neon-modal-panel" style={{ padding: 24 }}>
         <h3 id="edit-mls-title" style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 18, margin: '0 0 8px', color: 'var(--text-hi)' }}>
           Edit &amp; regenerate MLS
         </h3>
@@ -688,9 +710,10 @@ function EditMlsModal({
           id="edit-mls-preset"
           value={editPreset}
           onChange={e => onChangePreset(e.target.value)}
+          className="neon-input"
           style={{
-            width: '100%', marginBottom: 14, padding: '10px 12px', borderRadius: 8,
-            background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,255,255,0.2)', color: 'var(--text-hi)', fontSize: 13,
+            marginBottom: 14, borderRadius: 8,
+            background: 'rgba(0,0,0,0.4)', border: '1px solid rgba(0,255,255,0.2)',
           }}
         >
           <option value="">(none)</option>
@@ -708,10 +731,11 @@ function EditMlsModal({
           placeholder="e.g. Emphasize the chef's kitchen; tone down the opening…"
           rows={5}
           autoFocus
+          className="neon-input"
           style={{
-            width: '100%', marginBottom: 16, padding: 12, borderRadius: 8, resize: 'vertical',
+            marginBottom: 16, borderRadius: 8, resize: 'vertical', minHeight: 120,
             background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(0,255,255,0.15)', color: '#c8e4ec',
-            fontFamily: 'DM Sans,sans-serif', fontSize: 14, lineHeight: 1.6,
+            lineHeight: 1.6,
           }}
         />
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap' }}>

@@ -239,6 +239,6 @@ export default function LoginPage() {
     </div>
   );
 }
-const labelStyle: React.CSSProperties = { display:'block', fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, letterSpacing:'.14em', color:'var(--text-lo)', textTransform:'uppercase', marginBottom:6 };
-const inputStyle: React.CSSProperties = { width:'100%', padding:'11px 14px', background:'rgba(5,7,24,.9)', border:'1px solid rgba(0,255,255,.22)', borderRadius:9, color:'var(--text-hi)', fontFamily:'DM Sans, sans-serif', fontSize:14, outline:'none', transition:'border-color .2s, box-shadow .2s', caretColor:'var(--cyan)', boxSizing:'border-box' };
+const labelStyle: React.CSSProperties = { display:'block', fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', letterSpacing:'.14em', color:'var(--text-lo)', textTransform:'uppercase', marginBottom:6 };
+const inputStyle: React.CSSProperties = { width:'100%', padding:'11px 14px', minHeight:44, background:'rgba(5,7,24,.9)', border:'1px solid rgba(0,255,255,.22)', borderRadius:9, color:'var(--text-hi)', fontFamily:'DM Sans, sans-serif', fontSize:16, outline:'none', transition:'border-color .2s, box-shadow .2s', caretColor:'var(--cyan)', boxSizing:'border-box' };
 

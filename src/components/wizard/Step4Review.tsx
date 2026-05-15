@@ -1,9 +1,14 @@
 import type { WizardData } from '../../types/database';
 import { STAGING_STYLES } from '../../types/database';
 
-interface Props { data: WizardData; onChange: (patch: Partial<WizardData>) => void; }
+interface Props {
+  data: WizardData;
+  onChange: (patch: Partial<WizardData>) => void;
+  isFreeTier?: boolean;
+  onUpgradeRequest?: () => void;
+}
 
-export default function Step4Review({ data, onChange }: Props) {
+export default function Step4Review({ data, onChange, isFreeTier = false, onUpgradeRequest }: Props) {
   const stagingLabel = STAGING_STYLES.find(s => s.value === data.stagingStyle)?.label ?? '';
 
   const Row = ({ label, value }: { label: string; value: string | number | null | undefined }) =>
@@ -14,18 +19,26 @@ export default function Step4Review({ data, onChange }: Props) {
       </div>
     ) : null;
 
-  const FormatToggle = ({ fieldKey, label, desc, badge }: {
+  const FormatToggle = ({ fieldKey, label, desc, badge, locked }: {
     fieldKey: 'generateMLS' | 'generateAirbnb' | 'generateSocial';
     label: string; desc: string; badge: string;
+    locked?: boolean;
   }) => {
-    const on = data[fieldKey];
+    const on = !locked && data[fieldKey];
     return (
-      <div onClick={() => onChange({ [fieldKey]: !on })} style={{
+      <div onClick={() => {
+        if (locked) {
+          onUpgradeRequest?.();
+          return;
+        }
+        onChange({ [fieldKey]: !on });
+      }} style={{
         display: 'flex', alignItems: 'center', gap: 14,
         padding: '15px 17px',
-        background: on ? 'rgba(0,255,255,0.07)' : 'rgba(0,255,255,0.02)',
-        border: `1px solid ${on ? 'rgba(0,255,255,0.32)' : 'rgba(0,255,255,0.09)'}`,
-        borderRadius: 12, cursor: 'pointer',
+        background: locked ? 'rgba(255,0,255,0.03)' : on ? 'rgba(0,255,255,0.07)' : 'rgba(0,255,255,0.02)',
+        border: `1px solid ${locked ? 'rgba(255,0,255,0.22)' : on ? 'rgba(0,255,255,0.32)' : 'rgba(0,255,255,0.09)'}`,
+        borderRadius: 12, cursor: locked ? 'not-allowed' : 'pointer',
+        opacity: locked ? 0.88 : 1,
         transition: 'all .22s ease',
         boxShadow: on ? '0 0 16px rgba(0,255,255,0.08), inset 0 0 12px rgba(0,255,255,0.03)' : 'none',
         position: 'relative', overflow: 'hidden',
@@ -54,7 +67,7 @@ export default function Step4Review({ data, onChange }: Props) {
           fontFamily: "'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color: on ? 'var(--cyan)' : 'var(--text-lo)',
           whiteSpace: 'nowrap', transition: 'all .2s',
         }}>
-          {badge}
+          {locked ? 'STARTER+' : badge}
         </span>
       </div>
     );
@@ -142,9 +155,14 @@ export default function Step4Review({ data, onChange }: Props) {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
           <FormatToggle fieldKey="generateMLS"     label="MLS Listing Description"       desc="350–450 words · RESO-compliant MLS format with authentic Lowcountry voice" badge="~400 words" />
-          <FormatToggle fieldKey="generateAirbnb"  label="Airbnb / Short-Term Rental"    desc="200–250 words · Guest experience-first, Lowcountry vacation picture"        badge="~225 words" />
-          <FormatToggle fieldKey="generateSocial"  label="Social Media Captions"         desc="3 platform-ready posts · Instagram, Facebook, LinkedIn + local hashtags"    badge="3 posts" />
+          <FormatToggle fieldKey="generateAirbnb"  label="Airbnb / Short-Term Rental"    desc="200–250 words · Guest experience-first, Lowcountry vacation picture"        badge="~225 words" locked={isFreeTier} />
+          <FormatToggle fieldKey="generateSocial"  label="Social Media Captions"         desc="3 platform-ready posts · Instagram, Facebook, LinkedIn + local hashtags"    badge="3 posts" locked={isFreeTier} />
         </div>
+        {isFreeTier && (
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12.5, color: 'var(--text-lo)', margin: '10px 0 0', lineHeight: 1.55 }}>
+            Free plan includes MLS copy only. Upgrade to Starter for Airbnb and social formats.
+          </p>
+        )}
       </div>
 
       {/* Warning if nothing selected */}

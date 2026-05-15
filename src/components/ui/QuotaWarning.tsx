@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useStripe } from '../../hooks/useStripe';
 
 export default function QuotaWarning() {
   const { profile } = useAuth();
-  const { createCheckoutSession, openBillingPortal, loading } = useStripe();
+  const navigate = useNavigate();
+  const { createCheckoutSession, loading } = useStripe();
   const [dismissed, setDismissed] = useState(false);
 
   if (!profile || dismissed) return null;
@@ -12,7 +14,7 @@ export default function QuotaWarning() {
   const used = profile.generations_used;
   const limit = profile.generations_limit;
   const effectiveLimit = limit === -1 ? 999999 : limit + (profile.extra_gen_credits ?? 0);
-  const ratio = limit === -1 ? 0 : used / (limit || 1);
+  const ratio = limit === -1 ? 0 : used / effectiveLimit;
   if (ratio < 0.8) return null;
 
   return (
@@ -32,7 +34,7 @@ export default function QuotaWarning() {
     >
       <span style={{ fontSize: 13, color: 'var(--text-mid)' }}>
         {ratio >= 1
-          ? `You've used all ${limit} generations this period.`
+          ? `You've used all ${effectiveLimit} generations this period.`
           : `${used} of ${effectiveLimit} generations used — running low.`}
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -48,9 +50,9 @@ export default function QuotaWarning() {
           type="button"
           className="btn btn-primary btn-sm"
           disabled={loading}
-          onClick={() => openBillingPortal()}
+          onClick={() => navigate('/account')}
         >
-          Upgrade
+          View plans
         </button>
         <button
           type="button"

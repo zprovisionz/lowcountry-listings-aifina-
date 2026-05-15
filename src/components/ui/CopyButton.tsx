@@ -29,13 +29,14 @@ export default function CopyButton({ text, label = 'Copy', onCopy }: CopyButtonP
       className={copied ? 'success-pop' : ''}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: '7px 14px',
+        padding: '10px 16px',
+        minHeight: 44,
         background: copied ? 'rgba(0,255,150,0.1)' : 'rgba(0,255,255,0.07)',
         border: `1px solid ${copied ? 'rgba(0,255,150,0.4)' : 'rgba(0,255,255,0.25)'}`,
         borderRadius: 7,
         color: copied ? '#00ff96' : 'var(--cyan)',
         fontFamily: "'DM Mono', ui-monospace, monospace",
-        fontSize: 10, letterSpacing: '.1em',
+        fontSize: 'var(--text-ui-label)', letterSpacing: '.1em',
         cursor: 'pointer',
         transition: 'all .25s ease',
       }}

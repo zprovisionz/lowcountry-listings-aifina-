@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PLAN_LIMITS } from '../config';
 import { useAuth } from '../contexts/AuthContext';
 import AddressSearch from './AddressSearch';
 import LivePreview from './LivePreview';
@@ -17,13 +18,15 @@ const PROOF_PILLS = [
   { icon: '🏆', text: '94% authenticity score achievable' },
 ];
 
+const FREE_GENS = PLAN_LIMITS.free.generations;
+
 export default function Hero() {
   const [address, setAddress] = useState('');
   const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
-    <section style={{
+    <section className="hero-section" style={{
       position: 'relative',
       minHeight: '100vh',
       display: 'flex',
@@ -163,7 +166,7 @@ export default function Hero() {
 
         {/* ── Address box ── */}
         <div className="anim-fade-up d-400" style={{ maxWidth: 600, margin: '0 auto' }}>
-          <div style={{
+          <div className="hero-address-card" style={{
             background: 'var(--space-card)',
             border: '1px solid var(--cyan-border)',
             borderRadius: 20,
@@ -231,7 +234,7 @@ export default function Hero() {
           ) : (
             <>
               <a href="/login" className="btn btn-primary" style={{ fontSize: 15, padding: '15px 36px' }}>
-                🌿 Start Free — 10 Listings/mo
+                🌿 Start Free — {FREE_GENS} Listings/mo
               </a>
               <a href="#pricing" className="btn btn-ghost" style={{ fontSize: 15 }}>
                 View Pricing ↓
@@ -249,18 +252,15 @@ export default function Hero() {
         </p>
 
         {/* ── Stats row ── */}
-        <div className="anim-fade-up d-600" style={{
-          display: 'flex', justifyContent: 'center', flexWrap: 'wrap',
-          gap: 0, marginTop: 52,
+        <div className="anim-fade-up d-600 hero-stats-row" style={{
+          marginTop: 52,
           background: 'var(--cyan-ghost)',
           border: '1px solid var(--cyan-border)',
           borderRadius: 14,
           padding: '20px 0',
-          maxWidth: 560, marginLeft: 'auto', marginRight: 'auto',
         }}>
           {STATS.map(({ value, label }, i) => (
-            <div key={label} style={{
-              flex: '1 1 110px',
+            <div key={label} className="hero-stat-item" style={{
               textAlign: 'center',
               padding: '8px 20px',
               borderRight: i < STATS.length - 1 ? '1px solid var(--cyan-border)' : 'none',
@@ -270,7 +270,7 @@ export default function Hero() {
                 color: 'var(--cyan)', lineHeight: 1,
               }}>{value}</div>
               <div style={{
-                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8.5,
+                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 'var(--text-ui-label)',
                 color: 'var(--text-lo)', letterSpacing: '.14em',
                 marginTop: 4, textTransform: 'uppercase',
               }}>{label}</div>

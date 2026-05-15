@@ -6,7 +6,9 @@ const PAGE_META: Record<string, { title:string; sub:string }> = {
   '/dashboard': { title:'Dashboard',   sub:'Welcome back to Lowcountry AI' },
   '/generate':  { title:'Generate',    sub:'4-step listing wizard' },
   '/history':   { title:'History',     sub:'Your past generations' },
-  '/reports':   { title:'Reports',     sub:'Market intelligence — roadmap' },
+  '/reports':   { title:'Reports',     sub:'MLS comps waitlist — roadmap' },
+  '/analytics': { title:'Analytics',   sub:'Listing performance' },
+  '/bulk':      { title:'Bulk CSV',    sub:'Starter+ portfolio import' },
   '/team':      { title:'Team',        sub:'Manage your team & roles' },
   '/account':   { title:'Account',     sub:'Billing & preferences' },
   '/results':   { title:'Results',     sub:'Your generated listing' },
@@ -22,7 +24,7 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
     ?? { title:'Lowcountry AI', sub:'' };
 
   return (
-    <header style={{
+    <header className="app-topbar" style={{
       height:64, position:'sticky', top:0, zIndex:40,
       borderBottom:'1px solid rgba(0,255,255,0.1)',
       background:'rgba(5,5,18,0.9)',
@@ -46,7 +48,7 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
           {page.title}
         </h1>
         {page.sub && (
-          <p style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.1em', margin:'2px 0 0' }}>
+          <p className="topbar-subtitle" style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.1em', margin:'2px 0 0' }}>
             {page.sub}
           </p>
         )}
@@ -68,7 +70,7 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
           </div>
         )}
         {!pathname.startsWith('/generate') && !pathname.startsWith('/results') && (
-          <button onClick={() => navigate('/generate')} className="btn btn-primary btn-sm">
+          <button onClick={() => navigate('/generate')} className="btn btn-primary btn-sm topbar-quick-gen">
             ✦ Quick Generate
           </button>
         )}
@@ -84,7 +86,11 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
             <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)' }}>GEN</span>
             <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:11, color:'var(--cyan)', fontWeight:700 }}>
               {profile.generations_used}
-              <span style={{ color:'var(--text-lo)' }}>/{profile.generations_limit === -1 ? '∞' : profile.generations_limit}</span>
+              <span style={{ color:'var(--text-lo)' }}>
+                /{profile.generations_limit === -1
+                  ? '∞'
+                  : profile.generations_limit + (profile.extra_gen_credits ?? 0)}
+              </span>
             </span>
           </div>
         )}
@@ -96,7 +102,6 @@ export default function TopBar({ onMobileSidebarToggle }: { onMobileSidebarToggl
         )}
       </div>
 
-      <style>{`.mob-burger { display:none; } @media(max-width:768px){ .mob-burger{display:block!important;} }`}</style>
     </header>
   );
 }

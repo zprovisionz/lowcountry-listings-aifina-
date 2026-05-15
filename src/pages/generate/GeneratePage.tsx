@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WizardShell from '../../components/wizard/WizardShell';
 import Step1Basics from '../../components/wizard/Step1Basics';
@@ -79,6 +79,18 @@ export default function GeneratePage() {
     : 0;
   const quotaExhausted = profile && profile.generations_used >= effectiveLimit;
   const allowUiBypass = !!(DEBUG.bypassBilling && (import.meta.env.DEV || profile?.is_test_user));
+  const isFreeTier = (profile?.tier ?? 'free') === 'free';
+
+  useEffect(() => {
+    if (!isFreeTier) return;
+    setData((d) => ({
+      ...d,
+      generateAirbnb: false,
+      generateSocial: false,
+      generateMLS: d.generateMLS || true,
+      applyStaging: false,
+    }));
+  }, [isFreeTier]);
 
   const handleSubmit = async () => {
     if (!user) return;
@@ -146,8 +158,8 @@ export default function GeneratePage() {
           customAmenities:     data.customAmenities,
           tone:                data.tone,
           generateMLS:         data.generateMLS,
-          generateAirbnb:      data.generateAirbnb,
-          generateSocial:      data.generateSocial,
+          generateAirbnb:      isFreeTier ? false : data.generateAirbnb,
+          generateSocial:      isFreeTier ? false : data.generateSocial,
           photoUrls,
           overviewOnly: data.overviewOnly,
         },
@@ -234,9 +246,22 @@ export default function GeneratePage() {
       {step === 1 && <Step1Basics data={data} onChange={patch} overviewOnly={data.overviewOnly} />}
       {step === 2 && <Step2Photos    data={data} onChange={patch} />}
       {step === 3 && <Step3Amenities data={data} onChange={patch} />}
-      {step === 4 && <Step4Review    data={data} onChange={patch} />}
+      {step === 4 && (
+        <Step4Review
+          data={data}
+          onChange={patch}
+          isFreeTier={isFreeTier}
+          onUpgradeRequest={() => setShowUpgradeModal(true)}
+        />
+      )}
     </WizardShell>
-    {showUpgradeModal && <UpgradeModal reason="quota" onClose={() => setShowUpgradeModal(false)} />}
+    {showUpgradeModal && (
+      <UpgradeModal
+        reason={isFreeTier && !quotaExhausted ? 'feature' : 'quota'}
+        featureName={isFreeTier ? 'Airbnb & social copy' : undefined}
+        onClose={() => setShowUpgradeModal(false)}
+      />
+    )}
     </>
   );
 }

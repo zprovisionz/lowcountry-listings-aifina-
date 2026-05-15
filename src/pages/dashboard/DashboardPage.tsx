@@ -10,8 +10,8 @@ const freeGen = PLAN_LIMITS.free.generations;
 const TIER_FEATURES: Record<string, string[]> = {
   free:      [`${freeGen} generations/mo`,'MLS descriptions only','Basic analytics'],
   starter:   ['100 generations/mo','MLS + Airbnb + Social','10 staging credits'],
-  pro:       ['Unlimited generations','Virtual staging (40 credits)','MLS data pull'],
-  pro_plus:  ['Unlimited + priority queue','100 staging credits','Advanced reports'],
+  pro:       ['Unlimited generations','Virtual staging (40 credits)','Performance analytics'],
+  pro_plus:  ['Unlimited + priority queue','100 staging credits','Market reports waitlist'],
   team:      ['Unlimited shared','Multi-user seats','Custom brokerage branding'],
 };
 
@@ -29,8 +29,8 @@ export default function DashboardPage() {
       : profile.generations_limit;
   const effectiveGenCap =
     genLimit != null ? genLimit + (profile?.extra_gen_credits ?? 0) : null;
-  const usedPct = profile && genLimit != null && genLimit > 0
-    ? Math.min(100, (profile.generations_used / Math.max(genLimit, 1)) * 100)
+  const usedPct = profile && effectiveGenCap != null && effectiveGenCap > 0
+    ? Math.min(100, (profile.generations_used / effectiveGenCap) * 100)
     : 0;
   const stagingCap =
     profile?.staging_credits_limit === -1
@@ -40,7 +40,9 @@ export default function DashboardPage() {
     !!profile &&
     genLimit != null &&
     genLimit > 0 &&
-    profile.generations_used / genLimit >= 0.75;
+    effectiveGenCap != null &&
+    effectiveGenCap > 0 &&
+    profile.generations_used / effectiveGenCap >= 0.75;
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:24 }}>
@@ -101,7 +103,7 @@ export default function DashboardPage() {
               <strong style={{ color: 'var(--cyan)' }}>{profile.generations_used}</strong>
               {' '}
               of{' '}
-              <strong>{genLimit === -1 ? '∞' : genLimit ?? PLAN_LIMITS.free.generations}</strong>
+              <strong>{genLimit === -1 ? '∞' : effectiveGenCap ?? PLAN_LIMITS.free.generations}</strong>
               {' '}
               generations used
               {effectiveGenCap != null && profile.extra_gen_credits ? (
@@ -128,15 +130,15 @@ export default function DashboardPage() {
       )}
 
       {/* ── Stat cards ── */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:14 }}>
-        <StatCard value={profile?.generations_used ?? 0} label="Gens Used"     sub={`of ${profile?.generations_limit === -1 ? '∞' : profile?.generations_limit ?? PLAN_LIMITS.free.generations} this month`} color="cyan"    icon="⚡" delay={0}   />
+      <div className="dashboard-stat-grid">
+        <StatCard value={profile?.generations_used ?? 0} label="Gens Used"     sub={`of ${profile?.generations_limit === -1 ? '∞' : effectiveGenCap ?? PLAN_LIMITS.free.generations} this month`} color="cyan"    icon="⚡" delay={0}   />
         <StatCard value={completed.length}               label="Completed"      sub="All time"         color="cyan"    icon="✦"  delay={80}  onClick={() => navigate('/history')} />
         <StatCard value={profile?.staging_credits_used ?? 0} label="Staging Used" sub={`of ${profile?.staging_credits_limit === -1 ? '∞' : profile?.staging_credits_limit ?? 0}`} color="magenta" icon="🏠" delay={160} />
         <StatCard value={`${usedPct.toFixed(0)}%`}       label="Quota Used"    sub={usedPct > 80 ? '⚠ Consider upgrading' : 'Quota healthy'} color={usedPct > 80 ? 'magenta' : 'green'} icon="◈" delay={240} onClick={() => navigate('/account')} />
       </div>
 
       {/* ── Main row ── */}
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 320px', gap:18, flexWrap:'wrap' }}>
+      <div className="dashboard-main-grid">
 
         {/* Recent listings */}
         <div className="glass-dash anim-fade-up d-200">
@@ -193,7 +195,7 @@ export default function DashboardPage() {
                   <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:13.5, color:'#eafaff', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                     {g.address}
                   </div>
-                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', marginTop:2 }}>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', marginTop:2 }}>
                     {g.neighborhood ?? 'Charleston'} · {new Date(g.created_at).toLocaleDateString()}
                   </div>
                 </div>
@@ -219,7 +221,7 @@ export default function DashboardPage() {
 
           {/* Quick actions */}
           <div className="glass-dash anim-fade-up d-300" style={{ padding:'18px 18px' }}>
-            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:14 }}>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:14 }}>
               QUICK ACTIONS
             </div>
             {([
@@ -242,7 +244,7 @@ export default function DashboardPage() {
                 <span style={{ fontSize:16, color, width:20, textAlign:'center', textShadow:`0 0 8px ${color}` }}>{icon}</span>
                 <div style={{ flex:1 }}>
                   <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:13, color:'#eafaff' }}>{label}</div>
-                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)' }}>{sub}</div>
+                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)' }}>{sub}</div>
                 </div>
                 <span style={{ color:'var(--text-lo)', fontSize:12 }}>→</span>
               </div>
@@ -251,7 +253,7 @@ export default function DashboardPage() {
 
           {/* Plan card */}
           <div className="glass-magenta anim-fade-up d-400" style={{ padding:'18px 18px' }}>
-            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:9, color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:10 }}>
+            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:10 }}>
               YOUR PLAN
             </div>
             <div className="shimmer-text" style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:800, fontSize:18, marginBottom:12 }}>
@@ -272,11 +274,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <style>{`
-        @media(max-width:960px){
-          .dashboard-main { grid-template-columns:1fr !important; }
-        }
-      `}</style>
     </div>
   );
 }

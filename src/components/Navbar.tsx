@@ -53,7 +53,7 @@ export default function Navbar() {
 
         <div style={{
           maxWidth: 1240, margin: '0 auto',
-          padding: '0 28px',
+          padding: '0 clamp(16px, 4vw, 28px)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           {/* ─ Logo ─ */}
@@ -87,7 +87,7 @@ export default function Navbar() {
                 Lowcountry <span style={{ color: 'var(--cyan)' }}>AI</span>
               </span>
               <span style={{
-                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 8,
+                fontFamily: "'DM Mono', ui-monospace, monospace", fontSize: 'var(--text-ui-label)',
                 color: 'var(--text-lo)', letterSpacing: '.14em',
               }}>
                 CHARLESTON, SC
@@ -148,7 +148,8 @@ export default function Navbar() {
             onClick={() => setMenuOpen(m => !m)}
             style={{
               display: 'none', background: 'transparent', border: 'none',
-              color: 'var(--cyan)', cursor: 'pointer', padding: 6,
+              color: 'var(--cyan)', cursor: 'pointer', padding: 10,
+              minWidth: 44, minHeight: 44,
               fontSize: 20, lineHeight: 1,
             }}
             aria-label="Menu"

@@ -7,6 +7,10 @@ interface FAQItem {
 
 const FAQS: FAQItem[] = [
   {
+    q: 'What does the free plan include?',
+    a: 'Three MLS listing generations per month, Google Places address search, neighborhood detection, three of eight landmark driving distances, and basic analytics. Airbnb copy, social captions, virtual staging, and bulk CSV require Starter ($19/mo) or above. No credit card to start.',
+  },
+  {
     q: 'How accurate are the landmark distances?',
     a: 'Every distance is calculated via the Google Maps Distance Matrix API — actual driving distance, not straight-line approximation. We call it in real time when you enter an address, so the "0.4 miles to Shem Creek" in your listing is a real measurement, not a guess. The 8 landmarks are fixed: Downtown Charleston (King Street), Shem Creek, Sullivan\'s Island, Isle of Palms, Folly Beach, Ravenel Bridge, Angel Oak, and Magnolia Plantation.',
   },

@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { useStripe } from '../../hooks/useStripe';
 import { supabase } from '../../lib/supabase';
+import { PLAN_LIMITS } from '../../config';
 
 interface Tier {
   name: string;
@@ -16,7 +17,7 @@ interface Tier {
 }
 
 const TIERS: Tier[] = [
-  { name:'Free',    key:'free',     price:'$0/mo',   gens:'10/mo',        staging:'None',       color:'var(--text-lo)', border:'rgba(255,255,255,0.1)' },
+  { name:'Free',    key:'free',     price:'$0/mo',   gens:`${PLAN_LIMITS.free.generations}/mo`, staging:'None',       color:'var(--text-lo)', border:'rgba(255,255,255,0.1)' },
   { name:'Starter', key:'starter',  price:'$19/mo',  gens:'100/mo',       staging:'10 credits', color:'var(--cyan)',    border:'rgba(0,255,255,0.28)' },
   { name:'Pro',     key:'pro',      price:'$39/mo',  gens:'Unlimited',    staging:'40 credits', color:'var(--cyan)',    border:'rgba(0,255,255,0.5)' },
   { name:'Pro+',    key:'pro_plus', price:'$59/mo',  gens:'Unlimited',    staging:'100 credits',color:'var(--magenta)',  border:'rgba(255,0,255,0.5)' },
