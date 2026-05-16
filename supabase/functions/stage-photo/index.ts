@@ -1,6 +1,8 @@
 // supabase/functions/stage-photo/index.ts
 // Deploy with: supabase functions deploy stage-photo
 //
+// Prompts + fal strength live in ../_shared/stagingPrompts.ts (tune there; consider a
+// higher-fidelity fal model if interiors still look soft after lowering strength).
 // Required secrets:
 //   supabase secrets set FAL_KEY=...
 //   supabase secrets set SUPABASE_URL=...
@@ -16,6 +18,11 @@
 
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  DEFAULT_STAGING_STYLE,
+  FAL_IMAGE_TO_IMAGE_STRENGTH,
+  STAGING_PROMPTS,
+} from '../_shared/stagingPrompts.ts';
 
 const ALLOWED_ORIGIN = Deno.env.get('APP_PUBLIC_URL') ?? 'http://localhost:5173';
 const CORS_HEADERS = {
@@ -31,16 +38,6 @@ const DAILY_CAPS: Record<string, number> = {
   team:     200,
 };
 
-const STAGING_PROMPTS: Record<string, string> = {
-  coastal_modern:          'Professional real estate interior photo, coastal modern staging, clean architectural lines, light hardwood floors, white and driftwood palette with ocean blue accents, minimal coastal art, oversized windows, airy and sophisticated, Charleston Lowcountry coastal lifestyle, magazine quality real estate photography, sea-glass tile backsplash, natural rattan pendant lighting, driftwood side table, reclaimed wood shelf, linen throw, soft Atlantic blue textiles',
-  lowcountry_traditional:  'Professional real estate interior photo, traditional Lowcountry style staging, natural rattan and wicker furniture, linen upholstery, palmetto leaf motifs, shiplap accent wall, heart-pine floors, antique brass fixtures, sandy beige and seafoam palette, warm inviting Southern charm, authentic Charleston character, bright natural light, wainscoting, transom window details, Charleston single-house proportions, vintage Charleston maps as wall art, period-appropriate linen drapery, warm amber lighting',
-  contemporary:            'Professional real estate interior photo, contemporary staging, bold geometric furniture, dramatic lighting, rich jewel-tone or monochrome palette, statement art pieces, polished surfaces, sophisticated and curated aesthetic, high-end urban feel, architectural detail showcase',
-  minimalist:              'Professional real estate interior photo, minimalist staging, bright white walls, warm blonde wood floors, simple functional furniture with clean lines, abundant natural daylight, negative space, airy and calm, serene and uncluttered, Scandinavian-inspired aesthetic',
-  luxury_resort:           'Professional real estate interior photo, ultra-luxury resort-grade staging, neutral greige palette, bespoke custom furniture, curated fine art, integrated ambient lighting, seamless indoor-outdoor flow, Architectural Digest quality, concierge-level finish, ultra-premium real estate photography',
-  empty_clean:             'Professional real estate interior photo, empty room with no furniture, freshly painted bright white walls, clean polished floors, all clutter removed, bright even natural lighting, architectural photography clearly showing room proportions, ceiling height, trim detail, and window placement',
-};
-
-const DEFAULT_STAGING_STYLE = 'coastal_modern';
 const ALLOW_TEST_MODE = (Deno.env.get('ALLOW_TEST_MODE') ?? '').toLowerCase() === 'true';
 
 async function isAllowedTestUser(supabase: ReturnType<typeof createClient>, userId: string): Promise<boolean> {
@@ -140,7 +137,7 @@ serve(async (req: Request) => {
       body: JSON.stringify({
         image_url:            photoUrl,
         prompt,
-        strength:             0.62,         // 0 = preserve original, 1 = full generation
+        strength:             FAL_IMAGE_TO_IMAGE_STRENGTH,
         num_inference_steps:  28,
         guidance_scale:       7.5,
         num_images:           1,

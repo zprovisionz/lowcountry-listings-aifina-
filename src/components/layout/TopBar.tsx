@@ -4,7 +4,7 @@ import { DEBUG } from '../../config';
 
 const PAGE_META: Record<string, { title:string; sub:string }> = {
   '/dashboard': { title:'Dashboard',   sub:'Welcome back to Lowcountry AI' },
-  '/generate':  { title:'Generate',    sub:'4-step listing wizard' },
+  '/generate':  { title:'Generate',    sub:'' },
   '/history':   { title:'History',     sub:'Your past generations' },
   '/reports':   { title:'Reports',     sub:'MLS comps waitlist — roadmap' },
   '/analytics': { title:'Analytics',   sub:'Listing performance' },

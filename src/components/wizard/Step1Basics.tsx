@@ -2,16 +2,25 @@ import type { WizardData } from '../../types/database';
 import { PROPERTY_TYPES } from '../../types/database';
 import CharlestonAddressField from '../CharlestonAddressField';
 import { detectNeighborhood } from '../../lib/detectNeighborhood';
+import { useAuth } from '../../contexts/AuthContext';
+import { remainingStagingCredits } from '../../lib/stagingCredits';
 
 export default function Step1Basics({
   data,
   onChange,
-  overviewOnly,
 }: {
   data: WizardData;
   onChange: (p: Partial<WizardData>) => void;
-  overviewOnly: boolean;
 }) {
+  const { profile } = useAuth();
+  const overviewOnly = data.overviewOnly;
+  const stagingRem =
+    profile && remainingStagingCredits(profile) === Number.POSITIVE_INFINITY
+      ? '∞'
+      : profile
+        ? String(Math.floor(remainingStagingCredits(profile)))
+        : null;
+
   const neonField = (label: string, key: keyof WizardData, type = 'text', placeholder = '') => (
     <div>
       <label className="neon-label">{label}</label>
@@ -30,11 +39,12 @@ export default function Step1Basics({
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <h2 className="step-heading">Property Basics</h2>
-        <p className="step-sub">
-          Start with the property address and core details. Address must be within Charleston metro.
+        <p className="step-sub" style={{ marginBottom: 0 }}>
+          Address and core details (Charleston metro).{' '}
+          <span style={{ color: 'var(--text-lo)' }}>Optional quick mode skips required bed/bath/sqft.</span>
         </p>
       </div>
 
@@ -62,59 +72,59 @@ export default function Step1Basics({
         />
       </div>
 
-      <div
-        onClick={() => onChange({ overviewOnly: !data.overviewOnly })}
+      <label
         style={{
-          padding: '14px 16px',
-          borderRadius: 12,
-          border: `1px solid ${data.overviewOnly ? 'rgba(255,200,80,0.35)' : 'rgba(255,255,255,0.1)'}`,
-          background: data.overviewOnly ? 'rgba(255,200,80,0.06)' : 'rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
           cursor: 'pointer',
+          userSelect: 'none',
+          marginTop: -4,
         }}
+        title="MLS-style overview focused on neighborhood and area only—no invented bed/bath/sqft. Turn off for a full spec-driven listing."
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 4,
-              border: `2px solid ${data.overviewOnly ? 'rgba(255,200,80,0.8)' : 'rgba(255,255,255,0.25)'}`,
-              background: data.overviewOnly ? 'rgba(255,200,80,0.25)' : 'transparent',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 12,
-              flexShrink: 0,
-            }}
-          >
-            {data.overviewOnly ? '✓' : ''}
-          </div>
-          <div>
-            <div
-              style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontWeight: 700,
-                fontSize: 13,
-                color: 'var(--text-hi)',
-              }}
-            >
-              Neighborhood overview only (quick generate)
-            </div>
-            <div
-              style={{
-                fontFamily: 'DM Sans,sans-serif',
-                fontSize: 12,
-                color: 'var(--text-mid)',
-                marginTop: 4,
-                lineHeight: 1.5,
-              }}
-            >
-              Skip bed/bath/sqft. MLS will be an area-focused overview only—no invented property details. Add full
-              specs later for a complete listing.
-            </div>
-          </div>
-        </div>
-      </div>
+        <input
+          type="checkbox"
+          checked={overviewOnly}
+          onChange={(e) => onChange({ overviewOnly: e.target.checked })}
+          style={{
+            width: 16,
+            height: 16,
+            accentColor: 'var(--cyan)',
+            cursor: 'pointer',
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontFamily: "'DM Mono', ui-monospace, monospace",
+            fontSize: 10,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: overviewOnly ? 'var(--cyan)' : 'var(--text-mid)',
+          }}
+        >
+          Quick generate — overview only
+        </span>
+      </label>
+
+      {profile && stagingRem !== null && (
+        <p
+          style={{
+            fontFamily: 'DM Sans, sans-serif',
+            fontSize: 12.5,
+            color: 'var(--text-lo)',
+            margin: '-2px 0 0',
+            lineHeight: 1.5,
+          }}
+          title="Staging credits are used on the Results page after you generate a listing (1 credit per staged photo)."
+        >
+          Staging credits remaining: <strong style={{ color: 'var(--magenta)' }}>{stagingRem}</strong>
+          {profile.staging_credits_limit !== -1 && (profile.extra_staging_credits ?? 0) > 0 && (
+            <span style={{ color: 'var(--text-ghost)' }}> (incl. purchased packs)</span>
+          )}
+        </p>
+      )}
 
       <div>
         <label className="neon-label">Property Type *</label>
@@ -127,7 +137,7 @@ export default function Step1Basics({
                 type="button"
                 onClick={() => onChange({ propertyType: value as WizardData['propertyType'] })}
                 style={{
-                  padding: '9px 18px',
+                  padding: '8px 16px',
                   background: on ? 'rgba(0,255,255,0.12)' : 'rgba(0,255,255,0.03)',
                   border: `1px solid ${on ? 'rgba(0,255,255,0.6)' : 'rgba(0,255,255,0.15)'}`,
                   borderRadius: 9,

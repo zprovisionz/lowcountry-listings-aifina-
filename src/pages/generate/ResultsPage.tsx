@@ -8,6 +8,15 @@ import { useGenerations } from '../../hooks/useGenerations';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { DEBUG, TIMING_MS } from '../../config';
+import {
+  effectiveStagingCapacity,
+  hasStagingQuotaForN,
+  remainingStagingCredits,
+  stagingBatchCapForTier,
+  stagingSelectionCapForUi,
+} from '../../lib/stagingCredits';
+import { formatFeatureCount } from '../../lib/formatFeatureCount';
+import { countVoiceClichés } from '../../lib/mlsCopyGuards';
 
 type Tab = 'mls' | 'airbnb' | 'social' | 'staging';
 
@@ -35,7 +44,7 @@ export default function ResultsPage() {
   const { id } = useParams<{ id:string }>();
   const navigate = useNavigate();
   const { trackEvent } = useGenerations();
-  const { user, profile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const { toast } = useToast();
   const [gen,           setGen]           = useState<Generation | null>(null);
   const [loading,       setLoading]       = useState(true);
@@ -44,10 +53,13 @@ export default function ResultsPage() {
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef    = useRef(0);
   const stagingRef      = useRef<HTMLDivElement | null>(null);
+  const stagingBatchActiveRef = useRef(false);
   const [stagingJobs,   setStagingJobs]   = useState<StagingJob[]>([]);
   const [stagingStyle,  setStagingStyle]  = useState('coastal_modern');
-  const [stagingPhoto,  setStagingPhoto]  = useState<string>('');
+  /** Selected original photo URLs to stage in one run (order preserved). */
+  const [stagingSelected, setStagingSelected] = useState<string[]>([]);
   const [stagingBusy,   setStagingBusy]   = useState(false);
+  const [stagingBatchProgress, setStagingBatchProgress] = useState<{ done: number; total: number } | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editNotes,     setEditNotes]     = useState('');
   const [editPreset,    setEditPreset]    = useState('');
@@ -116,8 +128,15 @@ export default function ResultsPage() {
             ? prev.map(j => j.id === updated.id ? updated : j)
             : [...prev, updated];
         });
-        if ((payload.new as StagingJob).status === 'complete') setStagingBusy(false);
-        if ((payload.new as StagingJob).status === 'error')    { setStagingBusy(false); toast('Staging failed. Please try again.', 'error'); }
+        if ((payload.new as StagingJob).status === 'complete' && !stagingBatchActiveRef.current) {
+          setStagingBusy(false);
+        }
+        if ((payload.new as StagingJob).status === 'error') {
+          setStagingBusy(false);
+          stagingBatchActiveRef.current = false;
+          setStagingBatchProgress(null);
+          toast('Staging failed. Please try again.', 'error');
+        }
       })
       .subscribe();
 
@@ -153,14 +172,66 @@ export default function ResultsPage() {
     }
   }, [user?.id, id, gen?.mls_copy, editNotes, editPreset, toast]);
 
-  const handleStagePhoto = useCallback(async () => {
-    if (!user || !id || !stagingPhoto) return;
+  const toggleStagingPhoto = useCallback(
+    (url: string, selectCap: number) => {
+      setStagingSelected(prev => {
+        if (prev.includes(url)) return prev.filter(u => u !== url);
+        if (prev.length >= selectCap) {
+          toast(
+            selectCap < 1
+              ? 'No staging credits remaining, or staging is not on your plan.'
+              : `You can select up to ${selectCap} photo(s) per run (plan credits and batch limit).`,
+            'error',
+          );
+          return prev;
+        }
+        return [...prev, url];
+      });
+    },
+    [toast],
+  );
+
+  const handleStageSelected = useCallback(async () => {
+    if (!user || !id || stagingSelected.length === 0) return;
+    const n = stagingSelected.length;
+    const allowBypass = !!(DEBUG.bypassBilling && (import.meta.env.DEV || profile?.is_test_user));
+    if (!allowBypass) {
+      const { data: ok, error: rpcErr } = await supabase.rpc('check_staging_quota_n_for_me', { p_n: n });
+      if (rpcErr || !ok) {
+        toast('Not enough staging credits for this batch. Upgrade or add credits.', 'error');
+        return;
+      }
+    }
+    stagingBatchActiveRef.current = n > 1;
     setStagingBusy(true);
-    const { error } = await supabase.functions.invoke('stage-photo', {
-      body: { generationId: id, photoUrl: stagingPhoto, stagingStyle, userId: user.id },
-    });
-    if (error) { setStagingBusy(false); toast(error.message ?? 'Staging failed', 'error'); }
-  }, [user, id, stagingPhoto, stagingStyle, toast]);
+    setStagingBatchProgress({ done: 0, total: n });
+    let completed = 0;
+    try {
+      for (let i = 0; i < stagingSelected.length; i++) {
+        const photoUrl = stagingSelected[i];
+        const { error } = await supabase.functions.invoke('stage-photo', {
+          body: { generationId: id, photoUrl, stagingStyle, userId: user.id },
+        });
+        if (error) {
+          toast(error.message ?? 'Staging failed', 'error');
+          break;
+        }
+        completed += 1;
+        setStagingBatchProgress({ done: i + 1, total: n });
+        await refreshProfile();
+      }
+      if (completed === n) {
+        toast(completed === 1 ? 'Photo staged.' : `${completed} photos staged.`, 'success');
+      } else if (completed > 0) {
+        toast(`${completed} of ${n} photos staged before an error.`, 'warning');
+      }
+    } finally {
+      stagingBatchActiveRef.current = false;
+      setStagingBusy(false);
+      setStagingBatchProgress(null);
+      await refreshProfile();
+    }
+  }, [user, id, stagingSelected, stagingStyle, toast, refreshProfile, profile?.is_test_user]);
 
   /* ── Loading ── */
   if (loading) return (
@@ -224,6 +295,17 @@ export default function ResultsPage() {
   const hasCompleteStaging = stagingJobs.some(j => j.status === 'complete' && !!j.staged_url);
   const showStagingNew = hasPhotos && !hasCompleteStaging;
   const allowUiBypass = !!(DEBUG.bypassBilling && (import.meta.env.DEV || profile?.is_test_user));
+  const photoCount = gen.photo_urls?.length ?? 0;
+  const stagingSelectCap = stagingSelectionCapForUi(profile, profile?.tier, photoCount, allowUiBypass);
+  const stagingTierBatchMax = stagingBatchCapForTier(profile?.tier);
+  const stagingCreditsTotalLabel =
+    !profile ? '—' : effectiveStagingCapacity(profile) === Number.POSITIVE_INFINITY
+      ? 'Unlimited'
+      : String(Math.floor(effectiveStagingCapacity(profile)));
+  const stagingRemainingLabel =
+    !profile ? '—' : remainingStagingCredits(profile) === Number.POSITIVE_INFINITY
+      ? '∞'
+      : String(remainingStagingCredits(profile));
 
   return (
     <div style={{ maxWidth:900, margin:'0 auto', display:'flex', flexDirection:'column', gap:22 }}>
@@ -264,8 +346,8 @@ export default function ResultsPage() {
         {/* Landmark distances */}
         {gen.landmark_distances && (
           <div style={{ flex:1, minWidth:200 }}>
-            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>
-              LANDMARK DISTANCES
+            <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:13, color:'var(--text-hi)', marginBottom:8 }}>
+              Landmark distances
             </div>
             {Object.entries(gen.landmark_distances).slice(0,4).map(([place,dist],i) => (
               <div key={place} style={{
@@ -282,7 +364,7 @@ export default function ResultsPage() {
         {/* Suggestions */}
         {gen.improvement_suggestions && gen.improvement_suggestions.length > 0 && (
           <div style={{ flex:1, minWidth:180 }}>
-            <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:8 }}>SUGGESTIONS</div>
+            <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:13, color:'var(--text-hi)', marginBottom:8 }}>Suggestions</div>
             {gen.improvement_suggestions.map(s => (
               <div key={s} style={{ display:'flex', alignItems:'flex-start', gap:7, marginBottom:8, fontFamily:'DM Sans,sans-serif', fontSize:12.5, color:'var(--text-mid)', lineHeight:1.55 }}>
                 <span style={{ color:'var(--magenta)', flexShrink:0, marginTop:2, fontSize:12 }}>◈</span>
@@ -296,14 +378,11 @@ export default function ResultsPage() {
       {/* Virtual staging CTA (discoverability) */}
       <div className="glass-featured anim-fade-up d-150" style={{ padding:'18px 22px', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:14 }}>
         <div style={{ display:'flex', flexDirection:'column', gap:6, minWidth:240 }}>
-          <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>
-            VIRTUAL STAGING · POWERED BY FAL.AI
-          </div>
           <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontSize:16, fontWeight:800, color:'var(--text-hi)' }}>
-            Stage a photo in one click.
+            Virtual staging <span style={{ color:'var(--text-lo)', fontWeight:500, fontSize:13 }}>· fal.ai</span>
           </div>
           <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:13, color:'var(--text-mid)', lineHeight:1.6 }}>
-            Pick a photo, choose a style, and get a clean “before/after” you can download and use in your listing.
+            Select photos on the Staging tab, pick a style, then download before/after images for your listing.
           </div>
         </div>
         <div style={{ display:'flex', gap:10, flexWrap:'wrap', alignItems:'center' }}>
@@ -396,10 +475,32 @@ export default function ResultsPage() {
                     Based on your inputs: {basedOnInputs}
                   </div>
                 )}
+                {tab === 'mls' && text && (
+                  <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:12, color:'var(--text-lo)', marginBottom:10, lineHeight:1.55 }}>
+                    Generated from the facts saved with this listing (beds/baths/sqft, amenities you selected, and landmark distances). Verify against photos and disclosures before MLS publish.
+                  </div>
+                )}
+                {tab === 'mls' && text && countVoiceClichés(text) >= 2 && (
+                  <div
+                    style={{
+                      fontFamily:'DM Sans,sans-serif',
+                      fontSize:12,
+                      color:'rgba(255,200,120,0.95)',
+                      marginBottom:12,
+                      padding:'8px 12px',
+                      borderRadius:8,
+                      border:'1px solid rgba(255,200,80,0.35)',
+                      background:'rgba(255,180,60,0.08)',
+                      lineHeight:1.5,
+                    }}
+                  >
+                    Heads-up: this draft leans lyrical in places. Give it a quick edit for MLS tone and a fact check against your visuals.
+                  </div>
+                )}
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16, flexWrap:'wrap', gap:10 }}>
                   <div>
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>
-                      {tab==='mls' ? 'RESO-COMPLIANT MLS DESCRIPTION' : 'AIRBNB / VRBO GUEST-FACING COPY'}
+                    <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:13, color:'var(--text-hi)' }}>
+                      {tab==='mls' ? 'MLS description' : 'Airbnb / guest copy'}
                     </div>
                     <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-ghost)', marginTop:3 }}>{wc(text)} words</div>
                   </div>
@@ -437,8 +538,8 @@ export default function ResultsPage() {
           {/* Social */}
           {tab === 'social' && (
             <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
-              <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em', marginBottom:4 }}>
-                3 PLATFORM-READY CAPTIONS WITH LOWCOUNTRY HASHTAGS
+              <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:13, color:'var(--text-hi)', marginBottom:8 }}>
+                Social captions
               </div>
               {(gen.social_captions??[]).map((caption,i) => (
                 <div key={i} className={i%2===0?'glass':'glass-magenta'} style={{ padding:'18px 20px', borderRadius:12 }}>
@@ -461,69 +562,82 @@ export default function ResultsPage() {
 
           {/* Virtual Staging */}
           {tab === 'staging' && (
-            <div ref={stagingRef} style={{ display:'flex', flexDirection:'column', gap:20 }}>
-              <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>
-                AI VIRTUAL STAGING · POWERED BY FAL.AI
+            <div ref={stagingRef} style={{ display:'flex', flexDirection:'column', gap:18 }}>
+              <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:17, color:'var(--text-hi)' }}>
+                Virtual staging <span style={{ color:'var(--text-lo)', fontWeight:500, fontSize:13 }}>· fal.ai</span>
               </div>
               <p
                 style={{
                   fontFamily: 'DM Sans,sans-serif',
-                  fontSize: 12,
+                  fontSize: 13,
                   color: 'var(--text-mid)',
-                  lineHeight: 1.55,
+                  lineHeight: 1.6,
                   margin: 0,
                   maxWidth: 720,
                   borderLeft: '2px solid var(--cyan-border)',
                   paddingLeft: 12,
                 }}
               >
-                {STAGING_DISCLOSURE} Use the same wording in MLS or advertising when you publish staged images.
+                {STAGING_DISCLOSURE} Use the same disclosure in MLS or advertising when you publish staged images.
               </p>
 
-              {/* No photos warning */}
               {(!gen.photo_urls || gen.photo_urls.length === 0) && (
                 <div className="glass" style={{ padding:'20px 22px', borderRadius:12, textAlign:'center' }}>
                   <div style={{ fontSize:28, marginBottom:10 }}>📸</div>
-                  <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:14, color:'var(--text-mid)', margin:0 }}>
-                    No photos were uploaded with this listing. Go back and generate a new listing with photos to use virtual staging.
+                  <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:14, color:'var(--text-mid)', margin:0, lineHeight:1.6 }}>
+                    No photos were uploaded with this listing. Generate a new listing with photos to use virtual staging.
                   </p>
                 </div>
               )}
 
-              {/* Photo picker + style selector */}
               {gen.photo_urls && gen.photo_urls.length > 0 && (
                 <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                  <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:13, color:'var(--text-mid)', margin:0, lineHeight:1.55 }}>
+                    Below are your <strong style={{ color:'var(--text-hi)' }}>original</strong> listing photos. Staging runs after you choose a style and click Stage — <strong style={{ color:'var(--text-hi)' }}>1 credit per photo</strong>.
+                  </p>
                   <div>
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>SELECT PHOTO TO STAGE</div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>SELECT PHOTOS (TAP TO ADD)</div>
                     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(100px,1fr))', gap:8 }}>
-                      {gen.photo_urls.map((url, i) => (
-                        <div
-                          key={url}
-                          onClick={() => setStagingPhoto(url)}
-                          style={{
-                            borderRadius:8, overflow:'hidden', aspectRatio:'4/3',
-                            border: stagingPhoto === url ? '2px solid var(--cyan)' : '2px solid rgba(0,255,255,0.15)',
-                            cursor:'pointer', position:'relative',
-                            boxShadow: stagingPhoto === url ? '0 0 12px rgba(0,255,255,0.3)' : 'none',
-                            transition:'border-color .15s, box-shadow .15s',
-                          }}
-                        >
-                          <img src={url} alt={`Photo ${i+1}`} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-                          {stagingPhoto === url && (
-                            <div style={{ position:'absolute', inset:0, background:'rgba(0,255,255,0.15)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                              <span style={{ color:'var(--cyan)', fontSize:20, fontWeight:700 }}>✓</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                      {gen.photo_urls.map((url, i) => {
+                        const selected = stagingSelected.includes(url);
+                        return (
+                          <div
+                            key={url}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => toggleStagingPhoto(url, stagingSelectCap)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleStagingPhoto(url, stagingSelectCap); } }}
+                            style={{
+                              borderRadius:8, overflow:'hidden', aspectRatio:'4/3',
+                              border: selected ? '2px solid var(--cyan)' : '2px solid rgba(0,255,255,0.15)',
+                              cursor:'pointer', position:'relative',
+                              boxShadow: selected ? '0 0 12px rgba(0,255,255,0.3)' : 'none',
+                              transition:'border-color .15s, box-shadow .15s',
+                            }}
+                          >
+                            <img src={url} alt={`Listing photo ${i+1}`} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+                            {selected && (
+                              <div style={{ position:'absolute', inset:0, background:'rgba(0,255,255,0.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                                <span style={{ color:'var(--cyan)', fontSize:20, fontWeight:700 }}>✓</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
+                    <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:12, color:'var(--text-lo)', margin:'8px 0 0', lineHeight:1.5 }}>
+                      Selected: {stagingSelected.length}
+                      {stagingSelectCap > 0 ? ` · up to ${stagingSelectCap} per run` : ''}
+                      {stagingTierBatchMax > 0 ? ` · max ${stagingTierBatchMax} per batch on your plan` : ''}
+                    </p>
                   </div>
 
                   <div>
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>STAGING STYLE</div>
+                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:10, color:'var(--text-lo)', letterSpacing:'.1em', marginBottom:8 }}>STAGING STYLE</div>
                     <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                       {STAGING_STYLES.map(s => (
                         <button
+                          type="button"
                           key={s.id}
                           onClick={() => setStagingStyle(s.id)}
                           style={{
@@ -538,41 +652,52 @@ export default function ResultsPage() {
                     </div>
                   </div>
 
-                  {/* Quota info */}
                   {profile && (
-                    <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-ghost)', letterSpacing:'.08em' }}>
-                      STAGING CREDITS: {profile.staging_credits_used} / {profile.staging_credits_limit === -1 ? '∞' : profile.staging_credits_limit} USED
+                    <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:13, color:'var(--text-mid)', lineHeight:1.55 }}>
+                      <strong style={{ color:'var(--magenta)' }}>{profile.staging_credits_used}</strong> staging credits used
+                      {' · '}
+                      <strong style={{ color:'var(--cyan)' }}>{stagingRemainingLabel}</strong> remaining
+                      {' · '}
+                      {profile.staging_credits_limit === -1 ? 'Unlimited plan pool' : `${stagingCreditsTotalLabel} total on plan (incl. purchased packs)`}
+                    </div>
+                  )}
+
+                  {stagingBatchProgress && (
+                    <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:13, color:'var(--cyan)' }}>
+                      Staging batch: {stagingBatchProgress.done} / {stagingBatchProgress.total} complete…
                     </div>
                   )}
 
                   <button
-                    onClick={handleStagePhoto}
+                    type="button"
+                    onClick={handleStageSelected}
                     disabled={
-                      !stagingPhoto ||
+                      stagingSelected.length === 0 ||
                       stagingBusy ||
-                      (!allowUiBypass &&
-                        profile?.staging_credits_limit !== -1 &&
-                        (profile?.staging_credits_used ?? 0) >= (profile?.staging_credits_limit ?? 0))
+                      (!allowUiBypass && (!profile || !hasStagingQuotaForN(profile, stagingSelected.length)))
                     }
                     className="btn btn-primary"
-                    style={{ width:'fit-content', opacity: (!stagingPhoto || stagingBusy) ? 0.6 : 1 }}
+                    style={{ width:'fit-content', opacity: stagingSelected.length === 0 || stagingBusy ? 0.6 : 1 }}
                   >
-                    {stagingBusy ? 'Staging in progress…' : '🛋 Stage This Photo'}
+                    {stagingBusy
+                      ? (stagingBatchProgress
+                          ? `Staging… ${stagingBatchProgress.done}/${stagingBatchProgress.total}`
+                          : 'Staging…')
+                      : `Stage selected (${stagingSelected.length} credit${stagingSelected.length === 1 ? '' : 's'})`}
                   </button>
                 </div>
               )}
 
-              {/* Staging job results */}
               {stagingJobs.length > 0 && (
                 <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-                  <div style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)', letterSpacing:'.14em' }}>STAGED RESULTS</div>
+                  <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:700, fontSize:15, color:'var(--text-hi)' }}>Staged results</div>
                   {stagingJobs.map(job => (
                     <div key={job.id} className="glass" style={{ borderRadius:12, overflow:'hidden' }}>
                       {job.status === 'processing' && (
                         <div style={{ padding:'20px', display:'flex', alignItems:'center', gap:12 }}>
                           <div style={{ width:16,height:16,borderRadius:'50%',border:'2px solid rgba(0,255,255,0.2)',borderTopColor:'var(--cyan)',animation:'spinRing .8s linear infinite',flexShrink:0 }} />
-                          <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--text-lo)' }}>
-                            Staging in progress — fal.ai is applying {STAGING_STYLES.find(s => s.id === job.staging_style)?.label ?? job.staging_style} style…
+                          <span style={{ fontFamily:'DM Sans,sans-serif', fontSize:13, color:'var(--text-mid)', lineHeight:1.5 }}>
+                            Staging in progress — applying {STAGING_STYLES.find(s => s.id === job.staging_style)?.label ?? job.staging_style}…
                           </span>
                         </div>
                       )}
@@ -586,11 +711,11 @@ export default function ResultsPage() {
                           <div className="staging-compare-grid">
                             <div style={{ position:'relative' }}>
                               <img src={job.original_url} alt="Original" style={{ width:'100%', display:'block', objectFit:'cover', aspectRatio:'4/3' }} />
-                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'rgba(255,255,255,0.7)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>BEFORE</div>
+                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'rgba(255,255,255,0.7)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>Before</div>
                             </div>
                             <div style={{ position:'relative' }}>
                               <img src={job.staged_url} alt="Staged" style={{ width:'100%', display:'block', objectFit:'cover', aspectRatio:'4/3' }} />
-                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--cyan)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>STAGED</div>
+                              <div style={{ position:'absolute', bottom:6, left:8, fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--cyan)', background:'rgba(0,0,0,0.6)', padding:'2px 6px', borderRadius:4 }}>Staged</div>
                             </div>
                           </div>
                           <div style={{ padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
@@ -619,7 +744,7 @@ export default function ResultsPage() {
           { label:'Bedrooms',  value:gen.bedrooms },
           { label:'Bathrooms', value:gen.bathrooms },
           { label:'Sq Ft',     value:gen.sqft ? Number(gen.sqft).toLocaleString() : null },
-          { label:'Amenities', value:gen.amenities.length ? `${gen.amenities.length} features` : null },
+          { label:'Amenities', value:gen.amenities.length ? formatFeatureCount(gen.amenities.length) : null },
         ].filter(r=>r.value!=null).map(({ label, value }) => (
           <div key={label} style={{
             padding:'12px 16px', textAlign:'center',

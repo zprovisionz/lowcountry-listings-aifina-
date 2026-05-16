@@ -88,7 +88,6 @@ export default function GeneratePage() {
       generateAirbnb: false,
       generateSocial: false,
       generateMLS: d.generateMLS || true,
-      applyStaging: false,
     }));
   }, [isFreeTier]);
 
@@ -243,7 +242,7 @@ export default function GeneratePage() {
       submitting={submitting}
       nextLabel="Continue →"
     >
-      {step === 1 && <Step1Basics data={data} onChange={patch} overviewOnly={data.overviewOnly} />}
+      {step === 1 && <Step1Basics data={data} onChange={patch} />}
       {step === 2 && <Step2Photos    data={data} onChange={patch} />}
       {step === 3 && <Step3Amenities data={data} onChange={patch} />}
       {step === 4 && (

@@ -76,7 +76,7 @@ serve(async (req: Request) => {
           {
             role: 'system',
             content:
-              'Revise the MLS description per the agent instructions. Remove or avoid any factual claims not in the INPUT FACTS JSON. Preserve elegant Charleston voice and similar length. Return only the revised MLS text.',
+              'Revise the MLS description per the agent instructions. Do not add or invent facts: no flooring materials, window-wall or natural-light claims, open-concept/great-room layout, chef kitchen, marsh/water views, primary suite spa framing, yard/fence/school, or finishes not in the JSON. You may tighten MLS tone and remove purple clichés ("embrace","enchanting","beckons","oasis"). Preserve similar length. Return only the revised MLS text.',
           },
           {
             role: 'user',
@@ -84,7 +84,7 @@ serve(async (req: Request) => {
           },
         ],
         max_tokens: 1200,
-        temperature: 0.45,
+        temperature: 0.35,
       }),
     });
 

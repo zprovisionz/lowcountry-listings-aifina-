@@ -66,27 +66,45 @@ const NEIGHBORHOOD_VOCAB: Record<string, string[]> = {
   'Hanahan':              ['Cooper River proximity','Berkeley County','boat ramp access','quiet residential'],
 };
 
-// Few-shot MLS voice examples (Mount Pleasant + Summerville metro). Style only — model must still use only AUTHORIZED FACTS.
-const MLS_FEW_SHOT_EXAMPLES = `
-
-=== FEW-SHOT STYLE EXAMPLES (sentence rhythm and emotional tone ONLY) ===
-CRITICAL: Do NOT copy piazza, live oaks, fireplace, chef kitchen, marsh views, layout, or any feature from these examples unless that exact feature appears in AUTHORIZED FACTS or Photo-derived details below.
-
-[Mount Pleasant — arrival & piazza / live oaks]
-"The first time you turn onto the street, you feel it: the canopy of live oaks, the quiet hum of a neighborhood that still knows its neighbors. This Mount Pleasant home doesn't announce itself with flash—it invites you in with a wide, shaded piazza where the coastal breeze moves through the screens and the only soundtrack is the rustle of palmetto fronds. This is the Holy City at its most lived-in—a place where evenings begin with sweet tea on the piazza and end with marsh views and the glow of Shem Creek sunsets a short drive away."
-
-[Mount Pleasant — classic family / piazza & entertaining]
-"Nestled under a canopy of live oaks in the heart of Mount Pleasant, this charming Lowcountry retreat offers the perfect blend of timeless elegance and modern comfort. Step onto the welcoming piazza and feel the gentle coastal breeze that defines life in the Holy City. Inside, soaring ceilings and abundant natural light create an open, airy flow ideal for both quiet evenings and effortless entertaining. Outside, the beautifully landscaped yard beckons for al fresco dining or lazy afternoons with the family."
-
-[Mount Pleasant — marsh views / Shem Creek / Sullivan's]
-"Experience elevated Lowcountry living in this thoughtfully designed Mount Pleasant home. A charming farmhouse exterior and welcoming covered front porch set the tone for relaxed coastal elegance. Inside, the open-concept layout flows seamlessly from the chef's kitchen to the living spaces, where natural light pours in and marsh views inspire tranquility. Minutes from Shem Creek's renowned waterfront dining and Sullivan's Island beaches, this residence places the best of the Lowcountry at your doorstep."
-
-[Mount Pleasant — Old Village / historic charm]
-"In the sought-after Old Village of Mount Pleasant, this elegant residence captures the essence of Lowcountry living. Mature live oaks frame the property, creating a serene backdrop for the wide piazza that invites quiet mornings with coffee or evening gatherings with friends. The interior blends classic Charleston details with contemporary finishes, offering a lifestyle of refined comfort just steps from the historic charm and waterfront of the Holy City."
-
-[Summerville — traditional / schools & downtown]
-"Nestled in a quiet Summerville neighborhood, this charming home offers the perfect blend of classic Southern style and modern updates. Step inside to find spacious living areas filled with natural light and timeless details. The kitchen opens to the family room, creating an ideal space for both daily life and holiday gatherings. Outside, the fenced yard provides privacy and room for outdoor enjoyment. Conveniently located near excellent schools and downtown Summerville, this residence offers the lifestyle you've been waiting for."
+// Short style anchors only — long few-shot paragraphs encouraged feature mimicry.
+const MLS_STYLE_ANCHORS = `
+MLS VOICE ANCHORS (rhythm only — do NOT import features, room counts, or finishes from these ideas):
+- Alternate short factual sentences with one softer neighborhood/atmosphere line.
+- Ground credibility in the address, neighborhood name, and the exact landmark distance strings provided.
+- When amenities are sparse, write a shorter interior section rather than inventing rooms or finishes.
 `;
+
+function mlsToneGuidance(tone: string | undefined): string {
+  const t = (tone ?? 'standard').toLowerCase();
+  if (t === 'luxury') {
+    return `TONE=luxury: confident and spare; shorter sentences; no hype words ("stunning","exclusive","world-class"); still zero invented finishes or layout claims.`;
+  }
+  if (t === 'family') {
+    return `TONE=family: warm and practical; emphasize livability using ONLY beds/baths/sqft and listed amenities; do not invent schools, yards, or kid-specific features unless in facts/photos.`;
+  }
+  if (t === 'investment') {
+    return `TONE=investment: crisp and numbers-forward; lead with specs from facts; no rental income or cap-rate claims unless price + explicit investment notes support them.`;
+  }
+  return `TONE=standard: professional and approachable; at most ONE metaphorical image (e.g. breeze, neighborhood rhythm) per ~150 words; ban purple phrases ("warm embrace","enchanting","beckons","swept away","hidden gem").`;
+}
+
+const LANDMARK_USE_RULES = `LANDMARKS:
+- You may reference at most THREE named places, and ONLY those appearing in the "Landmark distances" line with their EXACT parenthetical distance text.
+- Never write "minutes away", "just moments", or "short drive" unless the distance text explicitly supports it (e.g. "2 mi" is fine; do not invent time estimates).
+- Do not add landmarks not listed in that line.`;
+
+const VOICE_DISCIPLINE = `VOICE DISCIPLINE:
+- Do not stack multiple metaphors in the same paragraph.
+- Prefer concrete nouns (street trees, porch, commute) over abstract "allure" or "embrace" framing.
+- Avoid realtor clichés: stunning, must-see, won't last, move-in ready, dream home, hidden gem, resort-like (unless a resort amenity is listed).`;
+
+const MLS_OUTLINE_RULES = `MLS DESCRIPTION STRUCTURE (400–450 words unless facts are too thin—then shorter is better than padding):
+(1) Opening 2–3 sentences: arrival / neighborhood context using ONLY neighborhood name, property type, and facts—no invented curb appeal.
+(2) One tight paragraph: state beds, baths, and sqft from AUTHORIZED FACTS in MLS-standard wording; if any are "not specified", omit that line entirely.
+(3) Interior & features: ONLY amenities explicitly listed OR clearly supported in Photo-derived details. If the amenity list is a single item, write ONE focused paragraph about that feature—do not invent a tour of other rooms.
+(4) Lifestyle paragraph: use ONLY the landmark distance strings provided (max 3 places). Area character is OK without inventing mileage.
+(5) Close with a simple private-tour CTA (no urgency gimmicks).
+End with a separate line exactly: [Word count: XXX]`;
 
 // ─── Vision: analyze property photos ────────────────────────────────────────
 async function analyzePhotosWithVision(photoUrls: string[], openAiKey: string): Promise<string> {
@@ -118,7 +136,7 @@ async function analyzePhotosWithVision(photoUrls: string[], openAiKey: string): 
 
 Rules:
 - ONLY describe details you can see with high confidence. If you are not certain, omit it.
-- Do NOT infer countertops, flooring materials, room count, layout, or “quality tier” unless clearly visible.
+- Do NOT infer countertops, flooring materials, room count, layout, open floor plan, great room, or “quality tier” unless clearly visible.
 - Do NOT use real estate sales language; output observational notes only.
 - Never invent features (fireplace, built-ins, coffered ceilings, shiplap, etc.) unless unmistakably visible.
 
@@ -152,17 +170,26 @@ function scoreAuthenticity(
   vocab: string[],
   hasPhotos: boolean,
   hasLandmarkDistances: boolean,
+  amenitiesCorpus: string,
 ): { authenticity: number; confidence: number } {
   let authenticity = 60; // base score
   let confidence = 55;
 
   // +vocab usage: reward for using neighborhood-specific terms
   const lowerCopy = copyText.toLowerCase();
+  const corpus = (amenitiesCorpus || '').toLowerCase();
   const vocabHits = vocab.filter(v => lowerCopy.includes(v.toLowerCase())).length;
   authenticity += Math.min(vocabHits * 4, 24); // up to +24
 
-  // +piazza usage (core Charleston authenticity signal)
-  if (lowerCopy.includes('piazza')) authenticity += 6;
+  // Piazza: reward only when amenity/photo corpus supports porch/piazza language
+  if (lowerCopy.includes('piazza')) {
+    if (corpus.includes('piazza') || corpus.includes('porch') || corpus.includes('screened')) {
+      authenticity += 4;
+    } else {
+      authenticity -= 12;
+      confidence -= 6;
+    }
+  }
 
   // +specific Charleston place references
   const placeRefs = ['king street', 'shem creek', "sullivan's island", 'folly beach',
@@ -177,8 +204,14 @@ function scoreAuthenticity(
   if (neighborhood && NEIGHBORHOOD_VOCAB[neighborhood]) confidence += 10; // Known neighborhood
   if (vocabHits >= 3) confidence += 10;         // Vocabulary coherence
 
+  // Purple-prose / AI-voice penalty
+  const purple = ['warm embrace', 'like a warm embrace', 'enchanting', 'beckons', 'swept away', 'oasis', 'hidden gem', 'dream home'];
+  const purpleHits = purple.filter(p => lowerCopy.includes(p)).length;
+  authenticity -= Math.min(purpleHits * 4, 20);
+  confidence -= Math.min(purpleHits * 2, 10);
+
   // Avoid generic terms penalty
-  const genericTerms = ['beautiful home', 'must see', 'move-in ready', 'great location', 'stunning property'];
+  const genericTerms = ['beautiful home', 'must see', 'move-in ready', 'great location', 'stunning property', 'turn-key', 'turnkey'];
   const genericHits = genericTerms.filter(t => lowerCopy.includes(t)).length;
   authenticity -= genericHits * 3;
   confidence   -= genericHits * 2;
@@ -237,15 +270,16 @@ async function refineMlsCopy(draftMls: string, openAiKey: string): Promise<strin
       messages: [
         {
           role: 'system',
-          content: 'You are an expert editor for Charleston, SC real estate listings. Rewrite only for style and flow. Do not add or invent any facts, features, room counts, or distances not present in the description. Only improve style, flow, and emotional depth—never add new factual claims. Preserve or deepen the evocative, human voice; do not make the copy drier or more generic. Return only the rewritten MLS description, no preamble or word count.',
+          content:
+            'You are an expert editor for Charleston, SC real estate listings. Tighten flow, remove repetition, and dial back purple prose. Do NOT add or invent any facts, finishes, room counts, layout claims, or distances not already present in the draft. If a sentence implies an unlisted feature, delete or neutralize it. Target ~380–430 words. Return only the rewritten MLS description, no preamble or word count.',
         },
         {
           role: 'user',
-          content: `Rewrite this MLS description to sound 100% human-written by a top Charleston agent. Remove repetition, improve flow, add emotional depth, ensure 400+ words. Do not add or invent any facts. Return only the rewritten MLS description, no preamble or word count.\n\n---\n\n${stripped}`,
+          content: `Rewrite this MLS description for MLS-ready tone. Remove stacked metaphors and clichés ("embrace","enchanting","beckons","oasis") unless they are extremely mild and singular. Do not add or invent any facts.\n\n---\n\n${stripped}`,
         },
       ],
       max_tokens: 1200,
-      temperature: 0.6,
+      temperature: 0.35,
     }),
   });
   if (!res.ok) return draftMls;
@@ -273,7 +307,7 @@ async function factCheckMls(
         {
           role: 'system',
           content:
-            'Review the MLS description. Remove any factual claims about the property that are NOT supported by the INPUT FACTS JSON (beds, baths, sqft, amenities list, vision text, landmarks). Preserve voice, flow, length (~400 words target), and rich atmospheric language (e.g. "gentle coastal breeze," "neighborhood rhythm") when it does not assert a specific unlisted feature. If the copy mentions piazza, fireplace, pool, dock, chef kitchen, live oaks on the lot, room layout, or finishes not in the facts, remove or generalize those sentences. Return ONLY the cleaned MLS description, no preamble.',
+            'Review the MLS description. Remove any factual claims about THIS property that are NOT supported by the INPUT FACTS JSON (beds, baths, sqft, price, amenities list, vision text, landmarks). Aggressively remove or neutralize: flooring materials, window-wall / "expansive windows" / natural light claims, open-concept layout, chef kitchen, marsh/water views, primary/master suite spa framing, and yard/fence/school claims unless explicitly in the JSON. Preserve MLS flow and ~380–430 words when possible. Return ONLY the cleaned MLS description, no preamble.',
         },
         {
           role: 'user',
@@ -364,16 +398,29 @@ serve(async (req: Request) => {
     const neighborhoodName = neighborhood ?? 'Charleston';
 
     const FACT_ONLY_RULES = `TEXT-ONLY FACT LOCK:
-Use ONLY factual details explicitly provided below (beds, baths, sqft, price, amenities list, photo-derived text, landmark distances). Do NOT add or assume: fireplaces, piazzas, pools, docks, chef kitchens, live oaks on this lot, fenced yard, primary suite layout, mudroom, or any finish or room not in that list. If a detail is missing, omit it gracefully—do not invent.
-Atmospheric storytelling is encouraged (breeze, light, neighborhood feel, Holy City lifestyle) as long as you do not claim a specific unlisted physical feature.
-Use the word "piazza" only if "Screened Piazza" or "Wraparound Porch" or similar appears in amenities OR photo analysis mentions porch/piazza. Otherwise use neutral terms like "entry" or omit.`;
+Every structural, finish, layout, storage, view, or exterior claim MUST appear verbatim (or as an unambiguous synonym listed below) in: (a) the amenities/custom list, (b) Photo-derived CONFIDENT line, or (c) landmark distance names/strings.
+
+FORBIDDEN unless explicitly supported above:
+- Flooring types or materials (hardwood, LVP, tile, marble, "rich wood", "heart pine", etc.).
+- Ceiling types (vaulted, tray, coffered, soaring) and "abundant / generous natural light" or "expansive / floor-to-ceiling windows".
+- Open floor plan / open concept / great-room flow unless explicitly in amenities or CONFIDENT photo line.
+- Chef's / gourmet kitchen unless "Chef's Kitchen" or equivalent is listed or clearly visible in CONFIDENT photo line.
+- Fireplaces, pools, docks, marsh/water/ocean "views" from this home, fenced yard, mudroom, built-ins, shiplap, coffered ceilings, primary/master "suite" as luxury spa framing, or any room not evidenced.
+
+If a detail is missing, omit it—write a shorter MLS rather than padding with invented tours.
+
+Atmosphere (breeze, neighborhood rhythm, Holy City lifestyle) is allowed ONLY when it does not assert an unlisted physical feature of THIS home.
+
+Use the word "piazza" only if "Screened Piazza", "Wraparound Porch", or similar appears in amenities OR CONFIDENT photo line mentions porch/piazza. Otherwise say "porch" only if supported, else omit.`;
 
     let systemPrompt: string;
     let userPrompt: string;
 
     if (overviewOnly && generateMLS) {
-      systemPrompt = `You are a Charleston metro real estate writer. Produce a NEIGHBORHOOD / AREA overview only—elegant, immersive, factual about the area. Never describe a specific home's interior, bed/bath count, or features unless Photo-derived details explicitly describe visible exterior from uploaded images. No invented property specifics.`;
+      systemPrompt = `You are a Charleston metro real estate writer. Produce a NEIGHBORHOOD / AREA overview only—clear, factual, and readable. Never describe a specific home's interior, bed/bath count, or features unless Photo-derived CONFIDENT line explicitly describes visible exterior. No invented property specifics.
+Avoid purple prose and these phrases entirely: "warm embrace", "enchanting", "beckons", "swept away", "dream home", "hidden gem", "oasis".`;
       userPrompt = `QUICK OVERVIEW MODE — no full property specs provided.
+${LANDMARK_USE_RULES}
 Vicinity address: ${address}
 Neighborhood: ${neighborhood ?? 'Charleston metro'}
 Property type label (for context only, do not invent a listing): ${propertyType}
@@ -389,15 +436,16 @@ improvement_suggestions: first MUST be exactly: "Add more details for full listi
 
 Respond ONLY with valid JSON: { "mls_copy", "airbnb_copy", "social_captions", "improvement_suggestions" }. Null unused fields.`;
     } else {
-      systemPrompt = `You are a top ${neighborhoodName} agent with 15+ years writing MLS listings. Write in an elegant, human, immersive voice — never robotic or repetitive.
+      systemPrompt = `You are a top ${neighborhoodName} agent writing MLS descriptions that are accurate first, engaging second.
 ${FACT_ONLY_RULES}
-Never invent or assume factual claims beyond the AUTHORIZED FACTS block. Use rich, immersive language and emotional storytelling—elegant and narrative, not bland or list-like.
-Neighborhood atmosphere vocabulary (use only where it does not falsely attribute a feature to this property): ${vocab.join(', ')}.
-${neighborhoodContext ? `Neighborhood copywriting guide: ${neighborhoodContext}` : ''}
-${lifestyleHints ? `Key lifestyle selling points: ${lifestyleHints}` : ''}
-Tone requested: ${tone ?? 'standard'}.
-Never use generic real estate clichés ("must see", "stunning", "move-in ready", "won't last long").
-${generateMLS ? MLS_FEW_SHOT_EXAMPLES : ''}`;
+${VOICE_DISCIPLINE}
+${LANDMARK_USE_RULES}
+Neighborhood vocabulary (do not attribute these features to the home unless in facts/photos): ${vocab.join(', ')}.
+${neighborhoodContext ? `Neighborhood guide (area flavor only): ${neighborhoodContext}` : ''}
+${lifestyleHints ? `Lifestyle hints (do not fabricate property features from these): ${lifestyleHints}` : ''}
+${mlsToneGuidance(typeof tone === 'string' ? tone : undefined)}
+Never use generic clichés ("must see", "stunning", "move-in ready", "won't last long", "turn-key").
+${generateMLS ? MLS_STYLE_ANCHORS : ''}`;
 
       const authorizedFacts = `AUTHORIZED FACTS — text-only; every structural/feature claim in MLS must be traceable to this list or photo-derived line:
 Address: ${address}
@@ -407,15 +455,12 @@ Bedrooms: ${bedrooms ?? 'not specified'} | Bathrooms: ${bathrooms ?? 'not specif
 Amenities / features you MAY mention by name: ${allAmenities.length ? allAmenities.join(', ') : 'none listed—do not invent features'}
 Landmark distances (use these exact distances only): ${nearbyLandmarks || 'none'}
 ${visionSummary ? `Photo-derived details (ONLY other source for finishes/layout/features): ${visionSummary}` : 'No photo analysis—do not describe interior finishes, rooms, or exterior features not in amenities.'}
-You have full creative freedom on voice, mood, and non-specific atmosphere. Do not add facts.`;
+Voice may be warm only in non-factual sentences; do not add property facts beyond this block.`;
 
       const mlsInstructions = generateMLS ? `
-Generate MLS_DESCRIPTION (target 400–450 words). Structure:
-1. Opening hook: arrival / street / neighborhood feel (no false claims about this home's exterior unless in facts/photos).
-2. Interior: room-by-room ONLY using beds/baths/sqft + amenities + photo details—no extra rooms or finishes.
-3. Exterior & lifestyle: landmark distances from list; area lifestyle; mention piazza/marsh/pool/dock ONLY if in amenities or photos.
-4. Closing: private tour CTA.
-End with: [Word count: XXX]` : '';
+${MLS_OUTLINE_RULES}
+${LANDMARK_USE_RULES}
+${VOICE_DISCIPLINE}` : '';
 
       userPrompt = `${authorizedFacts}
 
@@ -504,12 +549,15 @@ For unused sections return null (not empty string). improvement_suggestions must
       ...(generated.social_captions ?? []),
     ].join(' ');
 
+    const amenitiesCorpus = `${allAmenities.join(', ')} ${visionSummary || ''}`;
+
     const scores = scoreAuthenticity(
       allGeneratedCopy,
       neighborhood,
       vocab,
       photoUrls.length > 0,
       Object.keys(landmarkDistances).length > 0,
+      amenitiesCorpus,
     );
 
     // ─── Step 6: Update generation row ───────────────────────────────────

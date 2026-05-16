@@ -26,11 +26,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(async (userId: string) => {
     if (!isSupabaseConfigured) return;
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
+
+    // Missing row: .single() used to yield HTTP 406 (PGRST116). Heal via RPC then refetch.
+    if (!error && !data) {
+      const { error: healErr } = await supabase.rpc('ensure_profile');
+      if (!healErr) {
+        ({ data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle());
+      }
+    }
+
     if (!error && data) setProfile(data as Profile);
   }, []);
 

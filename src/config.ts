@@ -73,6 +73,15 @@ export const PLAN_LIMITS = {
   team: { generations: null as null | number, stagingCredits: 200 },
 } as const;
 
+/** Max listing photos to stage in one action (server + UI). Align with product tiers. */
+export const STAGING_BATCH_MAX_BY_TIER = {
+  free: 0,
+  starter: 5,
+  pro: 10,
+  pro_plus: 10,
+  team: 10,
+} as const satisfies Record<(typeof TIERS.order)[number], number>;
+
 export const DEBUG = {
   /**
    * When true, UI can optionally bypass quota gates for debugging (local only).

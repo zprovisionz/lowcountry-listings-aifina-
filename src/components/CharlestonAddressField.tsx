@@ -96,7 +96,6 @@ export default function CharlestonAddressField({
   const [internalManual, setInternalManual] = useState('');
   const [hasPick, setHasPick] = useState(false);
   const [geoError, setGeoError] = useState('');
-  const [placesUiError, setPlacesUiError] = useState('');
   const [loadingPick, setLoadingPick] = useState(false);
   const [loadHint, setLoadHint] = useState(false);
 
@@ -133,7 +132,6 @@ export default function CharlestonAddressField({
 
   const attachPac = useCallback(async () => {
     if (manualMode || disabled || !hostRef.current) return;
-    setPlacesUiError('');
     teardownPac();
     try {
       await loadGoogleMaps();
@@ -157,16 +155,11 @@ export default function CharlestonAddressField({
 
     el.addEventListener('gmp-error', (ev) => {
       const raw = readGmpErrorMessage(ev);
-      const permissionish =
-        /no permission|does not have permission|REQUEST_DENIED|forbidden/i.test(raw);
-      if (import.meta.env.DEV && raw) {
-        console.warn('[gmp-place-autocomplete]', raw);
+      if (import.meta.env.DEV) {
+        console.warn('[gmp-place-autocomplete]', raw || '(no detail)');
       }
-      setPlacesUiError(
-        permissionish
-          ? 'Google rejected autocomplete (permission). In Google Cloud: enable Places API (New) + Maps JavaScript API, link billing, and add this site’s URL to the browser key’s HTTP referrer allowlist. You can type the address manually below.'
-          : 'Address lookup unavailable — type full address manually (check API key, billing, and HTTP referrer for this host).',
-      );
+      teardownPac();
+      setManualMode(true);
     });
 
     const onSelect = async (ev: GmpSelectLike) => {
@@ -229,7 +222,6 @@ export default function CharlestonAddressField({
 
   const handleClear = () => {
     setGeoError('');
-    setPlacesUiError('');
     setHasPick(false);
     if (pacRef.current && 'value' in pacRef.current) {
       try {
@@ -372,7 +364,6 @@ export default function CharlestonAddressField({
             disabled={disabled}
             onClick={() => {
               setGeoError('');
-              setPlacesUiError('');
               setManualMode(true);
               teardownPac();
             }}
@@ -401,7 +392,6 @@ export default function CharlestonAddressField({
               resetGoogleMapsLoad();
               setManualMode(false);
               setGeoError('');
-              setPlacesUiError('');
               void loadGoogleMaps().catch(() => {});
             }}
             style={{
@@ -433,58 +423,6 @@ export default function CharlestonAddressField({
           }}
         >
           Still loading Google address search… you can switch to manual entry anytime.
-        </div>
-      )}
-
-      {mapsState === 'error' && !manualMode && (
-        <div
-          style={{
-            marginTop: 8,
-            padding: '9px 14px',
-            background: 'rgba(255,200,80,0.07)',
-            border: '1px solid rgba(255,200,80,0.28)',
-            borderRadius: 8,
-            fontSize: 11,
-            color: 'rgba(255,220,140,0.95)',
-            fontFamily: "'DM Mono', ui-monospace, monospace",
-          }}
-        >
-          Address lookup unavailable — type full address manually. Google Maps did not load (API key, billing,
-          enabled APIs, or HTTP referrer). Use <strong>Type manually</strong> above.
-        </div>
-      )}
-
-      {placesUiError && !manualMode && mapsState === 'ready' && (
-        <div
-          style={{
-            marginTop: 8,
-            padding: '9px 14px',
-            background: 'rgba(255,200,80,0.07)',
-            border: '1px solid rgba(255,200,80,0.28)',
-            borderRadius: 8,
-            fontSize: 11,
-            color: 'rgba(255,220,140,0.95)',
-            fontFamily: "'DM Mono', ui-monospace, monospace",
-          }}
-        >
-          {placesUiError}
-        </div>
-      )}
-
-      {effectiveManual.trim().length > 0 && showManual && (
-        <div
-          style={{
-            marginTop: 6,
-            padding: '8px 12px',
-            background: 'rgba(255,200,80,0.07)',
-            border: '1px solid rgba(255,200,80,0.25)',
-            borderRadius: 8,
-            fontSize: 11.5,
-            color: 'rgba(255,200,80,0.95)',
-            fontFamily: "'DM Mono', ui-monospace, monospace",
-          }}
-        >
-          Address not verified by Google; ensure it&apos;s in Charleston, Berkeley, or Dorchester.
         </div>
       )}
 

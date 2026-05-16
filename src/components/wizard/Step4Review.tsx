@@ -1,5 +1,4 @@
 import type { WizardData } from '../../types/database';
-import { STAGING_STYLES } from '../../types/database';
 
 interface Props {
   data: WizardData;
@@ -9,8 +8,6 @@ interface Props {
 }
 
 export default function Step4Review({ data, onChange, isFreeTier = false, onUpgradeRequest }: Props) {
-  const stagingLabel = STAGING_STYLES.find(s => s.value === data.stagingStyle)?.label ?? '';
-
   const Row = ({ label, value }: { label: string; value: string | number | null | undefined }) =>
     value ? (
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '9px 0', borderBottom: '1px solid rgba(0,255,255,0.06)' }}>
@@ -34,7 +31,7 @@ export default function Step4Review({ data, onChange, isFreeTier = false, onUpgr
         onChange({ [fieldKey]: !on });
       }} style={{
         display: 'flex', alignItems: 'center', gap: 14,
-        padding: '15px 17px',
+        padding: '12px 14px',
         background: locked ? 'rgba(255,0,255,0.03)' : on ? 'rgba(0,255,255,0.07)' : 'rgba(0,255,255,0.02)',
         border: `1px solid ${locked ? 'rgba(255,0,255,0.22)' : on ? 'rgba(0,255,255,0.32)' : 'rgba(0,255,255,0.09)'}`,
         borderRadius: 12, cursor: locked ? 'not-allowed' : 'pointer',
@@ -74,7 +71,7 @@ export default function Step4Review({ data, onChange, isFreeTier = false, onUpgr
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <h2 style={headSt}>Review & Generate</h2>
         <p style={subSt}>Confirm your details and choose output formats. Click Generate to unleash the AI.</p>
@@ -121,7 +118,6 @@ export default function Step4Review({ data, onChange, isFreeTier = false, onUpgr
         <Row label="LIST PRICE" value={data.price ? `$${Number(data.price).toLocaleString()}` : null} />
         <Row label="MLS #" value={data.mlsNumber} />
         <Row label="TONE" value={data.tone} />
-        <Row label="STAGING" value={data.applyStaging ? stagingLabel : 'Not applied'} />
 
         {data.amenities.length > 0 && (
           <div style={{ paddingTop: 10 }}>

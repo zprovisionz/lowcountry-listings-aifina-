@@ -162,6 +162,10 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
+      ensure_profile: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
       append_staged_photo: {
         Args: { p_generation_id: string; p_url: string };
         Returns: void;
@@ -172,6 +176,10 @@ export interface Database {
       };
       is_test_user: {
         Args: { p_user_id: string };
+        Returns: boolean;
+      };
+      check_staging_quota_n_for_me: {
+        Args: { p_n: number };
         Returns: boolean;
       };
     };
@@ -303,13 +311,11 @@ export interface WizardData {
   // Step 3 — Amenities
   amenities: string[];
   customAmenities: string;
-  stagingStyle: 'coastal_modern' | 'lowcountry_traditional' | 'contemporary' | 'minimalist' | 'luxury_resort' | 'empty_clean' | '';
-  applyStaging: boolean;
   // Step 4 — Review / output formats
   generateMLS: boolean;
   generateAirbnb: boolean;
   generateSocial: boolean;
-  tone: 'luxury' | 'family' | 'investment' | 'standard';
+  tone: 'luxury' | 'vacation' | 'investment' | 'standard';
   /** Quick path: MLS = neighborhood overview only; no bed/bath/sqft required */
   overviewOnly: boolean;
 }
@@ -320,20 +326,64 @@ export const WIZARD_DEFAULTS: WizardData = {
   yearBuilt: '', price: '', mlsNumber: '',
   photoFiles: [], photoUrls: [],
   amenities: [], customAmenities: '',
-  stagingStyle: '', applyStaging: false,
   generateMLS: true, generateAirbnb: true, generateSocial: true,
   tone: 'standard',
   overviewOnly: false,
 };
 
-export const AMENITY_OPTIONS = [
-  'Screened Piazza','Wraparound Porch','Deep Water Access','Private Dock',
-  'Inground Pool','Hot Tub','Outdoor Kitchen','Gas Fireplace','Chef\'s Kitchen',
-  'Quartz Countertops','Hardwood Floors','Shiplap Walls','Coffered Ceilings',
-  'Smart Home System','EV Charging','Solar Panels','Elevator',
-  'Detached DADU','3-Car Garage','Workshop','Marsh Views','Ocean Views',
-  'River Views','Golf Course Views','HOA Amenities','Boat Storage',
+export const AMENITY_GROUPS: { label: string; items: string[] }[] = [
+  {
+    label: 'Interiors',
+    items: [
+      "Chef's Kitchen",
+      'Quartz Countertops',
+      'Hardwood Floors',
+      'Shiplap Walls',
+      'Coffered Ceilings',
+      'Gas Fireplace',
+      'Elevator',
+    ],
+  },
+  {
+    label: 'Lowcountry Outdoor',
+    items: [
+      'Screened Piazza',
+      'Wraparound Porch',
+      'Live Oaks',
+      'Outdoor Kitchen',
+      'Inground Pool',
+      'Hot Tub',
+    ],
+  },
+  {
+    label: 'Waterfront',
+    items: [
+      'Deep Water Access',
+      'Private Dock',
+      'Boat Lift',
+      'Tidal Creek Access',
+      'Boat Storage',
+    ],
+  },
+  {
+    label: 'Views',
+    items: ['Marsh Views', 'Ocean Views', 'River Views', 'Golf Course Views'],
+  },
+  {
+    label: 'Garage & Utility',
+    items: ['3-Car Garage', 'Workshop', 'Guest House / ADU'],
+  },
+  {
+    label: 'Smart & Green',
+    items: ['Smart Home System', 'EV Charging', 'Solar Panels'],
+  },
+  {
+    label: 'Community',
+    items: ['HOA Amenities', 'Gated Community'],
+  },
 ];
+
+export const AMENITY_OPTIONS: string[] = AMENITY_GROUPS.flatMap((g) => g.items);
 
 export const PROPERTY_TYPES = [
   { value: 'single_family', label: 'Single Family' },
@@ -341,15 +391,6 @@ export const PROPERTY_TYPES = [
   { value: 'townhouse',     label: 'Townhouse' },
   { value: 'airbnb',        label: 'Short-Term Rental' },
   { value: 'land',          label: 'Land / Lot' },
-];
-
-export const STAGING_STYLES = [
-  { value: 'coastal_modern',         label: 'Coastal Modern',         icon: '🌊' },
-  { value: 'lowcountry_traditional', label: 'Lowcountry Traditional', icon: '🌿' },
-  { value: 'contemporary',          label: 'Contemporary',            icon: '⬡' },
-  { value: 'minimalist',            label: 'Minimalist',              icon: '◻' },
-  { value: 'luxury_resort',         label: 'Luxury Resort',           icon: '✦' },
-  { value: 'empty_clean',           label: 'Empty & Clean',           icon: '□' },
 ];
 
 export const LANDMARKS = [

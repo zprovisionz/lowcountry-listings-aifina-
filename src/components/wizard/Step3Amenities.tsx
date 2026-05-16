@@ -1,46 +1,140 @@
+import { useMemo, useState } from 'react';
 import type { WizardData } from '../../types/database';
-import { AMENITY_OPTIONS, STAGING_STYLES } from '../../types/database';
+import { AMENITY_GROUPS } from '../../types/database';
+import { useAuth } from '../../contexts/AuthContext';
+import {
+  remainingStagingCredits,
+  stagingBatchCapForTier,
+  stagingSelectionCapForUi,
+} from '../../lib/stagingCredits';
+import { DEBUG } from '../../config';
 
-export default function Step3Amenities({ data, onChange }: { data:WizardData; onChange:(p:Partial<WizardData>)=>void }) {
-  const toggle = (a:string) => {
-    const next = data.amenities.includes(a) ? data.amenities.filter(x=>x!==a) : [...data.amenities,a];
-    onChange({ amenities:next });
+const TONE_OPTIONS = [
+  { value: 'standard', label: 'Standard', desc: 'Professional & approachable' },
+  { value: 'luxury', label: 'Luxury', desc: 'Elevated & aspirational' },
+  { value: 'vacation', label: 'Vacation / STR', desc: 'Booking-driven & lifestyle' },
+  { value: 'investment', label: 'Investment', desc: 'ROI & income potential' },
+] as const;
+
+export default function Step3Amenities({ data, onChange }: { data: WizardData; onChange: (p: Partial<WizardData>) => void }) {
+  const { profile } = useAuth();
+  const allowBypass = !!(DEBUG.bypassBilling && (import.meta.env.DEV || profile?.is_test_user));
+  const photoN = data.photoFiles.length;
+  const tierCap = stagingBatchCapForTier(profile?.tier);
+  const selectCap = stagingSelectionCapForUi(profile, profile?.tier, photoN, allowBypass);
+  const rem = profile ? remainingStagingCredits(profile) : 0;
+  const remLabel = rem === Number.POSITIVE_INFINITY ? '∞' : String(Math.floor(rem));
+
+  const [filter, setFilter] = useState('');
+  const q = filter.trim().toLowerCase();
+
+  const filteredGroups = useMemo(() => {
+    if (!q) return AMENITY_GROUPS;
+    return AMENITY_GROUPS
+      .map((g) => ({ ...g, items: g.items.filter((a) => a.toLowerCase().includes(q)) }))
+      .filter((g) => g.items.length > 0);
+  }, [q]);
+
+  const toggle = (a: string) => {
+    const next = data.amenities.includes(a) ? data.amenities.filter((x) => x !== a) : [...data.amenities, a];
+    onChange({ amenities: next });
   };
 
+  const selectedCount = data.amenities.length;
+
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:28 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
         <h2 className="step-heading">Features & Amenities</h2>
-        <p className="step-sub">
+        <p className="step-sub" style={{ marginBottom: 0 }}>
           {data.overviewOnly
             ? 'Optional for overview mode. Select features if you want them mentioned when you add full details later.'
             : 'Select all applicable features (required: at least one chip or custom features). These are woven into your listing—only selected facts appear in copy.'}
         </p>
       </div>
 
-      {/* Amenity chips */}
       <div>
-        <label className="neon-label">Property Features ({data.amenities.length} selected)</label>
-        <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-          {AMENITY_OPTIONS.map(a => {
-            const on = data.amenities.includes(a);
-            return (
-              <button key={a} onClick={() => toggle(a)} className={`amenity-chip${on?' active':''}`}>
-                {on && <span style={{ marginRight:5, fontSize:12 }}>✓</span>}
-                {a}
-              </button>
-            );
-          })}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <label className="neon-label" style={{ marginBottom: 0 }}>
+            Property Features
+            {selectedCount > 0 && (
+              <span className="amenity-count-badge" aria-label={`${selectedCount} selected`}>{selectedCount}</span>
+            )}
+          </label>
+          {selectedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => onChange({ amenities: [] })}
+              className="amenity-clear-btn"
+              aria-label="Clear all selected features"
+            >
+              Clear all
+            </button>
+          )}
         </div>
+
+        <input
+          type="text"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Find a feature…"
+          className="neon-input amenity-search"
+          aria-label="Filter features"
+        />
+
+        {selectedCount > 0 && (
+          <div className="amenity-selected-row" aria-label="Selected features">
+            {data.amenities.map((a) => (
+              <button
+                key={a}
+                type="button"
+                className="amenity-selected-pill"
+                onClick={() => toggle(a)}
+                aria-label={`Remove ${a}`}
+              >
+                <span>{a}</span>
+                <span className="amenity-pill-x" aria-hidden="true">×</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {filteredGroups.length === 0 ? (
+          <p className="amenity-empty">No features match — add it as a custom feature below.</p>
+        ) : (
+          <div className="amenity-groups">
+            {filteredGroups.map((group) => (
+              <div key={group.label} className="amenity-group">
+                <div className="amenity-group-label">{group.label}</div>
+                <div className="amenity-group-chips">
+                  {group.items.map((a) => {
+                    const on = data.amenities.includes(a);
+                    return (
+                      <button
+                        key={a}
+                        type="button"
+                        onClick={() => toggle(a)}
+                        className={`amenity-chip${on ? ' active' : ''}`}
+                        aria-pressed={on}
+                      >
+                        {on && <span style={{ marginRight: 5, fontSize: 12 }}>✓</span>}
+                        {a}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Custom */}
       <div>
         <label className="neon-label">Additional Features (comma-separated)</label>
         <input
           type="text"
           value={data.customAmenities}
-          onChange={e => onChange({ customAmenities:e.target.value })}
+          onChange={(e) => onChange({ customAmenities: e.target.value })}
           placeholder="e.g. Wine cellar, custom millwork, tongue-and-groove ceilings…"
           className="neon-input"
         />
@@ -48,86 +142,62 @@ export default function Step3Amenities({ data, onChange }: { data:WizardData; on
 
       <div className="divider-subtle" />
 
-      {/* Staging */}
-      <div>
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-          <div>
-            <label className="neon-label" style={{ marginBottom:2 }}>Virtual Staging</label>
-            <p style={{ fontFamily:'DM Sans,sans-serif', fontSize:12.5, color:'var(--text-mid)', margin:0 }}>
-              AI-staged room photos in your chosen style. Uses 1 staging credit.
-            </p>
-          </div>
-          {/* Toggle */}
-          <button onClick={() => onChange({ applyStaging:!data.applyStaging })} style={{
-            width:48, height:25, borderRadius:12, padding:0, flexShrink:0,
-            background: data.applyStaging ? 'linear-gradient(90deg,var(--cyan),var(--magenta))' : 'rgba(255,255,255,0.1)',
-            border:'1px solid rgba(255,255,255,0.15)', cursor:'pointer', position:'relative', transition:'background .3s',
-            boxShadow: data.applyStaging ? '0 0 14px rgba(0,255,255,0.3)' : 'none',
-          }}>
-            <div style={{
-              width:17, height:17, borderRadius:'50%', background:'#fff',
-              position:'absolute', top:3, left: data.applyStaging ? 27 : 3,
-              transition:'left .3s var(--ease-spring)',
-              boxShadow:'0 1px 4px rgba(0,0,0,0.4)',
-            }} />
-          </button>
+      <div className="glass-magenta" style={{ padding: '12px 14px', borderRadius: 12 }}>
+        <div className="neon-label" style={{ marginBottom: 6 }}>
+          Virtual staging (after Results)
         </div>
-
-        {data.applyStaging && (
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(148px,42vw),1fr))', gap:10 }}>
-            {STAGING_STYLES.map(({ value, label, icon }) => {
-              const active = data.stagingStyle === value;
-              return (
-                <button key={value} onClick={() => onChange({ stagingStyle: value as WizardData['stagingStyle'] })} style={{
-                  padding:'18px 12px',
-                  background: active ? 'rgba(255,0,255,0.1)' : 'rgba(255,255,255,0.03)',
-                  border:`1px solid ${active ? 'rgba(255,0,255,0.55)' : 'rgba(255,255,255,0.08)'}`,
-                  borderRadius:12, cursor:'pointer',
-                  display:'flex', flexDirection:'column', alignItems:'center', gap:8,
-                  transition:'all .25s ease',
-                  boxShadow: active ? '0 0 22px rgba(255,0,255,0.18),inset 0 0 12px rgba(255,0,255,0.06)' : 'none',
-                }}>
-                  <span style={{ fontSize:26 }}>{icon}</span>
-                  <span style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:11.5, color: active ? 'var(--magenta)' : 'var(--text-mid)', textAlign:'center' }}>
-                    {label}
-                  </span>
-                  {active && <span style={{ fontFamily:"'DM Mono', ui-monospace, monospace", fontSize:'var(--text-ui-label)', color:'var(--magenta)', letterSpacing:'.12em' }}>SELECTED</span>}
-                </button>
-              );
-            })}
-          </div>
+        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: 'var(--text-mid)', margin: 0, lineHeight: 1.6 }}>
+          Staging does <strong style={{ color: 'var(--text-hi)' }}>not</strong> run when you press Generate. On the Results page, pick your photos, choose a style, and spend{' '}
+          <strong style={{ color: 'var(--text-hi)' }}>1 staging credit per photo</strong> (batch limits: Starter up to {stagingBatchCapForTier('starter')} per run, Pro+ up to{' '}
+          {stagingBatchCapForTier('pro')}).
+        </p>
+        {photoN > 0 && profile && (
+          <p
+            style={{
+              fontFamily: 'DM Sans, sans-serif',
+              fontSize: 12.5,
+              color: 'var(--text-lo)',
+              margin: '10px 0 0',
+              lineHeight: 1.55,
+            }}
+            title="Credits include your plan pool plus any purchased packs."
+          >
+            {selectCap > 0 || allowBypass ? (
+              <>
+                With your {photoN} uploaded photo{photoN === 1 ? '' : 's'}, you could stage up to <strong style={{ color: 'var(--cyan)' }}>{selectCap}</strong> per run right now
+                {tierCap > 0 ? ` (plan batch max ${tierCap})` : ''}. Remaining credits: <strong style={{ color: 'var(--magenta)' }}>{remLabel}</strong>.
+              </>
+            ) : (
+              <>
+                Staging needs credits after you generate. Remaining: <strong style={{ color: 'var(--magenta)' }}>0</strong> — upgrade from Free for staging.
+              </>
+            )}
+          </p>
         )}
       </div>
 
       <div className="divider-subtle" />
 
-      {/* Tone */}
       <div>
         <label className="neon-label">Listing Tone</label>
-        <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-          {([
-            { value:'standard',   label:'Standard',   desc:'Professional & approachable' },
-            { value:'luxury',     label:'Luxury',      desc:'Elevated & aspirational' },
-            { value:'family',     label:'Family',      desc:'Warm & community-focused' },
-            { value:'investment', label:'Investment',  desc:'ROI & income potential' },
-          ] as const).map(({ value, label, desc }) => {
+        <div className="tone-grid">
+          {TONE_OPTIONS.map(({ value, label, desc }) => {
             const on = data.tone === value;
             return (
-              <button key={value} onClick={() => onChange({ tone:value })} style={{
-                padding:'10px 16px', cursor:'pointer', textAlign:'left',
-                background: on ? 'rgba(0,255,255,0.08)' : 'rgba(0,255,255,0.02)',
-                border:`1px solid ${on ? 'rgba(0,255,255,0.45)' : 'rgba(0,255,255,0.1)'}`,
-                borderRadius:10, transition:'all .2s ease',
-                boxShadow: on ? '0 0 14px rgba(0,255,255,0.12)' : 'none',
-              }}>
-                <div style={{ fontFamily:"'Playfair Display', Georgia, serif", fontWeight:600, fontSize:13, color: on ? 'var(--cyan)' : 'var(--text-hi)' }}>{label}</div>
-                <div style={{ fontFamily:'DM Sans,sans-serif', fontSize:11.5, color:'var(--text-lo)', marginTop:2 }}>{desc}</div>
+              <button
+                key={value}
+                type="button"
+                onClick={() => onChange({ tone: value })}
+                className={`tone-chip${on ? ' active' : ''}`}
+                aria-pressed={on}
+              >
+                <div className="tone-chip-label">{label}</div>
+                <div className="tone-chip-desc">{desc}</div>
               </button>
             );
           })}
         </div>
       </div>
-
     </div>
   );
 }
